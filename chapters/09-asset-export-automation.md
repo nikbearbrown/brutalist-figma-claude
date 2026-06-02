@@ -1,53 +1,54 @@
 # Chapter 9 — Asset Export Automation
 
+*A pipeline is just a story about where things come from — until it breaks, and then it's a story about what nobody wrote down.*
+
+---
+
 The Slack message arrived at 11:47 PM: "buttons look fine on staging but the close icon is completely broken in prod."
 
-It was not the close icon. The close icon SVG had been re-exported from Figma by the designer three days earlier, optimized with SVGO, and committed to the repository. The icon in production was a different file — from six months ago — that a different developer had hardcoded into a legacy component because they did not know the design system had an official close icon. The two files had the same display name in the UI. They had completely different paths in the codebase.
+It was not the close icon. The close icon SVG had been re-exported from Figma three days earlier, optimized, and committed. The icon in production was a different file — six months old — that a developer had hardcoded into a legacy component because they did not know the design system had an official close icon. The two files had the same display name in the UI. Completely different paths in the codebase. When the designer re-exported and overwrote the design system file, the legacy component did not update. It had no connection to the asset pipeline. It had a hardcoded relative path to a file that no longer existed at that path. The broken display was a 404 on an SVG that had been moved.
 
-When the designer re-exported and overwrote the design system file, the legacy component did not update. The legacy component had no connection to the design system asset pipeline. It had a hardcoded relative path to a file that no longer existed at that path. The broken display was a 404 on an SVG that had been moved.
+This is not a story about SVG optimization. It is a story about what happens when asset management is informal: no single source of truth, no deterministic paths, no manifest of what exists and where it should live, no automated check that the file in the repository matches the node in Figma.
 
-This is not a story about SVG optimization or API calls. It is a story about what happens when asset management is informal: no single source of truth, no deterministic paths, no manifest of what exists and where it should live, no automated verification that the file in the repository matches the node in Figma.
+The pipeline in this chapter builds the thing that team did not have.
 
-The pipeline in this chapter builds the thing the team in that story did not have.
-
----
-
-## What This Chapter Does
-
-This chapter builds `export-assets.mjs` — the script that takes a manifest of Figma node IDs, requests export renders from the Figma image endpoint, downloads the expiring URLs, post-processes SVGs with SVGO, and writes the results to deterministic paths in the repository.
-
-By the end of this chapter you will have:
-
-- An `asset-manifest.json` that maps Figma node IDs to repository paths, formats, and optimization rules
-- An `export-assets.mjs` that batches image endpoint requests, handles expiring URLs, retries on rate-limit errors, and verifies output integrity
-- SVGO post-processing configured to remove Figma-specific metadata, standardize identifiers, and produce production-ready SVG
-- A GitHub Actions workflow triggered by `LIBRARY_PUBLISH` webhooks that exports, optimizes, and opens a pull request
-- Explicit handling of the four operational hazards that break real asset pipelines
+<!-- → [FIGURE: Diagram contrasting informal asset management (designer exports manually, developer copies file, paths diverge) vs. pipeline-driven management (manifest maps node IDs to deterministic paths, CI exports and verifies on every publish)] -->
 
 ---
 
-## Diagnosis: The Four Operational Hazards
+## The Render Endpoint Is Not a File Download
 
-The Figma image export endpoint is not like a file download endpoint. It is a render endpoint — it takes a node ID, renders the node at the requested format and scale, and returns a URL pointing to a CDN-hosted render. That URL expires. [verify — current as of writing: Figma documentation states that generated image URLs expire; the expiry window is documented in https://developers.figma.com/docs/rest-api/file-endpoints/ — verify the exact expiry period before shipping]
+Before writing any code, the most important thing to understand about the Figma image export endpoint is that it is a render endpoint, not a file storage endpoint. You do not ask it for a file. You ask it to render a node — at a given format and scale — and it hands you a URL pointing to a CDN-hosted render. That URL expires. [verify — current expiry window; Figma documentation states that generated image URLs expire; verify the exact period before shipping]
 
-This distinction creates four hazards that do not exist in simpler file-download pipelines.
+This is the root cause of every failure mode the pipeline has to handle. It shapes the architecture completely.
 
-**Hazard 1: URLs expire.** The pipeline must download the rendered assets immediately after receiving the URLs — not cache the URLs and download later, not retry the same URL after a delay. A pipeline that stores image URLs in a file and downloads them in a separate step (or a later CI run) will find the URLs 403ing silently. The expiring URL is not a defect in the API; it is the intended behavior. The pipeline must be designed around it.
+A pipeline that requests export URLs, stores them in a file, and downloads them later will produce 403 errors silently. A pipeline that requests 500 icons in a single call will hit rate limits. A pipeline that does not verify what it downloaded can write a JSON error body to disk, name it `.svg`, and commit it to the repository with no indication that anything went wrong.
 
-**Hazard 2: Rate limits apply to image requests.** The image endpoint is rate-limited separately from other Figma API endpoints. [verify — current as of writing] Requesting exports for 500 icons in a single call will not work. The pipeline must batch requests — grouping node IDs into chunks — and add delays between batches. If the pipeline hits a rate limit, it must back off and retry rather than failing hard.
+The pipeline in this chapter is designed around these constraints. Understanding them is what makes the design legible.
 
-**Hazard 3: Node IDs change on copy-paste.** A Figma node ID is stable as long as the node is not deleted and recreated. A rename does not change the ID. A move does not change the ID. A copy-paste creates a new node with a new ID. If a designer copies an icon frame to a new page (rather than moving it), the node ID changes and the asset manifest is invalid. The pipeline must detect this and log a warning rather than overwriting existing assets with renders from the wrong node.
+---
 
-**Hazard 4: Raw Figma SVG is not production-ready.** Figma's SVG export includes IDs, filter references, clip paths, and style attributes that are specific to Figma's rendering model. These are not harmful, but they add file size, can cause conflicts when multiple SVGs are inlined on the same page (duplicate `id` attributes), and do not follow the accessibility conventions that production SVGs should follow. Post-processing with SVGO is not optional — it is the step that transforms a Figma export into a production asset.
+## The Four Hazards
+
+There are four operational hazards that do not exist in simpler file-download pipelines. The code addresses all four explicitly.
+
+**Expiring URLs.** The pipeline must download each rendered asset immediately after receiving its URL. Request the URLs, download them, move on. There is no "cache the URLs and download later." There is no "retry the same URL after an hour." A URL that was valid thirty seconds ago may not be valid now. The pipeline is structured so that every URL is consumed within the same execution that requested it.
+
+**Rate limits on image requests.** The image endpoint is rate-limited separately from other Figma API endpoints. [verify — current as of writing] Requesting exports for 500 icons in a single call will not work. The pipeline batches node IDs into chunks, adds a delay between batches, and handles 429 responses with exponential backoff rather than a hard failure. The delays are not overhead to be optimized away — they are what keeps the pipeline from exhausting its quota.
+
+**Node ID instability after copy-paste.** A Figma node ID is stable for the lifetime of a node. A rename does not change it. A move does not change it. A copy-paste creates a new node with a new ID. If a designer duplicates an icon frame rather than moving it, the original node ID is still valid, the manifest is still correct for that icon, and the copy is simply not in the manifest until someone adds it deliberately. But if a designer rebuilds a component from scratch — which is functionally equivalent to delete-and-recreate — the old ID no longer resolves to anything. The pipeline detects this as a null render and logs it rather than silently overwriting a working asset with nothing.
+
+**Raw Figma SVG is not production-ready.** Figma's SVG export includes IDs generated by its rendering model, filter references, clip paths, and attributes that are Figma-specific. These are not harmful in isolation. They become harmful when two SVGs are inlined on the same page: duplicate `id` attributes cause CSS and JavaScript selectors to match the wrong elements. They add unnecessary file size. They do not follow the accessibility conventions production SVGs should follow. Post-processing with SVGO is not optional — it is the step that transforms a Figma export into something the application can actually use.
+
+<!-- → [TABLE: Four hazards — columns: hazard name, what causes it, how the pipeline handles it — covering expiring URLs, rate limits, node ID instability, and raw SVG quality] -->
 
 ---
 
 ## The Asset Manifest
 
-The manifest is the contract between the Figma file and the repository. It is a JSON file, version-controlled, that maps node IDs to repository paths, formats, and export settings.
+The manifest is the contract between the Figma file and the repository. It is a JSON file, version-controlled alongside the code, that maps node IDs to repository paths, formats, and per-asset settings. The export script reads it and trusts it. It does not generate it.
 
 ```json
-// asset-manifest.json
 {
   "version": 2,
   "assets": [
@@ -87,17 +88,19 @@ The manifest is the contract between the Figma file and the repository. It is a 
 }
 ```
 
-The manifest is maintained by a human (or the `figma-audit.js` from Chapter 5 in its manifest-generation mode). It is not generated by the export script. The export script reads it and trusts it. This is intentional: the decision of which nodes should be exported, in what format, to what path, is a design systems decision — not something the pipeline should infer.
+The node ID is the stable key. It survives renames. When a designer renames an icon from "Close" to "Icon / Close / Default" in the Layers panel, the node ID does not change, the manifest does not need to be updated, and the repository path stays the same. The name in the manifest is for human readability, not for routing. The `outputPath` is the deterministic location — the answer to "where does this asset live in the repository?" that is written down and version-controlled rather than remembered by whoever happens to be on the team.
 
-The node ID is the key. It is the stable identifier that survives renames. When a designer renames an icon in Figma, the node ID does not change, the manifest does not need to be updated, and the repository path stays the same. When a designer duplicates an icon (copy-paste), the old node ID is still valid, the old asset is still in the repository, and the manifest correctly identifies the original — the copy has a different ID and is not in the manifest until someone adds it deliberately.
+The decision of which nodes go in the manifest, in what format, to what path, is a design systems decision. It is not something the pipeline should infer from the file. The manifest is maintained by a human, or by the audit tooling from Chapter 5 in its manifest-generation mode. The export script reads and trusts it.
+
+<!-- → [FIGURE: Manifest structure diagram — node ID linking from Figma file to manifest entry, manifest entry linking to repository path — annotated to show which fields the export script uses for routing vs. which are for human reference] -->
 
 ---
 
-## export-assets.mjs
+## `export-assets.mjs`
 
 ```javascript
 // export-assets.mjs
-// Usage: node export-assets.mjs [--dry-run] [--manifest asset-manifest.json]
+// Usage: node export-assets.mjs [--dry-run] [--manifest=asset-manifest.json]
 // Requires: FIGMA_TOKEN, FIGMA_FILE_KEY in environment
 // Illustrative — verify endpoint behavior and rate-limit headers before shipping
 
@@ -107,11 +110,11 @@ import { fileURLToPath }                           from 'url';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 
-const TOKEN      = process.env.FIGMA_TOKEN;
-const FILE_KEY   = process.env.FIGMA_FILE_KEY;
-const DRY_RUN    = process.argv.includes('--dry-run');
-const MANIFEST   = process.argv.find(a => a.startsWith('--manifest='))?.split('=')[1]
-                 ?? 'asset-manifest.json';
+const TOKEN    = process.env.FIGMA_TOKEN;
+const FILE_KEY = process.env.FIGMA_FILE_KEY;
+const DRY_RUN  = process.argv.includes('--dry-run');
+const MANIFEST = process.argv.find(a => a.startsWith('--manifest='))?.split('=')[1]
+               ?? 'asset-manifest.json';
 
 if (!TOKEN || !FILE_KEY) {
   console.error('[export-assets] ERROR: FIGMA_TOKEN and FIGMA_FILE_KEY are required.');
@@ -120,20 +123,14 @@ if (!TOKEN || !FILE_KEY) {
 
 const BASE = 'https://api.figma.com/v1';
 
-// Batch size: number of node IDs per image request
+// Batch size: node IDs per image request.
 // [verify — current as of writing] Figma does not publish an explicit batch limit;
-// 50 is a conservative default that avoids URL-length and rate-limit issues
-const BATCH_SIZE = 50;
-
-// Delay between batches in milliseconds
+// 50 is a conservative default that avoids URL-length and rate-limit issues.
+const BATCH_SIZE    = 50;
 const BATCH_DELAY_MS = 1000;
+const MAX_RETRIES   = 3;
 
-// Maximum retries on 429 rate-limit response
-const MAX_RETRIES = 3;
-
-async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function figmaGet(path, retries = 0) {
   const res = await fetch(`${BASE}${path}`, {
@@ -141,129 +138,133 @@ async function figmaGet(path, retries = 0) {
   });
 
   if (res.status === 429) {
-    if (retries >= MAX_RETRIES) {
-      throw new Error(`Rate limit exceeded after ${MAX_RETRIES} retries on ${path}`);
-    }
-    // [verify — current as of writing] Figma returns Retry-After header on 429
-    const retryAfter = parseInt(res.headers.get('Retry-After') ?? '30', 10);
-    console.warn(`[export-assets] Rate limited. Waiting ${retryAfter}s before retry ${retries + 1}/${MAX_RETRIES}...`);
-    await sleep(retryAfter * 1000);
+    if (retries >= MAX_RETRIES) throw new Error(`Rate limit exceeded after ${MAX_RETRIES} retries on ${path}`);
+    const wait = parseInt(res.headers.get('Retry-After') ?? '30', 10);
+    console.warn(`[export-assets] Rate limited. Waiting ${wait}s (retry ${retries + 1}/${MAX_RETRIES})...`);
+    await sleep(wait * 1000);
     return figmaGet(path, retries + 1);
   }
 
-  if (!res.ok) {
-    throw new Error(`Figma API ${res.status}: ${await res.text()}`);
-  }
-
+  if (!res.ok) throw new Error(`Figma API ${res.status}: ${await res.text()}`);
   return res.json();
 }
 
-// Request image renders for a batch of node IDs
-// Returns { [nodeId]: url }
+// Request image renders for a batch of node IDs.
+// Returns { [nodeId]: url | null }
 // [verify — current as of writing] GET /v1/images endpoint and response shape
 async function requestImageBatch(nodeIds, format, scale) {
-  const ids = nodeIds.join(',');
+  const ids  = nodeIds.join(',');
   const data = await figmaGet(
     `/images/${FILE_KEY}?ids=${encodeURIComponent(ids)}&format=${format}&scale=${scale}`
   );
-
-  if (data.err) {
-    throw new Error(`Image endpoint error: ${data.err}`);
-  }
-
-  return data.images; // { [nodeId]: url | null }
+  if (data.err) throw new Error(`Image endpoint error: ${data.err}`);
+  return data.images;
 }
 
-// Download an expiring image URL and return the buffer
-// IMPORTANT: URLs expire. Download immediately after receiving.
+// Download an expiring URL immediately.
+// A 403 or 410 here almost always means the URL has expired.
+// [verify — current as of writing] Figma CDN URL expiry behavior
 async function downloadImage(url, name) {
   const res = await fetch(url);
-  if (!res.ok) {
-    // A 403 or 410 here usually means the URL has expired.
-    // [verify — current as of writing] Figma CDN URL expiry behavior
-    throw new Error(`Failed to download ${name}: ${res.status}. URL may have expired.`);
-  }
-  const buffer = Buffer.from(await res.arrayBuffer());
-  return buffer;
+  if (!res.ok) throw new Error(`Download failed for "${name}": ${res.status}. URL may have expired.`);
+  return Buffer.from(await res.arrayBuffer());
 }
 
-// Chunk an array into groups of size n
 function chunk(arr, n) {
-  const chunks = [];
-  for (let i = 0; i < arr.length; i += n) {
-    chunks.push(arr.slice(i, i + n));
-  }
-  return chunks;
+  const out = [];
+  for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
+  return out;
 }
 
-// Write a buffer to an output path, creating directories as needed
 function writeAsset(outputPath, buffer) {
-  const absPath = join(__dir, outputPath);
-  mkdirSync(dirname(absPath), { recursive: true });
-  writeFileSync(absPath, buffer);
+  const abs = join(__dir, outputPath);
+  mkdirSync(dirname(abs), { recursive: true });
+  writeFileSync(abs, buffer);
+}
+
+// Integrity check: catch silent failures where Figma returns an error body as HTTP 200
+function verifyAsset(buffer, asset) {
+  const errors = [];
+  if (buffer.length === 0) {
+    errors.push('Empty render — zero-byte file.');
+  }
+  if (asset.format === 'svg') {
+    const content = buffer.toString('utf8');
+    if (!content.trim().startsWith('<')) errors.push('SVG does not start with <. Possible error response body.');
+    if (!content.includes('<svg'))       errors.push('SVG does not contain <svg> element.');
+  }
+  if (asset.format === 'png') {
+    // PNG magic bytes: 89 50 4E 47
+    if (buffer[0] !== 0x89 || buffer[1] !== 0x50 || buffer[2] !== 0x4E || buffer[3] !== 0x47) {
+      errors.push('Missing PNG magic bytes. Possible error response body.');
+    }
+  }
+  return errors;
 }
 
 async function run() {
-  // Read manifest
   const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
-  const assets = manifest.assets ?? [];
+  const assets   = manifest.assets ?? [];
 
-  if (assets.length === 0) {
-    console.log('[export-assets] No assets in manifest. Exiting.');
-    return;
+  if (!assets.length) { console.log('[export-assets] No assets in manifest.'); return; }
+
+  // Validate for duplicate output paths before doing anything
+  const paths      = assets.map(a => a.outputPath);
+  const duplicates = paths.filter((p, i) => paths.indexOf(p) !== i);
+  if (duplicates.length) {
+    console.error(`[export-assets] ERROR: Duplicate output paths in manifest:\n  ${duplicates.join('\n  ')}`);
+    process.exit(1);
   }
 
-  console.log(`[export-assets] Processing ${assets.length} asset(s) from manifest...`);
+  console.log(`[export-assets] Processing ${assets.length} asset(s)...`);
   if (DRY_RUN) console.log('[export-assets] DRY RUN — no files will be written.');
 
-  // Group assets by format and scale for batching
+  // Group by format+scale so each batch request is homogeneous
   const groups = {};
   for (const asset of assets) {
     const key = `${asset.format}:${asset.scale}`;
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(asset);
+    (groups[key] ??= []).push(asset);
   }
 
-  const results = {
-    succeeded: [],
-    failed:    [],
-    nullRender: []
-  };
+  const results = { succeeded: [], failed: [], nullRender: [] };
 
   for (const [groupKey, groupAssets] of Object.entries(groups)) {
     const [format, scale] = groupKey.split(':');
     const batches = chunk(groupAssets, BATCH_SIZE);
 
-    for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
-      const batch = batches[batchIdx];
+    for (let bi = 0; bi < batches.length; bi++) {
+      const batch   = batches[bi];
       const nodeIds = batch.map(a => a.nodeId);
 
-      console.log(`[export-assets] Requesting ${format}@${scale}x — batch ${batchIdx + 1}/${batches.length} (${batch.length} nodes)`);
+      console.log(`[export-assets] ${format}@${scale}x — batch ${bi + 1}/${batches.length} (${batch.length} nodes)`);
 
       let images;
       try {
         images = await requestImageBatch(nodeIds, format, parseFloat(scale));
       } catch (err) {
-        console.error(`[export-assets] FAILED batch request: ${err.message}`);
+        console.error(`[export-assets] FAILED batch: ${err.message}`);
         batch.forEach(a => results.failed.push({ name: a.name, reason: err.message }));
         continue;
       }
 
-      // Download each URL immediately
       for (const asset of batch) {
         const url = images[asset.nodeId];
 
         if (!url) {
-          console.warn(`[export-assets] WARN: Null render for "${asset.name}" (nodeId ${asset.nodeId}). Node may have been deleted or its ID changed.`);
+          // Null render: node deleted, moved, or ID changed in Figma.
+          console.warn(`[export-assets] WARN: Null render for "${asset.name}" (${asset.nodeId}). Node may be deleted or its ID changed.`);
           results.nullRender.push(asset.name);
           continue;
         }
 
         try {
-          console.log(`[export-assets] Downloading ${asset.name}...`);
           let buffer = await downloadImage(url, asset.name);
 
-          // SVG post-processing
+          const integrity = verifyAsset(buffer, asset);
+          if (integrity.length) {
+            throw new Error(`Integrity check failed: ${integrity.join('; ')}`);
+          }
+
           if (format === 'svg' && asset.svgo) {
             buffer = await optimizeSvg(buffer, asset.name);
           }
@@ -272,7 +273,7 @@ async function run() {
             writeAsset(asset.outputPath, buffer);
             console.log(`[export-assets]   -> ${asset.outputPath}`);
           } else {
-            console.log(`[export-assets]   [dry-run] would write ${asset.outputPath} (${buffer.length} bytes)`);
+            console.log(`[export-assets]   [dry-run] ${asset.outputPath} (${buffer.length}b)`);
           }
 
           results.succeeded.push(asset.name);
@@ -282,65 +283,50 @@ async function run() {
         }
       }
 
-      // Delay between batches to respect rate limits
-      if (batchIdx < batches.length - 1) {
-        await sleep(BATCH_DELAY_MS);
-      }
+      if (bi < batches.length - 1) await sleep(BATCH_DELAY_MS);
     }
   }
 
-  // Summary
   console.log('\n=== Export Summary ===');
-  console.log(`Succeeded:   ${results.succeeded.length}`);
+  console.log(`Succeeded:    ${results.succeeded.length}`);
   console.log(`Null renders: ${results.nullRender.length}`);
   console.log(`Failed:       ${results.failed.length}`);
 
-  if (results.nullRender.length > 0) {
+  if (results.nullRender.length) {
     console.warn('\nNull renders (check node IDs in manifest):');
     results.nullRender.forEach(n => console.warn(`  ${n}`));
   }
-
-  if (results.failed.length > 0) {
+  if (results.failed.length) {
     console.error('\nFailures:');
     results.failed.forEach(f => console.error(`  ${f.name}: ${f.reason}`));
-    process.exit(1);
   }
 
-  // Write result log
-  const log = {
-    timestamp: new Date().toISOString(),
-    dryRun:    DRY_RUN,
-    ...results
-  };
+  const log = { timestamp: new Date().toISOString(), dryRun: DRY_RUN, ...results };
   writeFileSync('export-assets-log.json', JSON.stringify(log, null, 2));
   console.log('\nLog written to export-assets-log.json');
+
+  if (results.failed.length) process.exit(1);
 }
 
-run().catch(err => {
-  console.error('[export-assets] Fatal:', err.message);
-  process.exit(1);
-});
+run().catch(err => { console.error('[export-assets] Fatal:', err.message); process.exit(1); });
 ```
+
+The structure here follows directly from the four hazards. Grouping by format and scale before batching ensures each call to the image endpoint is homogeneous — format and scale are request-level parameters, not per-asset parameters in the URL. Downloading inside the same loop that receives URLs ensures nothing expires between request and consumption. Integrity checks happen before SVGO so the optimizer never receives garbage input. The failure path for any individual asset allows the rest of the batch to continue — a single bad node ID should not prevent 499 icons from exporting.
 
 ---
 
 ## SVG Post-Processing with SVGO
 
-SVGO (SVG Optimizer) is the standard tool for removing unnecessary content from SVG files. Raw Figma SVG exports include several categories of content that production SVGs should not have:
+Install SVGO before using this:
 
-- `id` attributes generated by Figma (e.g., `id="paint0_linear_1_234"`) that conflict with IDs from other inlined SVGs on the same page
-- `<defs>` blocks with `linearGradient` and `clipPath` elements that use those generated IDs
-- `data-name` and other non-standard attributes
-- Unnecessary precision in numeric values (Figma exports with six decimal places)
-- Empty groups and redundant transforms
-
-Install SVGO: `npm install svgo`
+```bash
+npm install svgo
+```
 
 ```javascript
 // Add to export-assets.mjs
 import { optimize } from 'svgo';
 
-// SVGO configuration for Figma SVG output
 // [verify — current as of writing] SVGO 3.x config API
 const SVGO_CONFIG = {
   plugins: [
@@ -353,13 +339,12 @@ const SVGO_CONFIG = {
     'mergeStyles',
     'inlineStyles',
     'minifyStyles',
-    'cleanupIds',          // removes unused IDs; caution with multi-SVG pages
+    'cleanupIds',             // removes unused IDs; see note below on multi-SVG pages
     'removeUselessDefs',
     'cleanupNumericValues',
     'convertColors',
     'removeNonInheritableGroupAttrs',
     'removeUselessStrokeAndFill',
-    'removeViewBox',       // CAUTION: set to false if SVGs need to be resized via CSS
     'cleanupEnableBackground',
     'removeHiddenElems',
     'removeEmptyText',
@@ -374,79 +359,32 @@ const SVGO_CONFIG = {
     'removeEmptyContainers',
     'mergePaths',
     'removeUnknownsAndDefaults',
-    'removeNonInheritableGroupAttrs',
     'sortAttrs',
     'sortDefsChildren',
-    'removeTitle',         // CAUTION: remove only if title is not needed for accessibility
+    'removeTitle',            // see accessibility note below
     'removeDesc'
   ]
 };
 
 async function optimizeSvg(buffer, name) {
-  const svgString = buffer.toString('utf8');
-  const result = optimize(svgString, { ...SVGO_CONFIG, path: name });
+  const result = optimize(buffer.toString('utf8'), { ...SVGO_CONFIG, path: name });
+  if (result.error) throw new Error(`SVGO error for ${name}: ${result.error}`);
 
-  if (result.error) {
-    throw new Error(`SVGO error for ${name}: ${result.error}`);
-  }
-
-  // Size reduction sanity check
-  const originalSize = buffer.length;
-  const optimizedSize = Buffer.byteLength(result.data, 'utf8');
-  const reduction = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
-  console.log(`[export-assets]   SVGO: ${originalSize}b -> ${optimizedSize}b (${reduction}% smaller)`);
+  const original  = buffer.length;
+  const optimized = Buffer.byteLength(result.data, 'utf8');
+  console.log(`[export-assets]   SVGO: ${original}b → ${optimized}b (${((1 - optimized / original) * 100).toFixed(1)}% smaller)`);
 
   return Buffer.from(result.data, 'utf8');
 }
 ```
 
-**Two SVGO decisions require explicit judgment.**
+Two configuration decisions require explicit judgment before you use this config.
 
-First: `removeViewBox`. If you set this to `true`, SVGO removes the `viewBox` attribute and replaces it with `width` and `height` attributes at the pixel dimensions of the export. SVGs without `viewBox` cannot be resized via CSS `width`/`height` without distortion. For an icon system where icons are sized via CSS, keep `viewBox` — set `removeViewBox` to `false` or remove that plugin from the config.
+The first is `removeViewBox`. When set to `true`, SVGO removes the `viewBox` attribute and replaces it with `width` and `height` at the export's pixel dimensions. An SVG without `viewBox` cannot be scaled via CSS `width` and `height` without distortion. For an icon system where icons are sized via CSS, `viewBox` is required. Remove `removeViewBox` from the plugin list, or this will cause visual bugs across every icon in the system.
 
-Second: `removeTitle`. The `<title>` element inside an SVG is the accessibility label for screen readers. If your icons are used as standalone images (not as `aria-hidden` decorative elements), removing the `<title>` breaks accessibility. If every icon use-site provides an `aria-label` on the wrapping element, removing the embedded `<title>` is acceptable. Know which pattern your component library uses before configuring this.
+The second is `removeTitle`. The `<title>` element inside an SVG is the accessible name the browser exposes to screen readers. If your icons are used as standalone images — not wrapped in an element with its own `aria-label` — removing `<title>` breaks accessibility. Know which pattern your component library uses. If every icon is wrapped in a button or span that provides the accessible label, `removeTitle` is safe. If any icon is ever the sole accessible label for a UI element, it is not.
 
----
-
-## Integrity Checks
-
-Before writing each asset, the pipeline should verify that what it downloaded makes sense.
-
-Add these checks to `export-assets.mjs` after the download step:
-
-```javascript
-function verifyAsset(buffer, asset) {
-  const errors = [];
-
-  // 1. Not empty
-  if (buffer.length === 0) {
-    errors.push('Empty render — Figma returned a zero-byte file.');
-  }
-
-  // 2. SVG content check
-  if (asset.format === 'svg') {
-    const content = buffer.toString('utf8');
-    if (!content.trim().startsWith('<')) {
-      errors.push('SVG content does not start with <. May be a JSON error response.');
-    }
-    if (!content.includes('<svg')) {
-      errors.push('SVG content does not contain <svg> element.');
-    }
-  }
-
-  // 3. PNG content check
-  if (asset.format === 'png') {
-    // PNG magic bytes: 89 50 4E 47
-    if (buffer[0] !== 0x89 || buffer[1] !== 0x50 || buffer[2] !== 0x4E || buffer[3] !== 0x47) {
-      errors.push('PNG content does not have PNG magic bytes. May be an error response.');
-    }
-  }
-
-  return errors;
-}
-```
-
-These checks catch the silent failure mode where Figma returns a valid HTTP 200 with an error payload in the body — which happens when a render times out for complex vector nodes. [verify — current as of writing] The pipeline would otherwise write an error JSON as if it were an SVG file.
+<!-- → [TABLE: SVGO plugin decisions — columns: plugin name, what it does, when to include, when to exclude — focusing on the non-obvious ones: removeViewBox, removeTitle, cleanupIds, mergePaths] -->
 
 ---
 
@@ -491,8 +429,7 @@ jobs:
 
       - name: Check for changes
         id: changes
-        run: |
-          git diff --quiet src/assets/ || echo "changed=true" >> $GITHUB_OUTPUT
+        run: git diff --quiet src/assets/ || echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Open PR with updated assets
         if: steps.changes.outputs.changed == 'true'
@@ -504,83 +441,86 @@ jobs:
           title: "Design asset update from Figma library publish"
           body: |
             Automated asset update triggered by Figma library publish.
-            
+
             Review the diff. Check for:
             - Node IDs that produced null renders (possible deleted or moved nodes)
             - Unexpected changes to stable assets
             - New assets not yet in the manifest
-            
+
             This PR was opened by the asset pipeline — not a human.
           labels: design-assets, automated
 ```
 
-The `Check for changes` step prevents the workflow from opening a PR when the export produces byte-for-byte identical output — which will happen on most runs if no assets have changed. A PR that says "no changes" is noise. The `git diff` step filters it out.
+The `Check for changes` step prevents a PR from being opened when the export produces byte-for-byte identical output — which will happen on most runs when no assets have changed since the last export. A PR that says "nothing changed" is noise; the `git diff` step filters it out before it reaches anyone's review queue.
+
+The `workflow_dispatch` trigger makes it possible to run the export manually without a library publish event — for initial setup, for recovering from manifest errors, and for dry-run validation before connecting the webhook.
+
+<!-- → [FIGURE: CI workflow sequence diagram — webhook fires → preflight check → export-assets.mjs → git diff → conditional PR creation — with annotations showing where null renders and failures would halt the sequence] -->
 
 ---
 
 ## Failure Modes
 
-**Render timeouts on complex vectors.** Some Figma nodes — gradients with many stops, effects stacked on effects, complex masks — can take longer than Figma's render timeout to process. [verify — current as of writing] When this happens, the image endpoint returns a null URL for that node. The pipeline logs it as a null render and continues. The solution is usually to simplify the node in Figma (flatten effects, reduce gradient complexity) rather than to increase timeout values the pipeline cannot control.
+**Render timeouts on complex vectors.** Figma's image endpoint will return a null URL for nodes whose renders time out — complex gradients, stacked effects, layered masks. [verify — current as of writing] The pipeline logs these as null renders and continues. The fix is almost always to simplify the node in Figma — flatten effects, reduce gradient complexity, rasterize where vector precision is not needed — rather than anything the pipeline can do.
 
-**Rate limits on image endpoints.** The image endpoint has its own rate-limit tier, separate from the file endpoint. [verify — current as of writing] A design system with 500 icons and a batch size of 50 requires 10 image requests. With 1-second delays between batches, the pipeline takes at least 10 seconds on the image requests alone. This is normal. Do not remove the delays; they are what keeps the pipeline from hitting the rate limit ceiling.
+**Node ID instability after file refactors.** When a designer restructures the Figma file — moving frames between pages, rebuilding icons from scratch, reorganizing component sets — node IDs can change for entire subtrees. The manifest becomes invalid for those nodes and the pipeline produces null renders. There is no automated way to detect this ahead of time; the null render list in the export log is the signal. The fix is to locate the new node IDs for the affected assets and update the manifest.
 
-**Node ID instability after file refactors.** When a designer restructures the Figma file — moving frames between pages, reorganizing component sets, rebuilding icons from scratch — node IDs can change for entire subtrees. The manifest becomes invalid for those nodes, and the pipeline produces null renders or exports the wrong assets. The fix is to regenerate the relevant entries in the manifest from the current file state. There is no automated way to detect this silently; the null renders in the export log are the signal.
+**SVG output quirks.** Three surprises that come up often:
 
-**SVG output quirks.** Figma's SVG export is not always what you expect. Common surprises:
+Text nodes in Figma export as `<text>` elements, not as paths, unless the text is explicitly outlined. `<text>` in SVG requires font files to render correctly in a browser. Export icons with outlined text, or ensure the font is available everywhere the SVG will render.
 
-- Text nodes are exported as `<text>` elements, not as paths, unless the text is explicitly outlined in Figma. `<text>` in SVG requires font files to render correctly. Export icons with outlined text, or use the `convertShapeToPath` SVGO plugin with caution.
-- Nested frames produce nested SVGs in some export configurations. Most SVGO configs handle this, but verify.
-- Figma's auto-layout containers export as groups with transforms. After SVGO flattening, the transforms may produce unexpected coordinate offsets.
+Nested frames produce nested SVGs in some export configurations. SVGO's `collapseGroups` and `mergeStyles` handle this in most cases, but verify on your specific file structure.
 
-**Duplicate filename collisions.** If two assets in the manifest have the same `outputPath`, the second write overwrites the first silently. The manifest should be validated for duplicate output paths before the export runs. Add a check in the manifest loading step:
+Auto-layout containers export as groups with transforms. After SVGO flattening, the transforms can produce unexpected coordinate offsets. If icons appear shifted after optimization, inspect the intermediate SVG before SVGO processes it.
 
-```javascript
-const paths = assets.map(a => a.outputPath);
-const duplicates = paths.filter((p, i) => paths.indexOf(p) !== i);
-if (duplicates.length > 0) {
-  console.error(`[export-assets] Duplicate output paths in manifest: ${duplicates.join(', ')}`);
-  process.exit(1);
-}
-```
+**The silent error body.** Figma can return a valid HTTP 200 with a JSON error body in the response when a render fails internally. Without the integrity check, the pipeline writes that JSON body to disk named as an SVG, and the error is invisible until someone opens the file. The `verifyAsset` function catches this by checking for the `<svg` element in anything that claims to be SVG.
+
+**Duplicate output paths.** If two entries in the manifest share the same `outputPath`, the second write silently overwrites the first. The manifest validation step at the top of `run()` catches this before any API calls are made.
 
 ---
 
 ## Decision Rules
 
-**When to use SVG vs. PNG.** Use SVG for all icons, illustrations, and graphics that need to scale or be resized via CSS. Use PNG only for assets that have pixel-precise rendering requirements (retina photographs, complex raster compositions) or for targets that do not support SVG (older email clients, some native app contexts). For a web-first design system, SVG for icons is almost always the right answer.
+<!-- → [TABLE: Decision rules reference — rows: SVG vs PNG, SVGO on/off, manifest update policy, trigger type, null render severity — columns: decision, when to choose A, when to choose B, consequence of wrong choice] -->
 
-**When to disable SVGO.** Disable SVGO (`"svgo": false` in the manifest) for complex illustrations where SVGO's path optimization changes the visual output. SVGO's `mergePaths` and `convertPathData` transforms are lossless in theory but can produce visible differences on complex artwork. When in doubt, run the optimized version through a visual diff tool before committing.
+Use SVG for all icons, illustrations, and graphics that need to scale or be resized via CSS. Use PNG only for pixel-precise assets — retina photographs, complex raster compositions — or for targets that do not support SVG.
 
-**When to update the manifest.** Update the manifest when a new asset is added to Figma and should flow into the repository. Update it when an asset is removed from Figma and should be removed from the repository. Update it when a node ID changes (which you will discover from null renders in the export log). Do not update the manifest automatically — it is a deliberate, human-owned document.
+Disable SVGO for complex illustrations where path optimization changes the visual output. SVGO's `mergePaths` and `convertPathData` are lossless in theory; on complex artwork they can produce visible differences. When in doubt, diff the optimized output against the original before committing.
 
-**When to trigger manually vs. on `LIBRARY_PUBLISH`.** Use `LIBRARY_PUBLISH` as the trigger for the steady-state pipeline. Use `workflow_dispatch` (manual trigger) for the initial setup, for recovering from manifest errors, and for dry-run validation. Do not use a scheduled trigger (nightly, hourly) as the primary mechanism — it adds unnecessary latency between the designer publishing and the repository updating, and it will run even when nothing has changed.
+Do not update the manifest automatically. It is a deliberate, human-owned document. The export script reads and trusts it; something else has to be responsible for keeping it accurate.
 
-**When the null-render list in the export log is a blocker.** If the null-render list contains assets that are used in production (primary navigation icons, branding elements, critical UI components), treat it as a blocking failure and do not merge the PR without investigation. If the null renders are for assets that are not yet in use (designer working ahead of the product), treat them as advisory and continue.
+Use `LIBRARY_PUBLISH` as the steady-state trigger. Use `workflow_dispatch` for setup, recovery, and dry-run validation. Do not use a scheduled trigger as the primary mechanism — it adds latency and runs even when nothing has changed.
 
----
-
-## Try This
-
-1. Build the `asset-manifest.json` for your design system. Start with five icons. Run `node export-assets.mjs --dry-run` and verify the log shows five expected writes.
-
-2. Remove `--dry-run` and run for real. Open the downloaded SVGs in a browser and verify they render correctly. Then run the SVGO optimization and compare the file sizes.
-
-3. Pick one of the exported SVGs and inline it on a test HTML page alongside a second copy. Verify that the two copies do not produce duplicate `id` attribute warnings in the browser console. If they do, your SVGO `cleanupIds` configuration needs adjustment.
-
-4. Deliberately enter a wrong node ID in the manifest and run the export. Verify that the pipeline logs it as a null render and continues rather than failing hard. Verify that the export log captures the null render.
-
-5. Add the `export-assets.mjs` step to your CI pipeline after the preflight check. Run the full pipeline with `npm run figma:preflight && npm run figma:assets`. Verify that a preflight failure prevents the asset export from running.
+Treat null renders for critical production assets — navigation icons, branding elements, core UI components — as a blocking failure. Do not merge the PR without investigation. Treat null renders for assets not yet in active use as advisory.
 
 ---
 
-## AI Wayback Machine: The Octicons Pipeline and the Icon Font Era
+## The AI Wayback Machine: The Octicons Pipeline and the Icon Font Era
 
-Before SVG icons were practical on the web — before browser support was reliable and before inline SVG tooling existed — icon systems were delivered as icon fonts. The icon was a Unicode character mapped to a glyph in a custom font file. To update an icon, a designer modified the glyph in a font editor (Glyphs, FontForge) and the engineering team regenerated the font files and updated the CSS codepoint mapping. The workflow was manual, opaque to designers, and produced accessibility nightmares (`role="img"` on a `<span>` containing an invisible character).
+Before SVG icons were practical on the web — before browser support was reliable and before inline SVG tooling existed — icon systems were delivered as icon fonts. The icon was a Unicode character mapped to a glyph in a custom font file. Updating an icon meant modifying the glyph in a font editor and regenerating the font files, then updating the CSS codepoint mapping. The workflow was manual, opaque to designers, and produced accessibility problems — `role="img"` on a `<span>` containing an invisible character.
 
-GitHub's Octicons were one of the first major icon systems to migrate from icon fonts to SVG, making the migration and the resulting SVG-based pipeline public in 2016. The key decisions the Octicons pipeline made — deterministic file paths, automated optimization, a manifest that maps icon names to source files, CI-driven builds — are the same decisions the pipeline in this chapter makes, applied to the Figma API rather than to a font editor workflow. [verify — current as of writing]
+GitHub's Octicons were among the first major icon systems to migrate from icon fonts to SVG, making the pipeline public around 2016. The decisions the Octicons pipeline made — deterministic file paths, automated optimization, a manifest mapping icon names to source files, CI-driven builds — are the same decisions the pipeline in this chapter makes, applied to the Figma API rather than a font editor workflow. [verify — current as of writing]
 
-The icon font era ended because SVG was simply better: resizable, colorable with CSS, accessible with `<title>` and `aria-label`, and not dependent on the browser's font rendering stack. The lesson from that transition is that the pipeline architecture — manifest, batch processing, optimization, deterministic output, CI build — survives across tool generations. The specific tool (font editor, Figma, Sketch) changes. The structure of the problem does not.
+The icon font era ended because SVG was simply better: scalable, styleable with CSS, accessible with `<title>` and `aria-label`, not dependent on the browser's font rendering stack. The lesson from that transition is that the pipeline architecture survives across tool generations. The manifest, the batch processing, the optimization step, the deterministic output paths, the CI build — these persist. The specific authoring tool (font editor, Sketch, Figma) changes. The problem it solves does not.
 
 ---
 
-*The token pipeline and the asset pipeline together cover the two highest-value extraction use cases. Chapter 10 applies the same structural thinking to component documentation: reading component names, descriptions, and variant properties from the API and generating documentation artifacts that stay in sync with the file.*
+## What Comes Next
+
+The token pipeline and the asset pipeline together cover the two highest-value extraction use cases. Chapter 10 applies the same structural thinking to component documentation: reading component names, descriptions, and variant properties from the API and generating documentation artifacts that stay in sync with the file. The question it answers is the same one the close icon failure raised — not "can we get the data?" but "does everyone know where the data came from and when it was last verified?"
+
+---
+
+## LLM Exercises
+
+**Exercise 1 — Generate and examine.**
+Paste the `requestImageBatch` and `downloadImage` functions into an LLM conversation. Ask it to explain what would happen if the `downloadImage` call were moved outside the batch loop — that is, if all URLs were collected first and downloaded in a second pass separated by a `sleep(60000)`. Ask the LLM to describe concretely what error the pipeline would produce, at which line, and why. Then ask it to propose a test fixture that would let you simulate an expired URL in a local test without hitting the Figma API.
+
+**Exercise 2 — Apply to known context.**
+Take your `asset-manifest.json` (real or fabricated with five or six entries). Ask an LLM to write a validation script — separate from `export-assets.mjs` — that reads the manifest and checks: no duplicate `outputPath` values, all `format` values are `svg` or `png`, all `scale` values are numbers greater than zero, all `nodeId` values match the pattern `\d+:\d+`. Run the script against your manifest and fix any violations before running the export.
+
+**Exercise 3 — Stress-test a specific claim.**
+The chapter recommends a batch size of 50 and a 1-second inter-batch delay. Ask an LLM to analyze the tradeoff: what would happen to a 500-icon export run if the batch size were increased to 200? What if the inter-batch delay were removed entirely? Ask it to estimate how long the 50/1000ms configuration takes for 500 icons vs. 200/0ms, and to explain what the failure mode of the aggressive configuration looks like from the server's perspective. Evaluate whether the conservative defaults are right for your specific design system's asset count.
+
+**Exercise 4 — Draft a professional deliverable.**
+You have just connected the asset export pipeline to your CI system. Write a short guide for designers on your team explaining: what triggers an export, what they need to do in Figma to ensure their assets are picked up correctly (keeping node IDs stable, publishing library changes), and what they should do if an asset they exported is not appearing in the repository after a day. Ask an LLM to draft the first version, then revise it to remove any jargon a non-technical designer would find opaque.

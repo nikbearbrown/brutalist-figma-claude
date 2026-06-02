@@ -49,34 +49,34 @@
 
   <!-- Fan arrows from formatters to 4 outputs -->
   <!-- CSS -->
-  <path d="M560,65 Q600,65 610,128" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <path d="M560,65 Q596,65 604,128" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
   <!-- Swift -->
-  <path d="M560,73 Q605,73 610,196" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <path d="M560,73 Q596,73 604,196" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
   <!-- Android -->
-  <path d="M560,87 Q605,87 610,262" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <path d="M560,87 Q596,87 604,262" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
   <!-- JS -->
-  <path d="M560,95 Q600,95 610,328" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <path d="M560,95 Q596,95 604,328" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
 
   <!-- Output boxes -->
   <!-- CSS -->
-  <rect x="612" y="110" width="56" height="38" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
-  <text x="640" y="127" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">CSS</text>
-  <text x="640" y="142" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#C8102E" text-anchor="middle">--color-brand-primary</text>
+  <rect x="604" y="110" width="88" height="38" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="648" y="127" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">CSS</text>
+  <text x="648" y="142" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#C8102E" text-anchor="middle">--color-brand-primary</text>
 
   <!-- Swift -->
-  <rect x="612" y="176" width="56" height="38" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
-  <text x="640" y="193" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">SWIFT</text>
-  <text x="640" y="208" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">colorBrandPrimary</text>
+  <rect x="604" y="176" width="88" height="38" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="648" y="193" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">SWIFT</text>
+  <text x="648" y="208" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#555555" text-anchor="middle">colorBrandPrimary</text>
 
   <!-- Android -->
-  <rect x="612" y="242" width="56" height="38" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
-  <text x="640" y="259" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">ANDROID</text>
-  <text x="640" y="274" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">color_brand_primary</text>
+  <rect x="604" y="242" width="88" height="38" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="648" y="259" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">ANDROID</text>
+  <text x="648" y="274" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#555555" text-anchor="middle">color_brand_primary</text>
 
   <!-- JS -->
-  <rect x="612" y="308" width="56" height="38" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
-  <text x="640" y="325" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">JS</text>
-  <text x="640" y="340" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">color.brand.primary</text>
+  <rect x="604" y="308" width="88" height="38" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="648" y="325" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">JS</text>
+  <text x="648" y="340" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#555555" text-anchor="middle">color.brand.primary</text>
 
   <!-- Annotation: deterministic label -->
   <line x1="32" y1="140" x2="560" y2="140" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="5 4"/>

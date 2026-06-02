@@ -597,10 +597,10 @@ The figures in this chapter have interactive D3 implementations. Load `NEU/CLAUD
 
 Produce a single self-contained HTML file with a two-path flow diagram. Top (happy path): three boxes in a row — API Request → Response (check res.status) → Return JSON — connected by arrows, with a "200 OK" label on the second arrow. Bottom (429 path): a red downward arrow from the Response box labeled "429" leads to three boxes in a row — Read Retry-After (red border) → Sleep → Retry once — connected by arrows. From Retry once: a dashed curved arrow going up-right to the success box labeled "success," and a red arrow going right to a red-bordered "Surface error / throw Error / let operator decide" box labeled "still 429." A rule bar at the bottom states the bounded-retry principle. All step boxes are hoverable and keyboard-accessible with tooltips. ResizeObserver redraws. Dark mode. Reduced-motion. SVG aria.
 
-> Reference implementation: `d3/02-what-the-api-actually-exposes-fig-01.html`
+> Reference implementation: `../d3/02-what-the-api-actually-exposes-fig-01.html`
 
 ### Figure 2.2 — figma-ping.js annotated output
 
 Produce a single self-contained HTML file with a two-panel layout. Left panel: a simulated terminal window with a dark chrome bar and monospace text showing five `figma-ping.js` check results (environment PASS ×2, auth PASS, file access PASS, variables WARN ×3 lines, rate limit INFO). Right panel: five callout boxes aligned to their corresponding check rows, connected by dashed connector lines. Callout borders: environment = border color, auth = red, file access = border, variables = brown/secondary, rate limit = border. Each check row in the terminal is a clickable/hoverable hit zone revealing a tooltip with the check's explanation. ResizeObserver redraws. Dark mode. Reduced-motion. SVG aria.
 
-> Reference implementation: `d3/02-what-the-api-actually-exposes-fig-02.html`
+> Reference implementation: `../d3/02-what-the-api-actually-exposes-fig-02.html`

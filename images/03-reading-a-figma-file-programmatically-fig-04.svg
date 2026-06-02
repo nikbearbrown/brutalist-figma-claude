@@ -48,12 +48,12 @@
   <text x="546" y="112" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">flat array · id · name · hasDescription</text>
 
   <!-- Output 1 consumers -->
-  <line x1="636" y1="90" x2="660" y2="72" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
-  <text x="664" y="70" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">Ch 5 audit</text>
-  <line x1="636" y1="100" x2="660" y2="96" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
-  <text x="664" y="99" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">Ch 10 docs</text>
-  <line x1="636" y1="110" x2="660" y2="120" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
-  <text x="664" y="124" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">Ch 12 spec</text>
+  <line x1="636" y1="90" x2="638" y2="72" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="640" y="70" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#555555">Ch 5 audit</text>
+  <line x1="636" y1="100" x2="638" y2="96" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="640" y="99" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#555555">Ch 10 docs</text>
+  <line x1="636" y1="110" x2="638" y2="120" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="640" y="124" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#555555">Ch 12 spec</text>
 
   <!-- Output 2: variable-inventory.json -->
   <rect x="456" y="196" width="180" height="40" fill="#F5F5F5" stroke="#C8102E" stroke-width="1"/>
@@ -61,8 +61,8 @@
   <text x="546" y="228" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">collections · variables · valuesByMode</text>
 
   <!-- Output 2 consumer -->
-  <line x1="636" y1="216" x2="660" y2="216" stroke="#C8102E" stroke-width="0.75" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
-  <text x="664" y="220" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">Ch 8 tokens</text>
+  <line x1="636" y1="216" x2="638" y2="216" stroke="#C8102E" stroke-width="0.75" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="640" y="220" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#555555">Ch 8 tokens</text>
 
   <!-- Output 3: missing-descriptions.md -->
   <rect x="456" y="272" width="180" height="40" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
@@ -70,8 +70,8 @@
   <text x="546" y="306" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">markdown table · human review</text>
 
   <!-- Output 3 consumer -->
-  <line x1="636" y1="292" x2="660" y2="292" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
-  <text x="664" y="296" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">Design team</text>
+  <line x1="636" y1="292" x2="638" y2="292" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="640" y="296" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#555555">Design team</text>
 
   <!-- Fixture also gets written -->
   <line x1="318" y1="216" x2="104" y2="256" stroke="#CCCCCC" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrow)"/>

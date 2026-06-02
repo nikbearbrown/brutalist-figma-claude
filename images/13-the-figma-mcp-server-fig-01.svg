@@ -74,7 +74,7 @@
   <!-- spec.json -->
   <rect x="456" y="194" width="116" height="32" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>
   <text x="514" y="210" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000" text-anchor="middle">spec.json</text>
-  <text x="514" y="222" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">component specs + Code Connect</text>
+  <text x="514" y="222" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#555555" text-anchor="middle">component specs + Code Connect</text>
 
   <!-- tokens.json -->
   <rect x="456" y="236" width="116" height="32" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>

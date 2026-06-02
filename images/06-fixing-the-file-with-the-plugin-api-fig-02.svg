@@ -39,11 +39,11 @@
 
   <!-- Arrow sandbox → channel -->
   <line x1="292" y1="148" x2="308" y2="148" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
-  <text x="228" y="140" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">APPLY_RESULTS</text>
+  <text x="210" y="140" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">APPLY_RESULTS</text>
 
   <!-- Arrow channel → sandbox -->
   <line x1="308" y1="160" x2="292" y2="160" stroke="#C8102E" stroke-width="1.5" fill="none" marker-end="url(#arrowRed)"/>
-  <text x="196" y="174" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#C8102E">APPLY_FIXES (approved only)</text>
+  <text x="170" y="174" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#C8102E">APPLY_FIXES (approved)</text>
 
   <!-- UI iframe box -->
   <rect x="408" y="48" width="260" height="200" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>

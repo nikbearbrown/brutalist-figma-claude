@@ -92,5 +92,5 @@
   <text x="56" y="380" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">One source of truth  ·  One token file  ·  Deterministic path  ·  Diff visible in PR  ·  History in Git  ·  Validation enforced</text>
 
   <!-- Caption -->
-  <text x="350" y="408" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">The automated crossing eliminates the snapshot. The current graph state is always readable.</text>
+  <text x="350" y="406" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">The automated crossing eliminates the snapshot. The current graph state is always readable.</text>
 </svg>

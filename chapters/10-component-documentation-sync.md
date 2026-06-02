@@ -507,10 +507,10 @@ AI Use Disclosure prompt (copy this into your team's documentation PR): "Variant
 
 Produce a single standalone HTML file containing a flow diagram built with D3 v7 that shows the Code Connect data pipeline for a Figma component. The diagram has five rectangular nodes arranged in two rows: a top horizontal row of three nodes (Figma Component Node → Code Connect Config File → figma connect publish) connected by solid arrows with edge labels ("maps to", "publish"), and a bottom row of two nodes (sync-docs.mjs Report on the left, Figma Dev Mode Panel on the right). A solid arrow descends from "figma connect publish" to "Figma Dev Mode Panel" labeled "renders in". Two dashed arrows descend from the top-row nodes to "sync-docs.mjs Report" showing the detection path. Node borders: "Code Connect Config" and "Figma Dev Mode Panel" use `var(--color-red)`; detection nodes use `var(--color-border)` with dashed stroke. All other borders use `var(--color-ink)`. Tooltips on hover for each node explain its role. Chart title, subtitle axis labels in `var(--color-secondary)`. Arrowhead in `<defs>` using `var(--color-ink)` fill. Deliverable: single HTML file, inline CSS, D3 v7 CDN.
 
-> Reference implementation: `d3/10-component-documentation-sync-fig-01.html`
+> Reference implementation: `../d3/10-component-documentation-sync-fig-01.html`
 
 ### Figure 10.2 — Documentation ownership decision tree
 
 Produce a single standalone HTML file containing a decision tree built with D3 v7. Root node at top: "Who authors component descriptions?" with explanatory subtitle. Two branches diverge: left branch labeled "Figma" leads to a "Figma → Platform" box (red border), right branch labeled "Platform" leads to a "Platform → Figma" box (border only). Each branch then arrows down to a CI behavior box showing the rules for that path. Both CI behavior boxes converge via dashed arrows to a shared conflict box at bottom: "Both sources have content — one source wins; one is destroyed." The left/red branch uses `var(--color-red)` for borders and accent text; the right branch uses `var(--color-border)`. Tooltips on each box. Deliverable: single HTML file, inline CSS, D3 v7 CDN.
 
-> Reference implementation: `d3/10-component-documentation-sync-fig-02.html`
+> Reference implementation: `../d3/10-component-documentation-sync-fig-02.html`

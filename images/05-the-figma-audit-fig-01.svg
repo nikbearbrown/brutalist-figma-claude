@@ -98,10 +98,10 @@
   <line x1="86" y1="210" x2="168" y2="210" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="4 3"/>
 
   <!-- Audience labels -->
-  <text x="540" y="200" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">human readable</text>
-  <text x="540" y="196" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" dy="10">→ designers fix</text>
-  <text x="540" y="224" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">machine readable</text>
-  <text x="540" y="224" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" dy="12">→ CI gate</text>
+  <text x="540" y="120" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">human readable</text>
+  <text x="540" y="132" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">→ designers fix</text>
+  <text x="540" y="166" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">machine readable</text>
+  <text x="540" y="178" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">→ CI gate</text>
 
   <!-- Fixture/API label -->
   <text x="32" y="42" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">live API or --fixture</text>

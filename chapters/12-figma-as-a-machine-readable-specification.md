@@ -817,16 +817,16 @@ AI Use Disclosure prompt (mandatory — copy this into any PR that uses spec out
 
 Produce a single standalone HTML file containing a comparison table built with D3 v7. The table has three columns — "Information Field", "Human-Readable Doc", "Machine-Readable Spec" — and nine rows covering: component name, description, variant dimensions, token alias chain, node ID, layout constraints, spacing values, typography details, and Code Connect import path. For each cell, encode status using color: `var(--color-ink)` for present, `var(--color-secondary)` for partial, `var(--color-brown)` for conditional, and `var(--color-red)` for absent. In the "absent" cells of the human doc column, append the code generation failure mode (e.g., "gen uses raw hex"). Column headers use `var(--color-red)` for the machine spec header and `var(--color-ink)` for others. Alternate row backgrounds between white and `var(--color-fill)`. Tooltip on each row cell explains the consequence of absence in the machine spec. Legend at bottom. Deliverable: single HTML file, inline CSS, D3 v7 CDN.
 
-> Reference implementation: `d3/12-figma-as-a-machine-readable-specification-fig-01.html`
+> Reference implementation: `../d3/12-figma-as-a-machine-readable-specification-fig-01.html`
 
 ### Figure 12.2 — Three paths to token alias resolution
 
 Produce a single standalone HTML file containing a three-column flow diagram built with D3 v7. Three columns, each representing one path to token alias resolution: Enterprise (Variables API direct) — red border; Tokens Studio (plugin export, any plan tier) — brown border; Style-name convention (any plan tier, slash-path inference) — black border. Each column has a header box, then two step boxes below connected by colored arrows (matching the column border color). After the final step in each column, solid black convergence arrows descend to a shared destination box — "tokenAlias field in component spec fill object" — with a red border. The convergence box notes "null when path unavailable". Tooltips on each header box explain the plan requirements and tradeoffs for that path. Deliverable: single HTML file, inline CSS, D3 v7 CDN.
 
-> Reference implementation: `d3/12-figma-as-a-machine-readable-specification-fig-02.html`
+> Reference implementation: `../d3/12-figma-as-a-machine-readable-specification-fig-02.html`
 
 ### Figure 12.3 — How build-spec.mjs output flows into downstream consumers
 
 Produce a single standalone HTML file containing an infographic built with D3 v7 showing how four output artifacts flow from a central source into downstream consumers. Center: a "build-spec.mjs" source box with red border. Four artifact boxes positioned at top-left, top-right, bottom-left, bottom-right, each connected to the source by an arrow (solid for direct outputs, dashed for per-component context). Below each artifact box, a second consumer box connected by a solid downward arrow. Artifact-to-consumer pairs: manifest.json → CI decisions; components.json → code generator batch runs; components/*.json → MCP agent context loading; component-sets.json → TypeScript prop type generation. Each artifact box is annotated with 1–2 key field names. Each consumer box notes what the consumer does with those fields. Tooltips on each artifact box provide the full explanation. Deliverable: single HTML file, inline CSS, D3 v7 CDN.
 
-> Reference implementation: `d3/12-figma-as-a-machine-readable-specification-fig-03.html`
+> Reference implementation: `../d3/12-figma-as-a-machine-readable-specification-fig-03.html`

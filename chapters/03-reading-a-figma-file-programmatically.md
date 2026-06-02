@@ -853,22 +853,22 @@ The figures in this chapter have interactive D3 implementations. Load `NEU/CLAUD
 
 Produce a single self-contained HTML file with a hierarchical layout. One root box at top center labeled "GET /v1/files/:key Response" (black fill, white text). Four column boxes below connected by Bezier branch arrows: "document" (border color), "components" (border), "styles" (border), "variables" (red border, red text). Below each top box, a detail panel shows the key's schema in monospace. A curved dashed red arrow from the document detail panel to the variables detail panel is labeled "boundVariables IDs resolve here." All four key boxes are hoverable and keyboard-accessible with tooltips describing contents and plan requirements. ResizeObserver redraws. Dark mode. Reduced-motion. SVG aria.
 
-> Reference implementation: `d3/03-reading-a-figma-file-programmatically-fig-01.html`
+> Reference implementation: `../d3/03-reading-a-figma-file-programmatically-fig-01.html`
 
 ### Figure 3.2 — Alias chain resolution
 
 Produce a single self-contained HTML file with a four-step horizontal chain diagram. Steps left to right: COMPONENT node (border color) → VariableID:12:45 / color/brand/primary (red border) → VariableID:11:30 / color/primitive/blue-500 (border) → a colored swatch rectangle filled #1558D6. Arrows between steps are red dashed with arrowheads labeled "alias ref," "alias →," and "terminal." Below each step, a detail box in monospace shows the relevant JSON fields (fills, valuesByMode, VARIABLE_ALIAS, r/g/b/a). A red call-out bar at the bottom reads "Use the variable reference — not the resolved value." All step boxes are hoverable with tooltips. ResizeObserver redraws. Dark mode. Reduced-motion. SVG aria.
 
-> Reference implementation: `d3/03-reading-a-figma-file-programmatically-fig-02.html`
+> Reference implementation: `../d3/03-reading-a-figma-file-programmatically-fig-02.html`
 
 ### Figure 3.3 — walk() pre-order traversal
 
 Produce a single self-contained HTML file with a tree diagram using depth columns (depth 0 through 4). Nodes: CANVAS (depth 0, visit 1), FRAME (depth 1, visit 2), COMPONENT_SET (depth 2, visit 3), COMPONENT/Default (depth 3, visit 4), TEXT leaf under Default (depth 4, visit 5), COMPONENT/Hover (depth 3, visit 6), TEXT leaf under Hover (depth 4, visit 7). Each node is a rectangle with visit-order badge (red circle for containers, brown for leaf nodes). Bezier edges connect parent to children. All nodes are hoverable and keyboard-reachable with tooltip explaining why that visit order occurs. A legend distinguishes container vs. leaf node types. ResizeObserver redraws. Dark mode. Reduced-motion. SVG aria.
 
-> Reference implementation: `d3/03-reading-a-figma-file-programmatically-fig-03.html`
+> Reference implementation: `../d3/03-reading-a-figma-file-programmatically-fig-03.html`
 
 ### Figure 3.4 — figma-read.mjs data flow
 
 Produce a single self-contained HTML file with a three-column flow diagram. Left column (inputs): Figma REST API (red border) and Local fixture (border). Central column: figma-read.mjs (black fill, white text). Right column (outputs): component-inventory.json (border), variable-inventory.json (red border), missing-descriptions.md (border). A separate node below the central node shows "Writes fixture." Arrows: live fetch = red solid, FIXTURE_PATH = dashed, outputs = solid black, downstream consumers = dashed gray. Small consumer labels at far right (Ch 5, Ch 10, Ch 12, Ch 8, Design team). All nodes are hoverable with tooltips. ResizeObserver redraws. Dark mode. Reduced-motion. SVG aria.
 
-> Reference implementation: `d3/03-reading-a-figma-file-programmatically-fig-04.html`
+> Reference implementation: `../d3/03-reading-a-figma-file-programmatically-fig-04.html`

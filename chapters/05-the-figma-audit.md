@@ -670,10 +670,10 @@ Series connection: The false-positive / false-negative failure mode is the defin
 
 Left-to-right flow diagram with a fan-in and fan-out structure. Left: a single "Data Source" box (Figma API or --fixture). Center: six stacked check function boxes labeled check-naming.js, check-token-hygiene.js, check-component-hygiene.js, check-brand-compliance.js, check-accessibility.js, check-structure.js — each with its ruleId and severity in #C8102E for errors or #555555 for warnings. Dashed #CCCCCC/0.75 arrows fan from the data source to each check and from each check into a central "Findings Array" box bordered in #C8102E/1.5 with fields category · severity · nodeId · message · suggestion · ruleId. A severity legend box below findings shows error / warning / info in their respective colors. Arrows from findings fan right to two output boxes: MARKDOWN (audit-report.md, human readable) and JSON (audit-report.json, CI gate). All boxes fill #F5F5F5 except findings (#FFFFFF with red border). viewBox 700×420. Deliverable: single HTML, inline CSS, D3 v7 CDN, responsive, dark mode, ARIA role="img", tooltip on hover showing each check's full description.
 
-> Reference implementation: `d3/05-the-figma-audit-fig-01.html`
+> Reference implementation: `../d3/05-the-figma-audit-fig-01.html`
 
 ### Figure 5.2 — CI pipeline: audit gate before token extraction
 
 Horizontal pipeline with a downward blocked-path branch. Four boxes left to right: Step 1 (Audit Figma file, red border #C8102E/1.5) → Gate (Exit code 0/1, red border) → Step 2 (Extract tokens, normal border, if: success()) → Step 3 (Code gen, normal border, CSS · Swift · Android · JS). A downward arrow in #C8102E from the Gate box leads to a "PIPELINE BLOCKED" box (white fill, red border) labeled "Fix naming / token errors first." Label "exit 1 — errors found" on the downward arrow. A second row below shows the ratchet baseline pattern: four boxes connected with arrows — audit-report.json (current) → audit-baseline.json (committed) → Regression? (red) → No regression. All step boxes fill #F5F5F5; blocked and gate boxes fill #FFFFFF with red border; normal boxes border #CCCCCC/0.75. viewBox 700×420. Deliverable: single HTML, inline CSS, D3 v7 CDN, responsive, dark mode, ARIA, tooltip on each step.
 
-> Reference implementation: `d3/05-the-figma-audit-fig-02.html`
+> Reference implementation: `../d3/05-the-figma-audit-fig-02.html`

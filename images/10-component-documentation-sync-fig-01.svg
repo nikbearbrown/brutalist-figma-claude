@@ -44,7 +44,7 @@
   <text x="526" y="198" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">renders in</text>
 
   <!-- Box 4: Figma Dev Mode panel -->
-  <rect x="359" y="228" width="298" height="100" fill="#F5F5F5" stroke="#C8102E" stroke-width="1"/>
+  <rect x="359" y="228" width="298" height="114" fill="#F5F5F5" stroke="#C8102E" stroke-width="1"/>
   <text x="508" y="253" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#C8102E" text-anchor="middle">FIGMA DEV MODE PANEL</text>
   <rect x="379" y="263" width="258" height="48" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
   <text x="391" y="281" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">import &#123; Button &#125; from '@acme/ds';</text>

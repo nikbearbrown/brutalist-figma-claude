@@ -398,16 +398,16 @@ The figures in this chapter have interactive D3 implementations. Load `NEU/CLAUD
 
 Produce a single self-contained HTML file with an interactive node diagram. Layout: two vertical panels divided by a dashed rule. Left panel: a directed graph of six nodes arranged top-to-bottom — DOCUMENT (root), CANVAS, COMPONENT, fills (leaf), boundVariables (leaf), VariableID:12:45 (terminal). Edges are straight lines with arrowhead markers; the boundVariables → VariableID edge is dashed and red. Right panel: a simulated canvas view with a rectangle labeled "Primary button" in a rendered frame, plus a red-bordered note "Variable change does not propagate to production." All six left-panel nodes are hoverable and keyboard-accessible, revealing a tooltip with the node's role. ResizeObserver redraws. Dark mode via `prefers-color-scheme: dark`. Transitions suppressed under `prefers-reduced-motion`. SVG has `role="img"`, `aria-labelledby`, `<title>`, `<desc>`.
 
-> Reference implementation: `d3/01-why-your-figma-file-is-lying-to-you-fig-01.html`
+> Reference implementation: `../d3/01-why-your-figma-file-is-lying-to-you-fig-01.html`
 
 ### Figure 1.2 — Snapshot drift timeline
 
 Produce a single self-contained HTML file with a line chart. X-axis: time (t₀ to now). Y-axis: state value. Two lines: a red continuous curve rising from the baseline (Figma state, label at right edge), and a black dashed horizontal line frozen after the first snapshot event (Production state, label at right edge). Two vertical snapshot event markers with labeled boxes ("SNAPSHOT") at t=0.28 and t=0.54. A drift annotation with a brace shows the gap at the right edge. A red shaded area between the two lines illustrates the drift zone. Snapshot boxes are hoverable with tooltip. Zero-baseline not required (y-axis shows relative state value). ResizeObserver redraws. Dark mode. Reduced-motion. Aria labels on SVG.
 
-> Reference implementation: `d3/01-why-your-figma-file-is-lying-to-you-fig-02.html`
+> Reference implementation: `../d3/01-why-your-figma-file-is-lying-to-you-fig-02.html`
 
 ### Figure 1.3 — Automated pipeline architecture
 
 Produce a single self-contained HTML file with a two-row flow diagram. Top row: five pipeline stage boxes (Trigger → API Read → Transform → Validate → PR/Deploy) connected by arrows; API Read has a red border. A red failure branch drops vertically from Validate to a red-bordered box "Validation fails → job fails, no PR opened." Bottom row (below a dashed divider labeled "vs. manual export"): four manual workflow boxes (Designer updates → Manual export → Slack/commit → 3 platforms, 3 states) with the final box red-bordered. A properties bar at the bottom lists pipeline attributes. Top-row stage boxes are hoverable and keyboard-accessible with tooltips. ResizeObserver redraws. Dark mode. Reduced-motion. Aria on SVG.
 
-> Reference implementation: `d3/01-why-your-figma-file-is-lying-to-you-fig-03.html`
+> Reference implementation: `../d3/01-why-your-figma-file-is-lying-to-you-fig-03.html`

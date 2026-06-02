@@ -1,0 +1,15 @@
+date,book,chapter,words
+2026-06-01,brutalist-figma-+-claude,01-why-your-figma-file-is-lying-to-you,2668
+2026-06-01,brutalist-figma-+-claude,02-what-the-api-actually-exposes,4070
+2026-06-01,brutalist-figma-+-claude,03-reading-a-figma-file-programmatically,4409
+2026-06-01,brutalist-figma-+-claude,04-naming-as-an-api-contract,3138
+2026-06-01,brutalist-figma-+-claude,05-the-figma-audit,3326
+2026-06-01,brutalist-figma-+-claude,06-fixing-the-file-with-the-plugin-api,3577
+2026-06-01,brutalist-figma-+-claude,07-the-machine-ready-file,3642
+2026-06-01,brutalist-figma-+-claude,08-design-token-pipelines,3931
+2026-06-01,brutalist-figma-+-claude,09-asset-export-automation,3925
+2026-06-01,brutalist-figma-+-claude,10-component-documentation-sync,3546
+2026-06-01,brutalist-figma-+-claude,11-brand-compliance-monitoring,4417
+2026-06-01,brutalist-figma-+-claude,12-figma-as-a-machine-readable-specification,5086
+2026-06-01,brutalist-figma-+-claude,13-the-figma-mcp-server,4273
+2026-06-01,brutalist-figma-+-claude,14-putting-it-together-the-production-ready-design-system,4509

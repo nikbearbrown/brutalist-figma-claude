@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" font-family="Inter, Helvetica, Arial, sans-serif">
+  <rect width="960" height="440" fill="#FFFFFF"/>
+
+  <!-- eyebrow / title -->
+  <text x="40" y="48" font-size="13" letter-spacing="1.5" fill="#545454" font-weight="700">FIGURE 6.1</text>
+  <text x="40" y="74" font-family="EB Garamond, Georgia, serif" font-size="26" fill="#121212">The staged Plugin remediation flow</text>
+  <line x1="40" y1="92" x2="920" y2="92" stroke="#D4D4D4" stroke-width="1"/>
+
+  <!-- nodes -->
+  <!-- Load -->
+  <rect x="40" y="160" width="150" height="86" fill="#FFFFFF" stroke="#121212" stroke-width="1.5"/>
+  <text x="115" y="196" text-anchor="middle" font-size="16" font-weight="700" fill="#121212">Load</text>
+  <text x="115" y="220" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">audit report</text>
+  <text x="115" y="236" text-anchor="middle" font-size="11" fill="#545454">No writes</text>
+
+  <!-- Preview -->
+  <rect x="250" y="160" width="150" height="86" fill="#FFFFFF" stroke="#121212" stroke-width="1.5"/>
+  <text x="325" y="196" text-anchor="middle" font-size="16" font-weight="700" fill="#121212">Preview</text>
+  <text x="325" y="220" text-anchor="middle" font-size="11" fill="#545454">diff of proposed</text>
+  <text x="325" y="236" text-anchor="middle" font-size="11" fill="#545454">renames · No writes</text>
+
+  <!-- Human Approval Gate (emphasized) -->
+  <rect x="460" y="146" width="190" height="114" fill="#FFFFFF" stroke="#C8102E" stroke-width="3"/>
+  <text x="555" y="186" text-anchor="middle" font-size="16" font-weight="700" fill="#C8102E">Human approval</text>
+  <text x="555" y="208" text-anchor="middle" font-size="16" font-weight="700" fill="#C8102E">gate</text>
+  <text x="555" y="232" text-anchor="middle" font-size="11" fill="#545454">button + confirm</text>
+  <text x="555" y="248" text-anchor="middle" font-size="11" fill="#545454">dialog required</text>
+
+  <!-- Apply -->
+  <rect x="710" y="160" width="150" height="86" fill="#FFFFFF" stroke="#121212" stroke-width="1.5"/>
+  <text x="785" y="196" text-anchor="middle" font-size="16" font-weight="700" fill="#121212">Apply</text>
+  <text x="785" y="220" text-anchor="middle" font-size="11" fill="#545454">bulk write to</text>
+  <text x="785" y="236" text-anchor="middle" font-size="11" fill="#545454">canvas · logged</text>
+
+  <!-- Rejected terminal -->
+  <rect x="460" y="330" width="190" height="60" fill="#FFFFFF" stroke="#545454" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="555" y="360" text-anchor="middle" font-size="14" font-weight="700" fill="#545454">Rejected</text>
+  <text x="555" y="378" text-anchor="middle" font-size="11" fill="#545454">no changes written · stop</text>
+
+  <!-- arrows -->
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#121212"/>
+    </marker>
+    <marker id="arrowgray" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#545454"/>
+    </marker>
+  </defs>
+  <line x1="190" y1="203" x2="248" y2="203" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="400" y1="203" x2="458" y2="203" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="650" y1="203" x2="708" y2="203" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="678" y="194" text-anchor="middle" font-size="11" fill="#545454">approved</text>
+  <!-- gate -> rejected -->
+  <line x1="555" y1="260" x2="555" y2="328" stroke="#545454" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowgray)"/>
+  <text x="568" y="298" font-size="11" fill="#545454">rejected</text>
+
+  <!-- caption -->
+  <text x="40" y="424" font-size="13" fill="#545454">Writes to the canvas happen only after an explicit human approval; Load and Preview never mutate the file.</text>
+</svg>

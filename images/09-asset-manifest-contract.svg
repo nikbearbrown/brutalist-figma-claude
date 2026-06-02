@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" font-family="Inter, Helvetica, Arial, sans-serif">
+  <rect width="960" height="460" fill="#FFFFFF"/>
+
+  <!-- eyebrow / title -->
+  <text x="40" y="48" font-size="13" letter-spacing="1.5" fill="#545454" font-weight="700">FIGURE 9.2</text>
+  <text x="40" y="74" font-family="EB Garamond, Georgia, serif" font-size="26" fill="#121212">The asset manifest as stability contract</text>
+  <line x1="40" y1="92" x2="920" y2="92" stroke="#D4D4D4" stroke-width="1"/>
+
+  <!-- ── JSON PANEL (left, ~55% width) ── -->
+  <rect x="40" y="110" width="390" height="220" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="1"/>
+
+  <!-- JSON content — monospace rendering -->
+  <!-- Line: { -->
+  <text x="60" y="133" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">&#123;</text>
+
+  <!-- "nodeId": "1:234" — nodeId key in RED (stable anchor) -->
+  <text x="60" y="153" font-family="JetBrains Mono, monospace" font-size="13" fill="#C8102E">  "nodeId"</text>
+  <text x="174" y="153" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">: </text>
+  <text x="190" y="153" font-family="JetBrains Mono, monospace" font-size="13" fill="#545454">"1:234"</text>
+  <text x="248" y="153" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">,</text>
+
+  <!-- "name": "icon-close" -->
+  <text x="60" y="173" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">  "name"</text>
+  <text x="162" y="173" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">: </text>
+  <text x="178" y="173" font-family="JetBrains Mono, monospace" font-size="13" fill="#545454">"icon-close"</text>
+  <text x="310" y="173" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">,</text>
+
+  <!-- "outputPath": "src/assets/icons/icon-close.svg" -->
+  <text x="60" y="193" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">  "outputPath"</text>
+  <text x="218" y="193" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">:</text>
+  <text x="60" y="210" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">    "src/assets/icons/icon-close.svg"</text>
+  <text x="358" y="210" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">,</text>
+
+  <!-- "format": "svg", "scale": 1 -->
+  <text x="60" y="230" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">  "format"</text>
+  <text x="174" y="230" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">: </text>
+  <text x="190" y="230" font-family="JetBrains Mono, monospace" font-size="13" fill="#545454">"svg"</text>
+  <text x="238" y="230" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">, "scale": </text>
+  <text x="342" y="230" font-family="JetBrains Mono, monospace" font-size="13" fill="#545454">1</text>
+  <text x="350" y="230" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">,</text>
+
+  <!-- "svgo": true -->
+  <text x="60" y="250" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">  "svgo"</text>
+  <text x="150" y="250" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">: </text>
+  <text x="166" y="250" font-family="JetBrains Mono, monospace" font-size="13" fill="#545454">true</text>
+
+  <!-- closing } -->
+  <text x="60" y="320" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">&#125;</text>
+
+  <!-- ── ANNOTATION BOXES (right panel) ── -->
+  <defs>
+    <marker id="leaderend" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L5,3 L0,6 Z" fill="#D4D4D4"/>
+    </marker>
+  </defs>
+
+  <!-- Annotation 1: nodeId → stable anchor -->
+  <rect x="460" y="110" width="460" height="52" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="474" y="128" font-size="11" font-weight="700" fill="#C8102E">nodeId — stable anchor</text>
+  <text x="474" y="143" font-size="11" fill="#545454">Stable across renames and moves; changes only</text>
+  <text x="474" y="156" font-size="11" fill="#545454">on delete-and-recreate or copy-paste</text>
+  <line x1="430" y1="153" x2="458" y2="136" stroke="#D4D4D4" stroke-width="0.75" marker-end="url(#leaderend)"/>
+
+  <!-- Annotation 2: name → not used for lookup -->
+  <rect x="460" y="172" width="460" height="40" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="474" y="188" font-size="11" font-weight="700" fill="#121212">name — human label only</text>
+  <text x="474" y="203" font-size="11" fill="#545454">Not used by the pipeline to locate the node</text>
+  <line x1="430" y1="173" x2="458" y2="185" stroke="#D4D4D4" stroke-width="0.75" marker-end="url(#leaderend)"/>
+
+  <!-- Annotation 3: outputPath → deterministic repo path -->
+  <rect x="460" y="222" width="460" height="40" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="474" y="238" font-size="11" font-weight="700" fill="#121212">outputPath — deterministic repo path</text>
+  <text x="474" y="253" font-size="11" fill="#545454">Human decision, not inferred from Figma name</text>
+  <line x1="430" y1="201" x2="458" y2="235" stroke="#D4D4D4" stroke-width="0.75" marker-end="url(#leaderend)"/>
+
+  <!-- Annotation 4: format + scale → render params -->
+  <rect x="460" y="272" width="460" height="40" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="474" y="288" font-size="11" font-weight="700" fill="#121212">format + scale — render parameters</text>
+  <text x="474" y="303" font-size="11" fill="#545454">Passed directly to GET /v1/images</text>
+  <line x1="430" y1="230" x2="458" y2="285" stroke="#D4D4D4" stroke-width="0.75" marker-end="url(#leaderend)"/>
+
+  <!-- Annotation 5: svgo → post-processing flag -->
+  <rect x="460" y="322" width="460" height="40" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="474" y="338" font-size="11" font-weight="700" fill="#121212">svgo — post-processing flag</text>
+  <text x="474" y="353" font-size="11" fill="#545454">false for complex illustrations; true for icons</text>
+  <line x1="430" y1="250" x2="458" y2="335" stroke="#D4D4D4" stroke-width="0.75" marker-end="url(#leaderend)"/>
+
+  <!-- ── STALE ID PANEL ── -->
+  <line x1="40" y1="345" x2="920" y2="345" stroke="#D4D4D4" stroke-width="1"/>
+
+  <!-- Stale manifest node (left) -->
+  <rect x="40" y="358" width="200" height="52" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="140" y="378" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#545454">manifest entry</text>
+  <text x="140" y="396" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">nodeId: "1:234" (stale)</text>
+
+  <!-- Arrow → image endpoint response -->
+  <defs>
+    <marker id="arrowgray2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#545454"/>
+    </marker>
+  </defs>
+  <line x1="240" y1="384" x2="318" y2="384" stroke="#545454" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arrowgray2)"/>
+  <text x="278" y="376" text-anchor="middle" font-size="10" fill="#545454">GET /v1/images</text>
+
+  <!-- Null response node -->
+  <rect x="320" y="358" width="200" height="52" fill="#FFFFFF" stroke="#545454" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="420" y="378" text-anchor="middle" font-size="12" fill="#545454">API response</text>
+  <text x="420" y="396" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#545454">url: null</text>
+
+  <!-- Explanation label -->
+  <text x="560" y="372" font-size="11" fill="#545454" font-style="italic">Designer copy-pasted icon →</text>
+  <text x="560" y="387" font-size="11" fill="#545454" font-style="italic">new node ID created → old manifest</text>
+  <text x="560" y="402" font-size="11" fill="#545454" font-style="italic">entry stale → null render in export log</text>
+
+  <!-- caption -->
+  <text x="40" y="450" font-size="13" fill="#545454">The asset manifest maps a stable Figma node ID to a deterministic repository path; a copy-pasted icon generates a new ID, making the old entry stale and producing a null render rather than a silent overwrite.</text>
+</svg>

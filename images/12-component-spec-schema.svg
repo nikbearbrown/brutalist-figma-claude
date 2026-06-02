@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 580" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-label="ComponentSpec schema field map showing four field groups: Identity, Geometry, Style and Token Chain, and Code Linkage, with variantProperties as a cross-cutting band">
+  <title>Component Spec Schema: Annotated Field Map</title>
+  <desc>Structured schematic of the ComponentSpec JSON object. Four callout zones radiate from a central box into four quadrants: Identity (upper left), Geometry (lower left), Style and Token Chain (upper right), Code Linkage (lower right). variantProperties appears as a red horizontal band bisecting the central box. Required fields are marked with filled red circles.</desc>
+
+  <!-- canvas -->
+  <rect width="960" height="580" fill="#FFFFFF"/>
+
+  <!-- eyebrow + title -->
+  <text x="40" y="48" font-size="13" letter-spacing="1.5" fill="#545454" font-weight="700">FIGURE 12.1</text>
+  <text x="40" y="76" font-family="EB Garamond, Georgia, serif" font-size="26" fill="#121212">Component spec schema: annotated field map</text>
+  <line x1="40" y1="94" x2="920" y2="94" stroke="#D4D4D4" stroke-width="1"/>
+
+  <!-- ============================================================
+       CENTRAL BOX: ComponentSpec
+       Centered at x=480, y=310
+       Box: x=370, y=230, width=220, height=160
+  ============================================================ -->
+
+  <!-- ARROW MARKER DEFS -->
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#121212"/>
+    </marker>
+  </defs>
+
+  <!-- CENTRAL BOX background -->
+  <rect x="370" y="228" width="220" height="164" fill="#121212"/>
+
+  <!-- ComponentSpec label (top portion, above variantProperties band) -->
+  <text x="480" y="253" text-anchor="middle" font-size="13" font-weight="600" fill="#FFFFFF" letter-spacing="0.5">ComponentSpec</text>
+  <text x="480" y="270" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#D4D4D4">components.json</text>
+
+  <!-- Fields below header, above variantProperties band -->
+  <text x="386" y="292" font-family="JetBrains Mono, monospace" font-size="10" fill="#D4D4D4">nodeId  key  name</text>
+  <text x="386" y="308" font-family="JetBrains Mono, monospace" font-size="10" fill="#D4D4D4">specVersion  generatedAt</text>
+
+  <!-- variantProperties BAND — cross-cutting, red -->
+  <rect x="370" y="316" width="220" height="28" fill="#C8102E"/>
+  <text x="480" y="333" text-anchor="middle" font-size="11" font-weight="600" fill="#FFFFFF" font-family="JetBrains Mono, monospace">variantProperties</text>
+
+  <!-- Fields below variantProperties band -->
+  <text x="386" y="360" font-family="JetBrains Mono, monospace" font-size="10" fill="#D4D4D4">dimensions  layout</text>
+  <text x="386" y="376" font-family="JetBrains Mono, monospace" font-size="10" fill="#D4D4D4">fills  codeConnect</text>
+
+  <!-- ============================================================
+       GROUP A — IDENTITY (upper left)
+       Box: x=40, y=130, width=230, height=160
+  ============================================================ -->
+  <rect x="40" y="128" width="240" height="164" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="1"/>
+  <!-- Group A header -->
+  <rect x="40" y="128" width="240" height="24" fill="#D4D4D4"/>
+  <text x="160" y="144" text-anchor="middle" font-size="11" font-weight="600" fill="#121212">A — Identity</text>
+
+  <!-- Required dot markers (red filled circle) -->
+  <!-- nodeId -->
+  <circle cx="56" cy="170" r="4" fill="#C8102E"/>
+  <text x="68" y="174" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">nodeId</text>
+  <text x="165" y="174" font-size="10" fill="#545454">node-unique within file</text>
+  <!-- key -->
+  <circle cx="56" cy="190" r="4" fill="#C8102E"/>
+  <text x="68" y="194" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">key</text>
+  <text x="165" y="194" font-size="10" fill="#545454">preferred for identity</text>
+  <!-- name -->
+  <circle cx="56" cy="210" r="4" fill="#C8102E"/>
+  <text x="68" y="214" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">name</text>
+  <!-- specVersion -->
+  <circle cx="56" cy="230" r="4" fill="#C8102E"/>
+  <text x="68" y="234" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">specVersion</text>
+  <!-- generatedAt -->
+  <circle cx="56" cy="250" r="4" fill="#C8102E"/>
+  <text x="68" y="254" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">generatedAt</text>
+  <!-- description (optional) -->
+  <circle cx="56" cy="270" r="3" fill="none" stroke="#545454" stroke-width="1"/>
+  <text x="68" y="274" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">description</text>
+  <text x="68" y="284" font-size="9" fill="#545454" font-style="italic">stable across file versions — key preferred over nodeId</text>
+
+  <!-- Arrow: Group A → central box -->
+  <line x1="280" y1="210" x2="368" y2="280" stroke="#121212" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ============================================================
+       GROUP B — GEOMETRY (lower left)
+       Box: x=40, y=340, width=240, height=160
+  ============================================================ -->
+  <rect x="40" y="338" width="240" height="164" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="1"/>
+  <!-- Group B header -->
+  <rect x="40" y="338" width="240" height="24" fill="#D4D4D4"/>
+  <text x="160" y="354" text-anchor="middle" font-size="11" font-weight="600" fill="#121212">B — Geometry</text>
+
+  <text x="56" y="379" font-size="10" font-weight="600" fill="#121212">dimensions</text>
+  <text x="68" y="393" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">width · height</text>
+  <text x="68" y="407" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">widthSizing · heightSizing</text>
+
+  <text x="56" y="424" font-size="10" font-weight="600" fill="#121212">layout</text>
+  <text x="68" y="438" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">mode · paddingTop/Bottom/Left/Right</text>
+  <text x="68" y="452" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">itemSpacing · counterAxisSpacing</text>
+
+  <text x="56" y="468" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">constraints</text>
+  <text x="56" y="480" font-size="9" fill="#545454" font-style="italic">layout constraints a code generator cannot infer</text>
+  <text x="56" y="491" font-size="9" fill="#545454" font-style="italic">from the canvas alone</text>
+
+  <!-- Arrow: Group B → central box -->
+  <line x1="280" y1="400" x2="368" y2="360" stroke="#121212" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ============================================================
+       GROUP C — STYLE + TOKEN CHAIN (upper right)
+       Box: x=680, y=128, width=240, height=164
+  ============================================================ -->
+  <rect x="680" y="128" width="240" height="164" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="1"/>
+  <!-- Group C header -->
+  <rect x="680" y="128" width="240" height="24" fill="#D4D4D4"/>
+  <text x="800" y="144" text-anchor="middle" font-size="11" font-weight="600" fill="#121212">C — Style + Token Chain</text>
+
+  <text x="696" y="170" font-size="10" font-weight="600" fill="#121212">fills</text>
+  <!-- alias chain -->
+  <text x="696" y="186" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">fills[ ] →</text>
+  <text x="696" y="200" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">  styleId → styleName →</text>
+  <text x="696" y="214" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">  tokenAlias</text>
+
+  <text x="696" y="230" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">typography</text>
+  <text x="696" y="244" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">  styleId · styleName · tokenAlias</text>
+
+  <!-- degradation note -->
+  <text x="696" y="262" font-size="9" fill="#545454" font-style="italic">alias chain: raw color → CSS custom property</text>
+  <text x="696" y="275" font-size="9" fill="#C8102E" font-style="italic">null on non-Enterprise plans; fallback: style-name</text>
+  <text x="696" y="286" font-size="9" fill="#C8102E" font-style="italic">convention</text>
+
+  <!-- Arrow: central box → Group C -->
+  <line x1="590" y1="280" x2="678" y2="220" stroke="#121212" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ============================================================
+       GROUP D — CODE LINKAGE (lower right)
+       Box: x=680, y=338, width=240, height=164
+  ============================================================ -->
+  <rect x="680" y="338" width="240" height="164" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="1"/>
+  <!-- Group D header -->
+  <rect x="680" y="338" width="240" height="24" fill="#D4D4D4"/>
+  <text x="800" y="354" text-anchor="middle" font-size="11" font-weight="600" fill="#121212">D — Code Linkage</text>
+
+  <text x="696" y="378" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">codeConnect</text>
+  <text x="696" y="394" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">  importPath</text>
+  <text x="696" y="410" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">  componentName</text>
+  <text x="696" y="426" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">  propMappings</text>
+  <text x="696" y="448" font-size="9" fill="#545454" font-style="italic">maps Figma variant dimensions to code</text>
+  <text x="696" y="460" font-size="9" fill="#545454" font-style="italic">prop names — required for correct import</text>
+  <text x="696" y="478" font-size="9" fill="#545454" font-style="italic">null when Code Connect not configured</text>
+
+  <!-- Arrow: central box → Group D -->
+  <line x1="590" y1="360" x2="678" y2="390" stroke="#121212" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- variantProperties annotation (right of band) -->
+  <line x1="591" y1="330" x2="676" y2="330" stroke="#C8102E" stroke-width="1" stroke-dasharray="3 2"/>
+  <text x="678" y="325" font-size="9" fill="#C8102E" font-style="italic">complete variant dimension map —</text>
+  <text x="678" y="336" font-size="9" fill="#C8102E" font-style="italic">not compressed for human readability</text>
+
+  <!-- REQUIRED FIELD LEGEND -->
+  <circle cx="41" cy="534" r="4" fill="#C8102E"/>
+  <text x="52" y="538" font-size="11" fill="#545454">required field</text>
+  <circle cx="140" cy="534" r="3" fill="none" stroke="#545454" stroke-width="1"/>
+  <text x="152" y="538" font-size="11" fill="#545454">optional field</text>
+
+  <!-- CAPTION -->
+  <text x="40" y="562" font-size="13" fill="#545454">The <tspan font-family="JetBrains Mono, monospace">ComponentSpec</tspan> groups fields into four zones; <tspan font-family="JetBrains Mono, monospace">variantProperties</tspan> is the cross-cutting field a code generator uses to emit TypeScript prop types; token alias chain degrades to <tspan font-family="JetBrains Mono, monospace">null</tspan> on non-Enterprise plans.</text>
+</svg>

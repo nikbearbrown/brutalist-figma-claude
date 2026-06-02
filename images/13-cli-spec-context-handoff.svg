@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 430" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-label="Figure 13.2: CLI-Spec Context Package Pre-Session Handoff">
+  <title>Figure 13.2 — CLI-Spec Context Package: Pre-Session Handoff</title>
+  <desc>Before each MCP session, the CLI pipeline generates four pre-verified context files — audit, spec, tokens, and preflight report — that feed the agent alongside the live MCP connection; FIGMA.md governs what the agent is authorized to do with the combined context.</desc>
+  <rect width="960" height="430" fill="#FFFFFF"/>
+
+  <!-- eyebrow / title / rule -->
+  <text x="40" y="48" font-size="13" letter-spacing="1.5" fill="#545454" font-weight="700">FIGURE 13.2</text>
+  <text x="40" y="74" font-family="EB Garamond, Georgia, serif" font-size="26" fill="#121212">CLI-spec context package: pre-session handoff</text>
+  <line x1="40" y1="90" x2="920" y2="90" stroke="#D4D4D4" stroke-width="1"/>
+
+  <!-- Arrow markers -->
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#121212"/>
+    </marker>
+    <marker id="arrowgray" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#545454"/>
+    </marker>
+    <marker id="arrowochre" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#C8860E"/>
+    </marker>
+  </defs>
+
+  <!-- CLI Pipeline block (left) -->
+  <rect x="40" y="110" width="190" height="220" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="1.5"/>
+  <text x="135" y="136" text-anchor="middle" font-size="14" font-weight="700" fill="#121212">CLI Pipeline</text>
+  <line x1="52" y1="144" x2="218" y2="144" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="60" y="163" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">figma-audit.js</text>
+  <text x="60" y="178" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">  --output json</text>
+  <text x="60" y="200" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">build-spec.mjs</text>
+  <text x="60" y="215" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">  --output json</text>
+  <text x="60" y="237" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">extract-tokens.mjs</text>
+  <text x="60" y="252" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">  --output json</text>
+  <text x="60" y="274" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">figma-audit.js</text>
+  <text x="60" y="289" font-family="JetBrains Mono, monospace" font-size="10" fill="#545454">  --mcp-check</text>
+  <text x="135" y="318" text-anchor="middle" font-size="11" fill="#545454">runs in sequence</text>
+
+  <!-- Four artifact nodes (center column) -->
+  <!-- audit.json -->
+  <rect x="290" y="114" width="180" height="48" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1.5"/>
+  <text x="380" y="136" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" font-weight="700" fill="#121212">audit.json</text>
+  <text x="380" y="154" text-anchor="middle" font-size="11" fill="#545454">file health · naming violations</text>
+
+  <!-- spec.json -->
+  <rect x="290" y="174" width="180" height="48" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1.5"/>
+  <text x="380" y="196" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" font-weight="700" fill="#121212">spec.json</text>
+  <text x="380" y="214" text-anchor="middle" font-size="11" fill="#545454">component specification</text>
+
+  <!-- tokens.json -->
+  <rect x="290" y="234" width="180" height="48" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1.5"/>
+  <text x="380" y="256" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" font-weight="700" fill="#121212">tokens.json</text>
+  <text x="380" y="274" text-anchor="middle" font-size="11" fill="#545454">current token values</text>
+
+  <!-- mcp-check.md -->
+  <rect x="290" y="294" width="180" height="48" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1.5"/>
+  <text x="380" y="316" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" font-weight="700" fill="#121212">mcp-check.md</text>
+  <text x="380" y="334" text-anchor="middle" font-size="11" fill="#545454">preflight · Code Connect coverage</text>
+
+  <!-- Arrows from CLI block to artifacts -->
+  <line x1="230" y1="145" x2="288" y2="139" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="230" y1="175" x2="288" y2="193" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="230" y1="238" x2="288" y2="255" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="230" y1="285" x2="288" y2="312" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- AI Agent Session block (right) — red border = primary destination -->
+  <rect x="540" y="154" width="200" height="128" fill="#FFFFFF" stroke="#C8102E" stroke-width="3"/>
+  <text x="640" y="184" text-anchor="middle" font-size="15" font-weight="700" fill="#121212">AI Agent Session</text>
+  <text x="640" y="204" text-anchor="middle" font-size="11" fill="#545454">reads static context package</text>
+  <text x="640" y="220" text-anchor="middle" font-size="11" fill="#545454">+ live MCP connection</text>
+  <line x1="556" y1="232" x2="728" y2="232" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="640" y="250" text-anchor="middle" font-size="11" fill="#545454">FIGMA.md bounds</text>
+  <text x="640" y="266" text-anchor="middle" font-size="11" fill="#545454">agent authority</text>
+
+  <!-- Arrows from artifacts to AI Agent Session -->
+  <line x1="470" y1="138" x2="538" y2="188" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="470" y1="198" x2="538" y2="206" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="470" y1="258" x2="538" y2="230" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="470" y1="318" x2="538" y2="252" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- MCP Server (live) node — enters from right/below -->
+  <rect x="760" y="154" width="160" height="60" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="1.5"/>
+  <text x="840" y="179" text-anchor="middle" font-size="13" font-weight="600" fill="#121212">MCP Server</text>
+  <text x="840" y="197" text-anchor="middle" font-size="11" fill="#545454">(live connection)</text>
+  <line x1="760" y1="184" x2="742" y2="200" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- FIGMA.md governance dashed box entering from above agent -->
+  <rect x="560" y="106" width="160" height="38" fill="#FFFFFF" stroke="#C8860E" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="640" y="123" text-anchor="middle" font-size="12" font-weight="600" fill="#545454">FIGMA.md</text>
+  <text x="640" y="138" text-anchor="middle" font-size="11" fill="#545454">governance bounds</text>
+  <line x1="640" y1="144" x2="640" y2="152" stroke="#C8860E" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrowochre)"/>
+
+  <!-- caption -->
+  <text x="40" y="410" font-size="13" fill="#545454">Before each MCP session, the CLI pipeline generates four pre-verified context files — audit, spec, tokens, and preflight report — that feed the agent</text>
+  <text x="40" y="426" font-size="13" fill="#545454">alongside the live MCP connection; FIGMA.md governs what the agent is authorized to do with the combined context.</text>
+</svg>

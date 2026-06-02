@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-label="Figure 14.1: Extraction Stack High-Level System Architecture">
+  <title>Figure 14.1 — Extraction Stack: High-Level System Architecture</title>
+  <desc>The production-ready design system is a five-layer governed stack: the Figma file feeds audit, extraction, and MCP/governance pipelines running through CI/CD, with a mandatory human review gate before any artifact reaches production.</desc>
+  <rect width="960" height="620" fill="#FFFFFF"/>
+
+  <!-- eyebrow / title / rule -->
+  <text x="40" y="48" font-size="13" letter-spacing="1.5" fill="#545454" font-weight="700">FIGURE 14.1</text>
+  <text x="40" y="74" font-family="EB Garamond, Georgia, serif" font-size="26" fill="#121212">Extraction stack: high-level system architecture</text>
+  <line x1="40" y1="90" x2="920" y2="90" stroke="#D4D4D4" stroke-width="1"/>
+
+  <!-- Arrow markers -->
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#121212"/>
+    </marker>
+    <marker id="arrowgray" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#545454"/>
+    </marker>
+    <marker id="arrowblock" markerWidth="10" markerHeight="10" refX="2" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,0 L2,6" stroke="#545454" stroke-width="2" fill="none"/>
+    </marker>
+  </defs>
+
+  <!-- FIGMA.md governance band (left-side spanning accent) -->
+  <!-- Vertical ochre left-border spanning Extraction through Human Gate -->
+  <rect x="40" y="270" width="4" height="262" fill="#C8860E"/>
+  <text x="52" y="370" font-size="11" font-weight="700" fill="#545454" transform="rotate(-90 52 370)">FIGMA.md GOVERNANCE SCOPE</text>
+
+  <!-- CI/CD sidebar (right) -->
+  <rect x="770" y="108" width="150" height="380" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="845" y="132" text-anchor="middle" font-size="13" font-weight="700" fill="#121212">CI/CD</text>
+  <text x="845" y="148" text-anchor="middle" font-size="11" fill="#545454">GitHub Actions</text>
+  <line x1="782" y1="158" x2="908" y2="158" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="845" y="178" text-anchor="middle" font-size="11" font-weight="600" fill="#545454">PR</text>
+  <text x="845" y="193" text-anchor="middle" font-size="10" fill="#545454">preflight check</text>
+  <line x1="782" y1="208" x2="908" y2="208" stroke="#D4D4D4" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="845" y="228" text-anchor="middle" font-size="11" font-weight="600" fill="#545454">merge</text>
+  <text x="845" y="243" text-anchor="middle" font-size="10" fill="#545454">tokens + assets + spec</text>
+  <line x1="782" y1="258" x2="908" y2="258" stroke="#D4D4D4" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="845" y="278" text-anchor="middle" font-size="11" font-weight="600" fill="#545454">weekly</text>
+  <text x="845" y="293" text-anchor="middle" font-size="10" fill="#545454">audit + brand</text>
+  <line x1="782" y1="308" x2="908" y2="308" stroke="#D4D4D4" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="845" y="328" text-anchor="middle" font-size="11" font-weight="600" fill="#545454">pre-release</text>
+  <text x="845" y="343" text-anchor="middle" font-size="10" fill="#545454">full pipeline</text>
+  <line x1="782" y1="358" x2="908" y2="358" stroke="#D4D4D4" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="845" y="378" text-anchor="middle" font-size="11" font-weight="600" fill="#545454">MCP session</text>
+  <text x="845" y="393" text-anchor="middle" font-size="10" fill="#545454">mcp-check</text>
+  <line x1="782" y1="408" x2="908" y2="408" stroke="#D4D4D4" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="845" y="430" text-anchor="middle" font-size="10" fill="#545454">opens PRs;</text>
+  <text x="845" y="445" text-anchor="middle" font-size="10" fill="#545454">engineer merges</text>
+  <text x="845" y="460" text-anchor="middle" font-size="10" fill="#545454">or blocks</text>
+  <line x1="782" y1="476" x2="908" y2="476" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="845" y="494" text-anchor="middle" font-size="10" fill="#545454" font-style="italic">pipeline proposes;</text>
+  <text x="845" y="508" text-anchor="middle" font-size="10" fill="#545454" font-style="italic">engineer merges</text>
+
+  <!-- Stack nodes — vertical top-to-bottom in main column -->
+  <!-- 1. Figma File (source) -->
+  <rect x="70" y="108" width="680" height="72" fill="#F5F5F5" stroke="#121212" stroke-width="2"/>
+  <text x="410" y="137" text-anchor="middle" font-size="16" font-weight="700" fill="#121212">Figma File</text>
+  <text x="410" y="157" text-anchor="middle" font-size="12" fill="#545454">source of truth · audited, versioned, governed</text>
+  <text x="410" y="173" text-anchor="middle" font-size="11" fill="#545454">published components · token collections · Code Connect mappings</text>
+
+  <!-- Arrow from Figma File to Audit/Remediation -->
+  <line x1="410" y1="180" x2="410" y2="196" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 2. Audit + Remediation -->
+  <rect x="70" y="196" width="680" height="70" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="1.5"/>
+  <text x="410" y="222" text-anchor="middle" font-size="15" font-weight="700" fill="#121212">Audit + Remediation</text>
+  <text x="410" y="242" text-anchor="middle" font-size="11" fill="#545454">figma-ping.js · figma-read.mjs · figma-audit.js · figma-fix-plugin/</text>
+  <text x="410" y="258" text-anchor="middle" font-size="11" fill="#545454">Ch 2–6 · naming discipline · blocking-error resolution</text>
+
+  <!-- Arrow from Audit to Extraction -->
+  <line x1="410" y1="266" x2="410" y2="280" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 3. Extraction -->
+  <rect x="70" y="280" width="680" height="80" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="1.5"/>
+  <text x="410" y="306" text-anchor="middle" font-size="15" font-weight="700" fill="#121212">Extraction</text>
+  <text x="410" y="326" text-anchor="middle" font-size="11" fill="#545454">extract-tokens.mjs · validate-tokens.mjs · export-assets.mjs</text>
+  <text x="410" y="342" text-anchor="middle" font-size="11" fill="#545454">sync-docs.mjs · monitor-brand.mjs · build-spec.mjs</text>
+  <text x="410" y="357" text-anchor="middle" font-size="11" fill="#545454">Ch 8–12 · tokens / assets / docs / brand / spec</text>
+
+  <!-- Arrow from Extraction to MCP+Governance -->
+  <line x1="410" y1="360" x2="410" y2="374" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 4. MCP + Governance -->
+  <rect x="70" y="374" width="680" height="72" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="1.5"/>
+  <text x="410" y="400" text-anchor="middle" font-size="15" font-weight="700" fill="#121212">MCP + Governance</text>
+  <text x="410" y="420" text-anchor="middle" font-size="11" fill="#545454">MCP server · FIGMA.md · figma-mcp-check.md</text>
+  <text x="410" y="436" text-anchor="middle" font-size="11" fill="#545454">Ch 13 · agent context + permission matrix · read / infer / generate / refuse</text>
+
+  <!-- Arrow from MCP+Governance to Human Gate -->
+  <line x1="410" y1="446" x2="410" y2="460" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 5. Human Gate (red border) -->
+  <rect x="200" y="460" width="420" height="72" fill="#FFFFFF" stroke="#C8102E" stroke-width="3"/>
+  <text x="410" y="489" text-anchor="middle" font-size="15" font-weight="700" fill="#121212">Human Gate</text>
+  <text x="410" y="509" text-anchor="middle" font-size="11" fill="#545454">agent surfaces; engineer decides · pipeline proposes; engineer merges</text>
+  <text x="410" y="525" text-anchor="middle" font-size="11" fill="#545454">PR is not a formality — it is the human gate</text>
+
+  <!-- Approved arrow to Production -->
+  <line x1="410" y1="532" x2="410" y2="546" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="432" y="543" font-size="10" fill="#545454">approved</text>
+
+  <!-- Rejection branch (dashed, blocked) -->
+  <line x1="200" y1="496" x2="120" y2="496" stroke="#545454" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <line x1="120" y1="496" x2="120" y2="360" stroke="#545454" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <line x1="120" y1="360" x2="134" y2="360" stroke="#545454" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrowgray)"/>
+  <!-- Block symbol -->
+  <line x1="110" y1="354" x2="110" y2="366" stroke="#121212" stroke-width="2"/>
+  <text x="54" y="428" font-size="10" fill="#545454">rejected →</text>
+  <text x="54" y="442" font-size="10" fill="#545454">pipeline re-run</text>
+
+  <!-- 6. Production -->
+  <rect x="200" y="546" width="420" height="48" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="1.5"/>
+  <text x="410" y="567" text-anchor="middle" font-size="15" font-weight="700" fill="#121212">Production</text>
+  <text x="410" y="585" text-anchor="middle" font-size="11" fill="#545454">CSS custom properties · exported assets · component spec · documentation</text>
+
+  <!-- caption -->
+  <text x="40" y="605" font-size="13" fill="#545454">The production-ready design system is a five-layer governed stack: the Figma file feeds audit, extraction, and MCP/governance pipelines running through CI/CD,</text>
+  <text x="40" y="619" font-size="13" fill="#545454">with a mandatory human review gate before any artifact reaches production.</text>
+</svg>

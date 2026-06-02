@@ -1,0 +1,2367 @@
+1
+Book Overview & App PreviewWritten by
+Prateek Prasad
+The past decade has seen significant technological innovation. Smartphones, which were
+considered a luxury not long ago, have become mainstream, and internet connectivity is
+accessible to a broader demographic. Not only has this enabled users to express
+themselves in new ways, it’s drastically skewed what “computing” means by moving
+these capabilities out of an office and into the palm of their hands. For many users, a
+smartphone is their very first computer.
+
+This is nothing short of a paradigm shift that has fundamentally altered numerous aspects
+of our lives. It’s made the world a smaller place by bringing people closer to one other. It
+has altered our social behavior and caused entirely new industries to spring up. It’s mind-
+blowing to realize that the phones we have on us at all times are exponentially more
+capable than the computers that landed humans on the moon.
+
+Looking back at how this ecosystem has evolved, we can see that even the entry-level
+devices available today are significantly more capable than their premium counterparts
+were in the early days. Smartphones now have more sophisticated interfaces, graphics
+and animations and ship with many more sensors to accurately analyze the world around
+us.
+
+This translates into smarter, more capable apps that solve a host of problems — and do it
+with delight. It’s hard to find an industry that apps haven’t impacted. It’s far easier to
+reach out to your audience and offer your services if you have an app. This has made
+distribution more effortless and has leveled the playing field for everyone. But it’s also
+made it more important to know how to design an app that goes beyond pure utility.
+
+
+
+Why design matters
+With smartphones becoming mainstream, our perception of design and how design
+impacts us daily has changed as well. With the original iPhone, apps tried to mimic the
+real world with what’s called skeuomorphic design. And they did this for a good reason.
+The iPhone was an entirely new device, the first in its category, so the only mental model
+users had when they came to it sprang from using real-world objects.
+
+Notes were literal sheets of paper with tears at the top. Contacts looked like a physical
+address book and there was liberal use of wood and leather across the board. Looking
+back at it now, it looks dated and maybe even childish to some of you. But it was
+revolutionary at the time.
+As humans, we rely on habits to interact with the physical world. We don’t need to learn
+how to use a notebook every time we buy one because we’re already familiar with them.
+The original iPhone leveraged these tendencies. Coming as close as possible to real-world
+objects made it easier for users to transfer their habits to a thin sheet of glass and make
+that cognitive leap.
+
+Ten years later, we no longer need to mimic the real world — but it’s invaluable to reflect
+upon the journey. As technology has advanced, user’s expectations from apps have also
+changed. An app doesn’t just need to work. It has to look good, feel intimate and familiar,
+and be delightful while still being unique enough to attract attention and establish its
+identity.
+
+That’s where this book fits in. It will teach you how to integrate design decisions to your
+apps. You’ll learn how to go beyond merely functional apps to create well-made, well-
+considered ones.
+
+
+
+About this book
+The book starts from the beginning, assuming you have no prior experience. It covers all
+the basics, such as layout and composition, color and typography, flow and transitions,
+and more. You’ll use Figma, a modern design app, to learn the fundamentals of the craft
+while learning how to use the tool itself. You’ll apply the lessons you learn to a sample
+app for a single point of reference throughout the book.
+
+
+Movie tracking app
+In this book, you’ll design Cinematic, an app for tracking movies. The app allows users
+to view trending and top-rated movies and make a list of movies they wish to watch.
+Here’s how it looks:
+     Assumptions about the audience
+     This book is for you if you are:
+
+        Someone with no prior design experience or training.
+        Someone with no familiarity with specialized design tools like Photoshop, Sketch
+  or Figma.
+        Unable pay for design tools, unless you can use them as a regular part of your
+  workflow.
+        Unable to hire a designer for your projects.
+        Someone who wants to do more of the design on your own or level up your skills.
+
+
+
+     Chapter summaries
+     Here’s a synopsis of each chapter as a preview of what to expect:
+
+1.          Book Overview & App Preview: This is the chapter you’re currently reading.
+    Get an overview of the book including a brief look at what’s coming up in each chapter.
+    Set up your Figma design workspace and learn how to access the project files. Jump in
+    and get started right away with a quick project.
+2.          Tour of Workspace & Figma Fundamentals: Get an introduction to key tools in
+    Figma like shapes, frames, sizing, alignment, colors and layers and apply your learnings
+    to design a screen from scratch.
+3.          App Teardown: Trace over provided screenshots for two popular apps to study
+    their layout and identify patterns and structures used to build them.
+4.          Wireframing & Screen Layout: Learn about the importance of wireframing and
+    how to incorporate it into your design process. Create wireframes of a few screens and
+    their components and build a scaffold of the app flow by defining the navigation between
+    screens.
+5.          Reusable Elements & Data: Learn to build reusable components for common UI
+    elements like buttons, toolbars and content cards. Incorporate sample text and image data
+    for more realism. Leverage resuable components for faster iterations and to build more
+    flexible designs.
+6.          Typography: Learn typography basics for communicating hierarchy, order and
+    emphasis.
+7.          Colors: Gain an overview of color basics by learning common practices and
+    creating palettes. Create visual styles for consistency throughout the app.
+8.          Transitions & Animations: Explore the prototyping tools to create a full app
+    walkthrough. Create different transitions between screens to communicate the
+    relationship among elements.
+9.          Feedback & Testing: Explore the collaboration tools to test designs on multiple
+    devices and solicit feedback about the app goals and overall user experience.
+10.         Design Systems & Visual Language: Learn how to build a design system to
+    establish brand consistency. Gain insights into fundamental design decisions by analyzing
+    Apple’s Human Interface Guidelines and Google’s Material Design.
+11.           Recap & Next Steps: Review of the lessons learned and how to apply them when
+      starting from scratch. Sources for inspiration and useful resources. Suggestions for
+      continued learning and mastering design skills.
+
+
+      Starter files
+      Each chapter comes with starter files to make it easier for you to focus on the topic
+      lessons, rather than fiddling with setup issues.
+
+      The files are Figma files with a .fig extension. You’ll also have access to final versions of
+      each chapter file for reference.
+
+
+
+      Setting up Figma
+      Figma is a relatively new design app that’s rapidly gaining popularity. It’s comparable to
+      Sketch or Adobe Photoshop, with standard tools for drawing shapes, using fonts, images,
+      colors, etc. It also has built-in prototyping features to simulate interactive walkthroughs.
+
+      Some of Figma’s best features are that it:
+
+            Is a cross-platform app.
+            Is free to use for up to three projects, which is sufficient for this book.
+            Has a vibrant third-party plugin ecosystem to enhance your workflow.
+            Has apps on iOS and Android, which means you can view and interact with the
+      projects on whichever device you use.
+
+
+      Sign up
+      Create an account at figma.com.
+
+
+      Launch the app
+      While Figma comes with native apps for both Mac and Windows, for the purposes of this
+      book, you’ll use Figma on the browser to keep things consistent across chapters.
+
+      Log in to your newly created Figma account on figma.com
+
+
+      Install the Mirror app
+      Finally, download the Figma Mirror app for your iOS and Android devices. You can find
+      links at figma.com/downloads or search for Figma Mirror in the iOS App Store or the
+      Google Play store.
+    Taking Figma for a spin
+    Here’s what you’ll learn in this first chapter:
+
+          Importing a design to Figma
+          Creating a prototype
+          Adding a button element to your design
+
+
+    Getting started
+    Log in to Figma, if you haven’t yet. If you’re inside a new file that Figma created for you,
+    click the top-left navigation button and select Back to Files.
+
+
+
+
+    Select the Drafts tab, where you’ll find three pre-installed projects from Figma. You’ll
+    see something similar to this image:
+
+
+
+
+    Next, find chapter-1-starter.fig in the book downloads and drag it into the Figma app
+    window to import the project.
+Double-click chapter-1-starter to open the project.
+
+
+
+
+The project has three frames that represent three screens of the app. The movie-list frame
+shows a list of movies under the Trending category, while two movie details frames
+show the details of the movies “Birds of Prey” and “Frozen 2”.
+
+These screens may look static, but it’s an interactive prototype.
+
+
+Viewing as an interactive prototype
+To interact with the prototype, click the Present button from the Toolbar. You’ll find it at
+the top-right corner of your screen.
+A new browser tab will open with the movie-list screen inside an iPhone 11 Pro
+Max device frame. The list is scrollable, but the status bar and the bottom navigation stay
+anchored.
+If you click anywhere on this browser tab, the interactive components will flash,
+indicating where you must click. In this case, it’s the Birds of Prey movie card, which is
+the first item on the list.
+Clicking the card takes you to the details screen for the movie. You can scroll through the
+screen and see the different sections.
+Having the ability to design and prototype the interactions in one tool is powerful and
+reduces a lot of friction and back and forth in typical design workflows.
+As a quick-start exercise, you’ll link the Frozen 2 movie screen to its detail screen. Also,
+there’s no way for you to navigate back to the movie-list screen as of now. You’ll build
+a Close button to exit the details screen.
+
+This quick exercise will get your hands dirty and give you a feel for the process. The
+upcoming chapters will go deeper into individual aspects of the tool and the process but
+for now, go have some fun!
+
+
+Creating a link between two screens
+Go back to the Figma editor window and click on the Prototype option in the Properties
+panel on the right.
+
+
+
+
+In the Layers panel on the left, expand the movie-list frame, and select the frozen-
+2 group as shown below.
+
+
+
+
+You’ll see a o button on the right edge of the card.
+When you hover over the o it will turn into a +. Click on the + and drag the arrow to
+the movie-details-frozen-2 frame. This links the Frozen 2 card to its details screen.
+An Interaction Details menu will appear, detailing the animation, navigation and
+transition properties. Leave everything at their default values and close the menu by
+clicking the X at the top-right.
+
+
+
+
+Click the Present button again to view the interactive prototype. You’re now able to
+navigate to the Frozen 2 movie details screen by clicking the card in the list.
+
+Awesome job building your very first interaction! You’ll now create a Close button to go
+back to the movie-list screen.
+
+
+Adding a button to the details screen
+Go back to the Editor tab and click the Design option in the Properties panel on the right.
+From the Toolbar on top, click Shape Tools and select Ellipse (O).
+
+
+
+
+Now, click anywhere on the movie-details-birds-of-prey frame. This will add
+a 100x100 circle to the screen. You’ll find this option in the Layers panel to your left, as
+well.
+    Select the circle by clicking it, then give it the following properties:
+
+          X = 16
+          Y = 60
+          W = 60
+          H = 60
+
+
+
+
+    Note: X and Y values define the X and Y coordinates of this circle, while W and H represent
+    its width and height.
+
+    You’ll now change the color of the button. To do so, select the Fill option from the
+    Properties panel on the right and give it a white (#FFFFFF) fill.
+Instead of manually creating the X symbol using lines, you’ll cheat a little and use the
+letter X to keep things simple. Sneaky right?
+
+From the Toolbar at the top, select Text (T) and click inside the circle to add a text layer.
+
+
+
+
+Type X in uppercase in the text layer.
+From the Text section of the Properties panel, give this layer a font size of 32 and use
+the Roboto font with the Regular weight.
+
+
+
+
+The X is not centered in the circle yet. To fix that, hold Shift and select both the circle
+and the text layer.
+
+
+
+
+Now, select Align Horizontal Centers to align the two layers horizontally.
+
+
+
+
+Next, select Align Vertical Centers to bring the text into the circle’s center.
+It’s time to group the layers. Keeping both the circle and the text layer selected, right-
+click and select Group Selection.
+
+
+
+
+Note: Grouping two layers wraps them into one entity, letting you move and resize all
+enclosing layers collectively. This comes in handy when working with UI elements that
+consist of many smaller parts.
+Double-click on the group in the Layers panel and name it close-button.
+
+
+
+
+Great job building your first button! Now, it’s time to link your button to the movie-list
+screen so you can go back to the list from the details screen.
+
+Start by clicking the Prototype option from the Properties panel. Now, select close-
+button from the Layers panel and click on the ○ and drag a link to the movie-list frame.
+
+
+
+
+Go back to the interactive prototype by clicking Present. You can now return to the
+movie-list screen by clicking the Close button on the details screen.
+You need to add the Close button to the movie-details-frozen-2 screen as well. Instead of
+creating it from scratch, select close-button and press Command/Control-C to copy the
+button. Now, select the movie-details-frozen-2 frame and press Command/Control-V.
+
+
+
+
+Not only will this copy the button along with the correct positioning, but it will copy the
+link you created earlier as well.
+
+Go back to the interactive prototype by clicking the Present button and you’ll see
+the Close button on the Frozen 2 details screen.
+
+
+Previewing on a device
+To take your prototyping to the next level, deploy your prototypes to a physical device
+and interact with them. Install the Figma Mirror app from the App Store or Play Store
+and log in to your Figma account.
+All you need to do now is select the frame you want to view on your device, and voilà, it
+will appear. It’s fully interactive.
+
+Note that the prototype may not fit perfectly on your device due to the size differences,
+but Figma Mirror still does an excellent job of scaling the designs — close to perfection.
+
+Great job with the quick-start exercise! You built your first UI element and interaction
+from scratch. This is quite an achievement and you should be proud of yourself. Even
+though you haven’t thoroughly dived into Figma yet, this introduction hopefully gave you
+a quick look into what you’ll finally be able to build from scratch after going through this
+book.
+    2
+    Workspace Tour & Figma
+    FundamentalsWritten by Prateek Prasad
+    In the last chapter, you started by going over the importance of design and how it can
+    help you, as a developer, to collaborate effectively with your design team. You also set up
+    your design workspace in Figma and learned how to import the project files that you’ll
+    use going forward. Now, you’re ready to be part of the early conversations that steer the
+    direction of your product’s development.
+
+    While learning how to use Figma is an important part of this book, the most important
+    thing to come away with is an understanding of foundational design principles that you
+    can leverage with any tool.
+
+    Tools come and go, and there will always be a newer, fancier one you might want to use.
+    But as long as you approach design from the foundational principles, you’ll be able to
+    translate your ideas into real-world designs, regardless of which tool you use. The
+    ultimate goal of this book is to make the tools take a back seat, becoming merely a means
+    to your creative expression.
+
+    You might wonder, why pick Figma instead of Sketch, Photoshop or another popular
+    tool? There are a few strong reasons to use Figma:
+
+        It’s is free to start with, unlike other programs that require an upfront purchase or
+  subscription.
+        Figma plays nicely with other popular tools, like Sketch and Adobe XD, so you
+  can bring files created in those tools over to Figma without issues.
+
+    But, by far, the biggest motivation behind using Figma is that it’s a browser-based design
+    tool, which makes it universally accessible. As long as you can open websites on your
+    device, you can use Figma, whether you have a Mac, a Windows computer, a Linux
+    machine or even an iPad!
+
+    While Figma comes with a fairly minimal interface and toolset, it has powerful features
+    that make rapid prototyping and iteration extremely easy. When designing, you want to
+    explore as many alternatives as possible and iterate over them quickly. You don’t want
+    your creative exploration to get bogged down by tedious revisions and adjustments.
+    Learning how to harness Figma’s features will help you get more done with less effort.
+
+    In this chapter, you’ll go over Figma’s interface, look at its fundamental features and play
+    with the different tools and options to get a feel for how they work.
+
+    Now, it’s time for your introduction to Figma.
+     Exploring the Figma interface
+     Log in to Figma, if you haven’t yet. Then create a new Draft. Figma’s UI has four
+     distinct sections:
+
+1.        The canvas: The main area in the middle of the screen, where you’ll work.
+2.        Layers panel: Located on the left side, the Layers panel houses all your screens
+   and the components that make them.
+3.        Properties panel: Find this panel on the right side of your screen. You’ll use it to
+   tweak and change the attributes — height, width, color, etc. — of the different elements
+   you’ll work with.
+4.        Toolbar: This sits on top of the screen as a horizontal strip. You’ll find the basic
+   building blocks used to create designs — shapes, texts, frames, etc. — on the toolbar
+   alongside options to navigate your workspace and access Figma’s preferences and files.
+
+
+
+
+     Now that you’ve gotten a look at the Figma interface, it’s time to create the frame where
+     your design will live.
+
+
+
+     Starting with a frame
+     Frames are central to any design that you create. You can think of them as containers that
+     house the different elements that make up your design.
+
+     Figma ships with frames that mimic the display area of popular devices. For the screens
+     you’ll design in this book, you’ll use iPhone 11 Pro Max as the frame. Select it by
+     pressing F on your keyboard or by clicking Frame in the toolbar, then selecting
+     the iPhone 11 Pro Max option.
+It now shows up in your Layers panel on the left.
+
+
+
+
+Note: The default frame options are handy, but you can always create a custom frame by
+pressing F and clicking and dragging anywhere on the canvas.
+
+Zoom in and out of the canvas by pressing Command/Control and scrolling up or down.
+
+Now that you’ve added a frame to work with, it’s time to learn about another fundamental
+part of Figma: shapes. In the next section, you’ll learn how to work with and style shapes
+by creating a simple sign-up button.
+
+
+
+Adding shapes
+Click the Shape Tools option on the toolbar to reveal the different kinds of shapes
+available.
+Note: If there’s a shortcut available for an option in Figma, it will show up next to the option.
+In this case, the shortcut to add a rectangle is R, for an oval, it’s O, etc. Over time, the more
+you use keyboard shortcuts, the more quickly you’ll navigate through Figma’s options.
+
+Select the Rectangle option (R) and click anywhere inside the iPhone frame you added
+earlier to add the rectangle to your frame. You’ll eventually turn this rectangle into your
+sign-up button.
+
+
+
+
+Note: Whenever you add a layer to a frame, you’ll also see that layer enclosed inside the
+frame in the Layers panel on the left.
+
+To modify the rectangle’s size, drag the four handles on the corners or edit the height and
+width in the Design tab of the Properties panel on the right. Move the rectangle by
+clicking and dragging it.
+Note: When using the handles to manipulate a shape’s size, hold Shift to maintain the
+proportions. Holding Shift while dragging a shape will allow you to move it in straight lines
+horizontally or vertically.
+
+Change the size of the rectangle to 252x55 and give it a corner radius of 8.
+Click the + icon in the Fill section of the Properties panel and select a fill of #087FA5.
+This gives the shape a nice blue color.
+Note: A fill fills a shape with a specific color. A stroke colors the shape’s border. The stroke
+width determines the thickness of the border.
+
+For the final touch, click the + icon in the Effects section and give your button a drop
+shadow. Use the default values of the drop shadow for now.
+
+
+
+
+Now, press T and click inside the shape to add a text layer to the frame. Type Sign up.
+
+In the Text section of the Properties panel on the right, change the font to Rubik. Use a
+font-weight of Medium and a font size of 18. In the Fill section below, select #000000 as
+the fill color.
+
+Your canvas should look like this:
+Note: Figma comes with the entire Google Fonts library, you just have to search for the font
+by name.
+
+Now that you’ve put the basic elements of a button in place, it’s time to learn about
+alignment.
+
+
+
+Aligning layers
+The first row in the Properties panel is made up of six alignment options. These options
+help you align your layers with respect to either your frame or to each other.
+
+
+
+
+Select the text layer and click the Align Horizontal Centers option. This will align your
+text layer to the horizontal center of the frame.
+Next, click Align Vertical Centers to align the text layer with the vertical center of the
+frame. Note that this will move the text outside of your shape. Don’t worry, you’ll fix that
+in a moment.
+
+
+
+
+To be sure the vertical positioning is correct, validate it by checking the positioning of the
+layer. Select the text layer and bring your mouse outside the text layer while still within
+the frame, then press Alt/Option. Red lines will appear on all four sides of the text field,
+showing the distance from the frame edges on all four sides.
+Now, do the same for the rectangle.
+
+
+
+
+Once both the text layer and rectangle are in the frame’s center, you’ll group them so you
+can move them together as one.
+
+
+Grouping layers
+To group the layers, select the text layer, press and hold Shift, then click the rectangle.
+You can see that both layers are selected in the Layers panel on the left.
+
+Once you’ve selected both layers, right-click and select Group Selection or
+press Command/Control-G.
+Now, you can move both layers collectively.
+Note: You can use the four arrow keys to move shapes and groups around in increments of 1.
+This is extremely helpful when you want to align things precisely. To move in increments
+of 10, hold down the Shift key while you press the arrow keys.
+
+There are four more alignment options, which you should play around with. They let you
+position your shapes to the left, top, right and bottom with respect to each other or the
+enclosing frame.
+
+Now that you know a bit about how to add elements to your design, it’s time to create a
+beautiful login screen for your app.
+
+
+
+Creating Cinematic’s login screen
+You’ll now leverage your knowledge of shapes, text and properties to create the
+following screen:
+Change the fill of the text layer you created earlier to white and change the text to I’m
+new to Cinematic. You will notice that the text no longer fits within the rectangle.
+
+
+
+
+You could fix the alignment of the rectangle and the text, but wouldn’t it be nicer to have
+buttons that resize automatically?
+
+This is where one of Figma’s most powerful features comes into play: Auto Layout.
+
+
+Auto Layout
+Auto Layout lets you create frames that adapt to the size of their contents. This makes it
+easy to create responsive UI elements.
+Press Command/Control-Z and change the text back to Sign up, then make sure your
+text and rectangle are horizontally and vertically aligned. Once that’s done, select the
+group and click the + icon under the Auto Layout section of the Properties panel to add
+Auto Layout. You can also use the keyboard shortcut: Shift-A.
+
+
+
+
+Visually, nothing’s changed — but your button is now an Auto Layout frame that
+dynamically resizes based on the text.
+
+To test it, change the text to I’m new to Cinematic again. You’ll see your button grow
+automatically while respecting the alignment.
+
+
+
+
+You’ll use Auto Layout quite extensively in this book. But for now, it’s time to set up
+your login screen’s layout.
+
+
+Creating a grid layout
+The login screen’s final design has a grid of movie posters in the background with a
+gradient overlay. There are two posters per row.
+
+Start setting this up by adding a rectangle (R) to the frame. Give it a width of 414/2 —
+half of the width of your frame — and a height of 283.
+Note: Figma supports arithmetic expressions in the fields that accept numeric input. Use this
+handy feature to create elements with precise dimensions.
+Select this rectangle, then press and hold Alt/Option and drag it to the right to create a
+duplicate.
+
+
+
+
+Now, select both of the rectangles and duplicate the row vertically three times so you
+have eight rectangles in total. Your last two rectangles might go out of the frame, as
+shown in the screenshot below.
+That’s because, if a shape’s dimension exceeds the frame bounds, it gets added to the
+canvas but stays outside the frame. To fix this, just select the two rectangles outside of the
+frame bounds in the Layers panel and drag them back into the frame.
+
+Select all the rectangles you just created and put them in a group. Then rename the group
+to posters-grid by double-clicking the name in the Layers panel.
+
+While you’re at it, rename the button frame to sign-up-button and move the layer above
+the posters-grid layer to make it visible. Your Layers panel will look like this when
+you’re done:
+Now that you have your grid set up, you’ll fill it in with gorgeous movie poster images.
+
+
+Adding images to the background
+Press and hold Command/Control and click the rectangle on the top left. From the Fill
+section, click the fill color and from the drop-down menu at the top-left of the pop-up,
+click Image.
+
+
+
+
+Click the Choose image button in the middle of the pop-up and navigate to the movie-
+images folder in your downloaded project files for this chapter.
+Pick any image and close the pop-up, then repeat the same process for all the other
+rectangles until you fill the grid with images.
+
+Once done, click the lock icon next to posters-grid in the Layers panel. Locking a layer
+prevents you from accidentally changing it or moving it out of place.
+
+
+
+
+Next, you’ll add a background color to make the images blend together seamlessly.
+
+
+Adding a gradient
+To create a gradient background, add a rectangle to the frame and give it a size
+of 414×896, which is the size of your frame, then place it at X = 0 and Y = 0. Place this
+layer between the sign-up-button and posters-grid layers and name it gradient.
+Now, from the Fill section’s drop-down, click Linear to give this layer a linear gradient.
+
+
+
+
+Select the left handle in the gradient slider and give it a color
+of #018AA8 and 50% opacity. Then select the right handle in the gradient slider and give
+it a color of #060D31 and 100% opacity.
+Your gradient layer will look like this:
+
+
+
+
+Displaying the Cinematic name
+Next, add a text layer above the gradient layer and enter Cinematic, the name of the app.
+Give this layer a fill color of white, a font size of 77, and use the Pacifico font with
+a Regular weight. Add a drop shadow to this layer, using the default values, by clicking
+the + in the Effects section and selecting Drop Shadow. Finally, align it horizontally to
+the frame and position it 204 from the top by entering 204 in the Y field of the Properties
+panel.
+
+
+
+
+At this point, you have nearly all of the elements you need for your log-in screen.
+Congratulations!
+
+
+Adding a sign-in button
+The last piece you need on this screen is the sign-in button. You’ll add that now.
+
+First, place the sign-up-button at a margin of 119 from the bottom.
+
+
+
+
+Now, add another text layer with the text Sign in. Give it a font size of 16 and use
+the Rubik font with a font-weight of Medium. Give this layer a fill color of white.
+
+Align it horizontally and position it 36 below the sign-up-button by using the arrow
+keys. Remember, you can always see how far one layer is from another by using
+the Alt/Option button while the layer is selected.
+Group the two buttons and rename the group: buttons-group. Position this group 64 from
+the bottom edge of the frame and align it horizontally. Remember to use
+the Alt/Option key to check the positioning.
+
+Congratulations! You now have all the elements of your log-in screen in place. Next,
+you’ll do some polishing to ensure the screen always looks great.
+
+
+
+Constraining the layers
+Right now, the log-in screen looks great. But what happens if you use a different device
+than the one you selected for your frame? The design will shift out of place if the screen
+size is different.
+
+Since you always want the buttons to be on the bottom part of the screen, you can
+use constraints to configure the button group so that no matter what your frame or device
+size is, the group always aligns itself to the bottom.
+
+Constraints are another powerful feature in Figma. They allow you to configure how your
+objects and layers are positioned relative to one another, across different frames or screen
+sizes.
+
+Constraints, along with Auto Layout, are concepts that iOS developers will already be
+familiar with, but using them in Figma doesn’t translate exactly to how they work in
+code.
+
+Auto Layout and constraints do similar things in both environments, letting you build
+responsive and adaptive UIs. For Android Developers, Constraint Layout offers
+constraint and Auto Layout features.
+
+Click the frame and decrease the height to 759. You’ll notice that the buttons get cut off.
+Reset the frame to its original height and select buttons-group. From
+the Constraints option in the Properties panel, Select Left & Right for the horizontal
+constraints and Bottom for the vertical constraint.
+
+
+
+
+Do the same for the Cinematic layer and pin its position to the top of the screen.
+
+Now, modify the frame height and you’ll see the button group and Cinematic layers retain
+their positions, no matter the size of the frame.
+
+And that’s it! Reset the frame to its original height of 896. Your screen in its final state
+will look like this:
+3
+App TeardownsWritten by Prateek Prasad
+In the last chapter, you explored Figma’s workspace and built a sign-in screen using
+Figma’s fundamental shapes.
+
+Before diving deeper into Figma and building more screens, you’ll now go through an
+app teardown exercise to study the discovery screens of two popular apps: Airbnb and
+Pocket Casts.
+
+Part of developing your style and an eye for good design is drawing inspiration from
+other apps. Doing teardowns helps you understand why things were built the way they
+were, while also building your understanding of common layout patterns and design
+decisions.
+
+Tearing down an entire app is beyond the scope of this chapter. Instead, you’ll limit your
+focus to Airbnb and Pocket Casts’ discovery experience. [TODO: FPE: “Discovery
+experience” doesn’t mean anything to me. Will it be clear to our readers, or should we
+use another term?]
+
+The primary motivation behind picking these two apps is that their design is consistent
+across both iOS and Android. This helps you look at the broader picture without delving
+too much into platform-specific nuances.
+
+
+
+Loading the starter file
+Start in Figma’s Files screen, then drag chapter-3-starter.fig into the main Figma
+window to import it. This file is in your downloaded materials under Chapter-
+3/projects/starter.
+
+Alternatively, click the Import button at the top right to navigate to the file and import it.
+Open the imported project. You’ll see two screenshots that you’ll trace in this exercise.
+
+While the two apps are drastically different, they’re built on the same principles and
+patterns. Sure, they use different typography, color palettes and layouts to establish their
+visual identity and brand. But, by looking at each app more closely, you’ll notice the
+repeated patterns and common building blocks that their designers used to build these
+screens.
+
+
+Tracing Airbnb’s explore screen
+First, you’ll focus on the Airbnb app. To make it easy to notice the patterns, you’ll focus
+on one section of the app and break it down. In this case, you’ll trace the list.
+
+Start with the Top sellers section, which has two distinct elements: the section header and
+the horizontal scrolling list of cards. This section is repeated vertically across the screen
+for different categories.
+    Focus on the card element. It consists of:
+
+          Header image with a status tag and a Favorite button
+          Ratings
+          Name
+          Details
+          Pricing
+Now that you understand the composition, you can see that the screen is made up of only
+a few unique elements. What differentiates each instance is the data it represents.
+
+This will become even clearer once you trace out the entire screen. Instead of replicating
+the app, you’ll trace the component boundary to create a low fidelity scaffold. The goal is
+to gain insights into structure and layout, not to clone the UI.
+
+In the airbnb-trace frame, select the screenshot image, reduce its opacity to 10% in the
+Layer section of the Properties panel, then lock the layer. This will make your trace easier
+to see.
+
+Select the rectangle tool, then trace over the first section’s heading. In the Fill section of
+the Properties panel, remove the fill for this rectangle by clicking the - icon and give it a
+stroke instead so you can see the element boundaries. Give it a corner radius of 8.
+Do the same with the first image card, giving it a corner radius of 16.
+
+
+
+
+Now, use rectangles to trace the four vertical text sections and give them each a corner
+radius of 8.
+
+To make this even more effortless, use Auto Layout to maintain the margins while you
+create the repetitions. You can duplicate a shape by selecting it in the Layers panel and
+pressing Command/Control-D.
+
+When you’re done, group (G) all the layers that make up the card.
+
+Now that you’ve created one instance of this trace, you can duplicate the group for other,
+similar items in the section. Make sure that they’re aligned correctly!
+
+Once one section is complete, group (G) the list with the section header. Take note of
+how you’re composing smaller elements into larger components that you can reuse.
+Repeat the tracing for the remaining three sections of the screen, then hide the screenshot
+altogether and look at the trace now. Notice how the section header rectangles visually
+divide the list, even without the data.
+
+
+
+
+The layout amplifies the screen’s core structure, which, aside from the navigation bar on
+top, is made up of only two components!
+
+
+Tracing Pocket Casts’ discover screen
+While the Pocket Casts screenshot doesn’t look as straightforward as Airbnb, this method
+will still work!
+
+Unlike Airbnb, Pocket Casts uses different section styles to surface different things within
+the same list. The app uses a total of five section styles. Check them out:
+Most apps with a scrollable feed of items compose multiple item types to create a list. For
+this exercise, you’ll go top-down and trace the list sections, one by one.
+
+Start by reducing the screenshot’s transparency and locking the layer.
+
+For the top section, Featured, trace over the thumbnail. Give it a stroke, remove the fill,
+and change the corner radius to 4. Do the same for the other text elements in the section,
+giving them each a corner radius of 8.
+
+
+
+
+Next, trace the Trending section’s heading and the Show All text, then group (G) them
+into a header. You can reuse this header component across multiple other sections of the
+screen.
+Trace over the list items, group them (G) and name the group list item. Use Auto Layout
+to duplicate the trace, adjusting the width of the text layers accordingly.
+
+
+
+
+Now, trace race the Sponsored section and group it (G).
+
+
+
+
+Note: It’s a good practice to maintain a top-down visual order in your Layers panel, which
+means that sections and items that appear first on the screen should be on the top of the
+Layers list. That makes it easy to find elements when you have to search through many layers
+and items in each frame.
+
+The Guest List section is interesting. Trace the rectangle backdrop, giving it a corner
+radius of 8. Next, trace the avatar image, giving it a stroke width of 4 and placing the
+stroke outside. Make sure your avatar layer is on top of the backdrop layer.
+
+
+
+
+You may notice that, since the shapes have no fill, the backdrop’s stroke is visible
+through the avatar circle. That looks a little out of place.
+
+To fix this, first select the circle and give it a fill. Now, select the circle and the backdrop
+and click the Boolean operations’ drop-down on the toolbar. Finally, click Subtract
+Selection.
+
+
+
+
+You’ll notice that the circle gets punched out of the backdrop.
+Boolean operations help you cut one shape out of the other or combine them in different
+ways. Take a moment to play with them to get a feel of how they work.
+
+Now that you’ve punched out the avatar, create a new avatar circle on top of the
+subtracted layer with the same properties you used earlier.
+
+
+
+
+Trace out the text layer and group (G) this section. Call this group guest-list.
+
+If you’ve been organizing your groups as suggested earlier, your Layers panel should
+look like this:
+For The Little Ones section, follow the same approach as you did with the Airbnb
+horizontal scrolling list. Trace out the first card and then use Auto Layout to construct the
+list.
+
+
+
+
+For the Network Highlight section, duplicate the Guest List section and adjust the trace
+boundaries.
+Finally, for the Popular in United States section, duplicate the Trending section.
+
+
+
+
+Now, hide the screenshot entirely and analyze the repetition. Unlike Airbnb, Pocket Casts
+reuses smaller building blocks across components. They also stagger their repetitions.
+Great job completing the app teardowns! By leveraging your knowledge of basic shapes,
+you traced these screenshots and uncovered the fundamental pieces used to build the
+screens.
+
+A large part of each app’s experience was crafted by standing on the shoulders of
+reusable components with unique data. This exercise lets you see this in practice.
+
+This is a significant realization at this stage, and you’ll find that most apps work this way.
+
+As you dive into future chapters, this idea will become more apparent. While you’re at it,
+you’ll also learn techniques that will help you fly through Figma.
+
+In the next chapter, you’ll start wireframing the screen layout and work on the app flow
+for the Cinematic app.
+4
+Wireframing & Screen LayoutWritten by
+Prateek Prasad
+In the previous chapter, you went over Figma’s basic shape and styling options and used
+them to create a sign-in screen. You also went through an app teardown exercise to
+uncover common patterns across two popular apps. In the process, you learned how to
+reuse and compose simple building blocks to create unique design variations.
+
+Figma has many more tools to offer, which you’ll look into eventually. For now,
+however, you’ll leverage the skills you picked up in the last chapter to start laying the
+foundation for your movie app, Cinematic.
+
+In this chapter, you’ll start wireframing the app and build a scaffold that you’ll flesh out
+in the upcoming chapters.
+
+
+
+The importance of wireframing
+Wireframing is essential in UI design. It allows you to give structure to your ideas and
+materialize them. Wireframing exposes the rough edges in your thoughts early on so you
+can iterate them without time-wasting changes and revisions.
+
+Diving directly into creating high-fidelity mockups that look and feel real might seem
+tempting at this stage, and for good reason. But you are going to start with wireframes as
+working in low-fidelity helps prevent wasting time and effort.
+
+Wireframing is particularly crucial when working in a cross-functional team because it
+lets key stakeholders get involved early in the ideation phase to discuss different
+approaches. It opens up the discussion about which direction to take and promotes
+collaboration. Your collaborators don’t need to know how a specific tool works to
+provide valuable input.
+
+When you’re wireframing an app, it’s essential to keep customization and styling to a
+bare minimum. Wireframes need to be generic enough to allow for rapid iteration and
+exploration while still having critical building blocks in place to define the foundation of
+the core experience. This stage in design focuses more on function and less on form.
+
+Establishing the core flow and functional structure with wireframes will allow you to
+modify and tune the app’s cosmetic aspects in the future. In the chapters that follow,
+you’ll build on top of the wireframe, adding the finer details and polish like establishing a
+palette and a typographic scale.
+
+
+
+Defining the app’s concept
+    Before you turn to the drawing board, it’s helpful to define the idea you’re working
+    toward.
+
+    In this case, you’re building a movie tracking app that lets users curate a list of movies
+    they want to watch and gives details about the movie, like the cast, genre, duration,
+    ratings and so on.
+
+    From the intent above, you can break down the app into a few key features. It should:
+
+          Display a list of movies.
+          Show the movie details.
+          Let the user bookmark/favorite a movie.
+
+    Breaking the broad idea down into smaller features helps you focus on them one at a time
+    without worrying about the big picture.
+
+    Now that you have defined these key features, you’ll tackle them one by one. As you
+    work, you’ll keep the details and finish in the wireframes low-fidelity so you can change
+    things around quickly and create multiple iterations.
+
+    Launch Figma and create a new file. Add a new frame to the canvas by pressing F and
+    selecting the iPhone 11 Pro Max frame. Name the file cinematic-wireframe by clicking
+    on an empty spot in the canvas and then clicking on the file name in the toolbar.
+
+
+
+
+    Designing the movies list
+    For the first iteration, you’ll create a conventional list, like the ones you’ve seen in most
+    of the apps you use. The list item will have five components:
+          Movie poster
+          Movie name
+          Metadata (release year, director, etc.)
+          Genres
+          Rating
+
+    Start building this screen by adding a 414×224 rectangle (R) for the movie list item
+    container, then removing the fill and adding a black stroke. Align the rectangle to the top
+    and left of the frame by either moving it manually or by setting the X and Y fields to 0 in
+    the properties panel. Finally, name the frame container.
+
+    Now, add another rectangle (R) for the movie poster measuring 125×192. Remove the
+    fill, and add a black stroke. Switch to the Line Shape Tool (L) and add two diagonal
+    lines. Align the ends of each line to the corners of the rectangle to create an x. Group the
+    rectangle and diagonal lines and name the group movie-image.
+
+    Position movie-image inside the container on the left side. Give it a margin of 16 on the
+    left, top, and bottom from the sides of the container by moving it manually or by setting
+    the X and Y fields to 16 in the properties panel. Your list item should look like this:
+
+
+
+
+    Adding the movie name
+    For the movie name, add a text layer (T) with SpiderMan Far From Home, a font size
+    of 24 and the font Roboto-Regular. Name this layer movie-name, align it to the left
+    of movie-image with a left margin of 32, a right margin of 32 and a top margin of 16.
+Adding the metadata
+For the next row, which contains the movie metadata, add a text layer (T) with 2019 to
+denote the movie release year. Give it a size of 14 and use the font Roboto with
+a Regular weight.
+
+Then, duplicate the release year layer and change the text to 1h 42 min denoting the
+movie’s duration. Select both these text layers and create an Auto Layout (Shift-A). In the
+Auto Layout Properties, select Auto Height and a horizontal spacing of 12. Add another
+text layer (T) in the layout with Cathy Yan, denoting the director.
+
+The Auto Layout with the three text layers should look like this:
+
+
+
+
+Name the Auto Layout movie-info and place it below movie-name with a top margin
+of 16.
+
+
+Adding genres
+For the genres row, create a rectangle (R) measuring 51×18 with a default fill. Now, add a
+text layer (T) on top of the rectangle with the text set to Action, a font size of 12 and the
+font Roboto-Regular. Align the text to the rectangle horizontally and vertically. With
+both layers selected, change the constraints to center.
+Next, with both layers selected, create an Auto Layout (Shift-A) and name it genre. This
+makes the background rectangle resize according to the text width.
+
+Duplicate genre and change the text to Drama. Place the duplicated genre to the right of
+the Action genre with a margin of 8. Now, select both genre auto layouts and create
+another Auto Layout (Shift-A) to create a row. Name this auto layout genres. Duplicate
+one of the genre auto layouts and change the text to Fiction. Notice that the margin and
+constraints stay consistent.
+
+Place the genres row below the movie-info row with a top margin of 16.
+
+
+
+
+Adding ratings
+For the rating row, select the Star from the Shape Tools menu.
+Add a 20×20 Star with a fill color of black. Duplicate this layer five times and, with all
+five star layers selected, use Auto Layout (Shift-A) to create a row of five stars.
+Select Horizontal alignment and add a margin of 8 between each star. Change the fill
+color of the fifth star to gray. Finally, name this auto layout rating.
+
+Here’s what it should look like:
+
+
+
+
+Place this row below the genres layer with a top margin of 16.
+
+Group all the layers in your frame and name it movie-list-item. Duplicate the movie-list-
+item four times and, with all four groups selected, use Auto Layout (Shift-A) and name
+the result movies-list. Inside each movie-list item, change the name of the movie
+accordingly.
+
+This list can be a category of movies like trending, top-rated, etc. In this app, you’ll
+display two types of movies along with a user-curated favorites section. You can reuse
+the list across the different sections to a great extent, but you’ll need a way to navigate.
+
+
+Creating the navigation
+Start by adding a 414×52 rectangle (R) with a default fill and a black stroke to the frame.
+Align it to the bottom of the frame and place it on top of the movies list. This rectangle
+will serve as a container for the navigation destinations.
+On top of this rectangle, add a 36×36 ellipse (O) with a fill of #7A7575. Align the ellipse
+vertically with the rectangle and place it to the rectangle’s left with a margin of 29.
+
+
+
+
+Duplicate the ellipse and align the new ellipse horizontally to the rectangle, placing it in
+the center. Select the two ellipses and use Auto Layout (Shift-A).
+
+Duplicate the ellipse one more time, giving you three ellipses representing the three
+destinations. Because the first two ellipses are using Auto Layout the third ellipse should
+automatically be positioned to the right side of the navigation container.
+
+Group the rectangle and the ellipses and name the group bottom-navigation.
+
+
+
+
+Great job creating your first wireframe! Even though this screen isn’t fleshed out with
+real data, you can see a preliminary structure taking form.
+    Looking at the wireframe you just created, you’ll notice that certain elements will
+    probably stay the same across different variations, for example:
+
+          The movie poster element
+          The rating row
+          The genres row
+
+    You’d make the overall iteration much faster by extracting them so you can reuse them.
+    It’s time to take a quick detour and learn about another powerful Figma feature.
+
+
+
+    Components
+Components in Figma are UI elements that you can reuse across multiple design files.
+They allow you to create consistent designs and make changes quickly.
+
+A great way to visualize this is to consider the rating row in your current wireframe.
+Imagine you’ve created ten different wireframes that show the ratings in the form of stars.
+Each of these iterations has seven movie cards. If you later decide to change the icon
+from a star to a heart, you’d have to make changes in 70 places! That’s a lot of wasted
+time and unnecessary changes.
+
+This is where components shine. They let you create consistent elements once, then reuse
+them. When you make changes, you only need to modify them in one place and those
+changes will reflect across files.
+
+You’ll try this out by converting the movie image, genre row, the rating row and the
+navigation bar into components.
+
+
+Creating your components
+Before creating your components, take a moment to organize things by breaking them up
+on a different frame. Press F and create a new Macbook frame, which you’ll find under
+the Desktop category in the Frames menu. Name this frame components.
+
+Note: You’re using a Macbook frame just because it is a good size to work in, not because
+we will be making a wireframe for a Macbook app. You also could have just created a
+custom frame and set the size to something large enough to provide ample working space.
+
+
+
+
+Now, copy one of the movie-list-item groups to the components frame, then right-click
+and select Ungroup. You can now freely move the individual elements that make up the
+list item around the canvas.
+Duplicate the movie-image group, then click on the Create Component option from the
+toolbar on top. Alternatively, you can right-click on the group and click Create
+Component.
+
+
+
+
+Nothing has changed visually, but if you look at the Layers panel, the movie-image group
+now has a new icon shaped like four diamonds. This icon denotes that the group is now a
+component.
+
+
+
+
+Repeat the same process for the genres and rating groups, duplicate them and clean up
+their placement on the canvas so it’s easy to differentiate between individual components
+on the frame.
+Copy over the bottom-navigation group and create a component for it as well.
+
+
+Implementing your components
+Now, in the components canvas, rebuild the movie-list-item card by replacing the movie-
+image, genre, and rating groups with the components you just created.
+
+To reuse a component, duplicate it by holding Alt/Option while clicking and dragging it,
+or click on the Assets option in the Layers panel to see a list of all your components, as
+shown below.
+Drag and drop the components you select from the Assets panel into the canvas.
+
+Once you’ve replaced the movie-image, genres, and rating groups with components,
+regroup the movie-list-item layers you ungrouped previously. Name this group movie-
+list-item and then turn it into a component. Here’s how the component will look in the
+Layers panel.
+Note: An instance of a component has a single diamond icon, while the main component has
+a four-diamond icon.
+
+Your canvas should now have five reusable components, including the movie-list-item,
+which is made up of smaller components. Here’s what your components frame should
+look like:
+
+
+
+
+Now, it’s time to use the components you just created to clean up the wireframe. In the
+process, you’ll see how powerful they are.
+
+
+Trying out the components
+Create a new iPhone 11 Pro Max frame (F) and name it movie-list-wireframe. Add
+a bottom-navigation component to this frame by dragging it from the Assets panel then
+align it to the bottom of the frame. Set the bottom navigation constraints
+to Left and Bottom.
+
+Now, add four instances of the movie-list-item component to the frame. Change the
+movies’ names, and while selecting all four movie-list-item components, use Auto
+Layout (Shift-A). Name this auto layout movie-list.
+
+Time for some magic! On the components frame, select the movie-image component and
+give it a fill of #DAD7D7. As soon as you add a fill to the main component, notice that
+all instances immediately reflect the change.
+    Now, select the individual genres in the genres component and give them a corner radius
+    of 12. You will notice that all genre rows now use a rounded rectangle.
+
+
+
+
+    Components are a powerful feature that makes iteration and revisions extremely fast. The
+    next chapter goes into components in more depth and uses them far more extensively. If
+    you like what you saw here in this brief introduction, you’ll enjoy working with
+    components in the next chapter.
+
+
+
+    Reviewing the current list implementation
+    The list looks good, but before proceeding, it’s important to spend some time with the
+    wireframe and see how it fits in the grand scheme of things. This is also a good time to
+    refine your ideas and see if your strategy needs any course correction.
+
+    You started with the idea of building a movie tracking app that lets users curate a list of
+    movies they want to watch and that gives details about the movie.
+
+    You then broke down the idea into the overarching goals of:
+
+          Showing a list of movies.
+          Showing details about a movie (synopsis, cast, etc.).
+          Adding the ability to bookmark/favorite a movie.
+
+    The breakdown was a great starting point, but it leaves many unanswered questions about
+    the app’s function.
+
+          Are the movies sorted by release dates or ratings?
+           Does the user have an option to modify the list using filters?
+           What if the user has already seen a movie? How do we prevent showing the
+    viewed movie again?
+           Does the concept of favorites make sense in this app, or should we pivot to
+    calling it bookmarks, or wishlist?
+           Where do the ratings come from?
+           Does the year and duration of a movie make sense to show on the card? How
+    does that information influence the user’s decision to bookmark a movie?
+           Is the information on the list enough for the user and if so, is a detail screen even
+    required?
+
+    These questions are difficult to answer because, while some are purely related to design
+    and usability, others require input from the engineering teams and more detailed user
+    research to figure out what might or might not work. Cross-team collaboration is vital to a
+    successful app.
+
+    In an actual product development lifecycle, instead of assuming the user’s preferences
+    and requirements, you’d involve those users in development via surveys and studies.
+    Doing user research and feedback not only validates your assumptions but also provides
+    valuable insights into how they perceive what you’ve built and whether it works for them.
+
+    It’s important to understand that wireframing isn’t the only iterative cycle in product
+    development. While wireframing helps you realize the app’s core foundation, the final
+    form it takes is heavily influenced by user feedback. This cycle of iteration ▸
+    prototyping ▸ feedback repeats with every new feature addition and redesign.
+
+    Prototyping is covered in detail in Chapter 8, “Transitions & Animations” and in Chapter
+    9, “Feedback & Testing”, you learn about how to test your designs and get feedback from
+    stakeholders.
+
+
+    Making some decisions
+    Since this chapter’s scope is focused on wireframing, you’ll just go over the questions
+    above and think about the solutions so you can iterate over the design and continue
+    making progress.
+
+          Are the movies sorted by release dates or rating?
+
+    By default, the list is sorted by release date. This will make sure new releases show up at
+    the top of the list.
+
+          Does the user have an option to modify the list using filters?
+
+    The initial ideation phase didn’t include this feature, but it makes a lot of sense to allow
+    users to filter the list based on their preferences.
+         What if the user has already seen a movie? How do we prevent showing the
+    viewed movie again?
+
+    The user can curate a list of movies they want to watch. This curated list will be a
+    separate section of the app. A bookmarked movie can be marked as seen, which will
+    prevent it from appearing on the main list.
+
+           Does the concept of favorites make sense in this app or should we pivot to
+    calling it bookmarks or wishlist?
+
+    While the behavior is the same, calling the feature Add to watchlist makes more sense. It
+    also provides a clear description of what it does, compared to the other options.
+
+          Where do the ratings come from?
+
+    The ratings come from an external source, like IMDB or Rotten Tomatoes. This is one of
+    the decisions that the engineering and product teams have more influence over.
+
+          Does the year and duration of a movie make sense to show on the card? How
+    does that information influence the user’s decision to bookmark a movie?
+
+    The release year influences the sorting order, and the duration might be important in
+    certain circumstances. If you have a two-hour flight coming up, you’d plan to watch a
+    movie that fits your flight duration. This is an assumption at this point, but user feedback
+    would help validate and refine the idea.
+
+          Is the information on the list enough for the user and if so, is a detail screen
+    even required?
+
+    The list shows information at a glance, but a user’s decision to watch a movie also
+    depends on many other factors. Some users like seeing the trailer before deciding, while
+    others are picky about the actors. Some even like to spoil it for themselves by reading the
+    plot.
+
+    These richer pieces of information are tough to squeeze inside a list, so a detail screen
+    makes sense. The detail screen also gives you space to promote sponsored content
+    tailored to the user’s preferences, if the need arises.
+
+    Now that you have some actionable answers, revisit the movie list screen. As of now, the
+    only piece missing is an option to filter the list.
+
+
+
+    Filtering the list
+    Your next step is to add a button to surface the filter options.
+
+    In movie-list-wireframe, add an ellipse (O) measuring 55×55 with a default drop shadow
+    and fill.
+Place this button on the bottom-right of the frame, above the bottom-navigation layer.
+Give it a margin of 32 from the right and bottom and name the layer filter-button.
+
+
+
+
+Constrain the button to the Right and Bottom so it adapts to frame size changes.
+
+
+
+
+Instead of taking the user to a different screen, it’s more convenient to display the filter as
+a dismissable option in the list screen. The user can filter the list based on genre, release
+year, duration and director.
+
+Duplicate the movie-list-wireframe frame and name it movie-list-wireframe-filter.
+Delete the filter-button from this frame.
+
+Lock the movies-list and bottom-navigation layers since you aren’t going to make any
+changes to them.
+
+Now, add a rectangle (R) to this frame measuring 414×896 above both layers. Reduce the
+opacity of this layer to 70%, name it filter-background and lock the layer.
+Here’s how your layer arrangement should look at this point:
+
+
+
+
+Add a rectangle measuring 414×448 and give it a white fill. Constrain this layer to
+the Center and Bottom and name it filter-sheet. This sheet will house the options to
+filter the list.
+
+
+
+
+Add a text layer (T) on the filter-sheet layer with the text Genre. Use Roboto-Regular as
+the font with size 18. Place it at a margin of 16 from the top and left and name the
+layer filter-header.
+Add a genres component and place it below the filter-header at a margin of 16 from the
+top and left.
+
+
+
+
+Duplicate the modified genres component three times to get a total of 12 genres, as
+shown below.
+
+
+
+
+Repeat the process to create the release year, duration and director filter categories.
+Here’s how it should look when you’re done.
+    You did a great job building a good chunk of the filter UI on your own. If you’re unsure
+    about the margins and positioning of the different filter categories and their options, you
+    can refer to the final project file, chapter-3-final.fig, and see how they look in the
+    finished project.
+
+    The list screen now offers the ability to filter the movie per the user’s preferences.
+
+    Ideally, when wireframing a feature or a screen, you’d build at least three to four
+    alternatives and compare them against each other. This helps you uncover areas that need
+    further polish.
+
+    But for now, you’ll move on to working on the movie details UI.
+
+
+
+    Designing the movie detail screen
+    The detail screen involves a few more bits than the list screen does. This screen will
+    show:
+
+          All the information from the movie-list-item
+          The movie synopsis
+          Cast details
+          Movie ratings
+          An “Add to watchlist” option
+
+    You’ll reuse most of the information from the movie-list-item on this screen. Add
+    an iPhone 11 Pro Max frame (F) to the canvas. Name the frame movie-details-
+    wireframe
+
+    Add a movie-image component at a margin of 40 from the top, and change the dimension
+    to 174×262. Align it horizontally to the frame.
+
+    Copy over the movie-name and movie info text layers from one of the previous frames
+    and change the movie-name text alignment to Text-Align Center.
+
+    Place the movie-name below the movie-image with a margin of 40 from the top. Be sure
+    to keep everything horizontally centered in the frame.
+
+
+
+
+    Place the movie-info layer below the movie name, horizontally centered, at a margin
+    of 32 from the top. Now, add the genres and rating components to the frame. Place the
+    genres below movie-info and the rating below the genres. Give both a margin of 24.
+    You’ll notice they are quite small for the screen.
+
+    Select the genres and press K to enter Scale mode. Alternatively, you can
+    select Scale from the toolbar at the top of the screen.
+Drag the corner handles of the genre row and increase the dimensions
+to 218×23 approximately.
+
+Note: Scale may increase your dimensions in decimal values, so you might not get
+precisely 218×23. Don’t worry about it, as long as you are close enough to this dimension.
+Remember, this is a mock-up, and things don’t need to feel perfect at this stage.
+
+
+
+
+Now, select the rating row and scale the dimension to 237×36. Make sure all layers added
+to the frame so far are horizontally aligned.
+
+
+
+
+Next, add a text layer (T) for the synopsis. Don’t worry about displaying an actual
+synopsis here. You can now use placeholder text to get a feel of how things will look with
+real data in place. A great website to pick up some placeholder text is http://lipsum.com.
+
+Paste nine lines of text onto the text layer. Name this layer movie-synopsis.
+
+Center the text and horizontally align the layer to the frame. Use Roboto-Regular as the
+font, with a font size of 12. Position the synopsis at a margin of 32 from the rating row.
+For the cast section, add a text layer (T) for the section header with Cast. Name this
+layer section-header.
+
+Use Roboto-Regular font with a font size of 24 and place it at a margin of 64 below the
+synopsis layer and 16 from the left.
+
+
+
+
+At this point, you might have run out of room to add more layers to the frame. Select the
+frame name from the Layers panel and either drag its handles vertically to increase the
+height or manually increase the frame’s height to 1587. This should give you enough
+room to add the remaining sections to the screen.
+
+Now, add a movie-image component and change the dimension to be 63×63. Place it
+below the section header layer at a margin of 24 from the top and 16 from the left. Name
+this layer cast-image.
+Add a text layer (T) for the cast name below the cast-image with a font size of 16 and
+align it horizontally with the cast-image. Use John Doe as the text. Name this layer cast-
+name. Group cast-image and cast-name and call the group cast-member. Duplicate cast-
+member five times and, with all five selected, use Auto Layout (Shift-A) with a
+horizontal spacing of 24. Now, change the name of each cast-member and name this auto
+layout cast-list.
+
+
+
+
+Moving along, duplicate the section-header you created earlier. Change the text
+to Ratings and place it below cast-list with a margin of 64.
+
+To create the rating list, duplicate the cast-name and cast-image you created earlier.
+Place the cast-image below the section-header with a margin of 24 from the top
+and 16 from the left. Vertically align the cast-name to the image and place it at a margin
+of 24 from the left.
+
+Add a rating component and place it below cast-name at a margin of 8 from the top
+and 24 from the left. Group the cast-name, cast-image and rating and name the
+group review-list-item.
+
+Next, duplicate review-list-item four times and, with all four selected, use Auto Layout
+(Shift-A). Select Vertical from the auto layout properties and set Spacing Between
+Items to 32.
+Implementing the “Add to Watchlist” feature
+The last missing piece on this screen is an option to add a movie to a watch list. To do
+this, add a 382×58 rectangle (R) to the screen. Give it a black stroke and a fill
+of #C4C4C4.
+
+Now, add the text Add to Watchlist on a text layer (T) with a font of Roboto-
+Medium and a font size of 24. Center the text on the rectangle and group the elements.
+Name the group favorite-button and place it at the bottom of the screen with a margin
+of 16 from the sides and bottom.
+
+
+
+
+The cast and rating sections are distinguishable at this point, but there’s no grouping of
+the actual movie information. You’ll add a backdrop to fix this.
+
+
+Grouping the movie information
+Start by adding a rectangle (R) measuring 379×590 with a corner radius of 8,
+a black stroke and a fill of #F5F1F1. Call this rectangle backdrop and make it the last
+layer on the Layers panel for this frame. Next, horizontally align it to the frame and
+position it at a margin of 171 from the top.
+Marking movies as seen
+The last thing to do on this screen is to add the ability to mark a movie in the user’s
+watchlist, as seen. This only requires you to add an extra state to the button.
+
+Duplicate the movie-details-wireframe and change the button text to Mark as Seen.
+Once done, you should have two states of the detail screen, as shown below.
+The detail screen looks much better now. The sections of the screen are clearly separated,
+which lets users quickly scan the information, and it offers controls to curate the user’s
+watch list.
+
+Great job with your first wireframe! You just completed one of the essential steps
+towards building a great app. By going through the wireframing process, you built out the
+core of what the app will feel like. Going forward, you have a strong foundation and a
+clear idea of which use cases you’re catering to.
+
+Ideally, wireframing is the stage where developers and designers come together to talk
+out any engineering constraints that might come up during the final implementation. This
+gives the designers a clear picture of the boundaries and limitations they should account
+for.
+Try getting involved in the wireframing process next time you work with your designers.
+They’ll appreciate the early feedback and input, as it’s much easier to iterate and
+incorporate changes at this stage, when the designs are still rudimentary.
+
+In the next chapter, you’ll build on top of these wireframes and add real data to bring the
+screens to life.
+
+
+
+
+5
+Reusable Elements & DataWritten by Prateek
+Prasad
+In the last chapter, you created wireframes for the app and established a well-thought-out
+scaffold. These are essential steps in designing a product. Having set a general direction
+for your team, you’ll now start working on the finer details by fleshing the screens out
+with real data.
+
+Among the more useful features in Figma are components, which you briefly touched
+upon in the last chapter. Even without going into detail, having an overview of
+components helped speed up the iteration.
+
+In this chapter, you’ll take a closer look at components and how you can leverage them to
+create flexible designs. More importantly, you’ll learn the value of reusability when
+building designs — this chapter focuses specifically on building reusable components.
+You’ll also learn how to better organize your components and their variations.
+
+
+
+Visualizing when to use components
+A common question when you start using components is: Which pieces of my screen
+would benefit from being a reusable component? Frankly, it’s not a straightforward
+question to answer.
+
+A lot of this boils down to the idea behind the product and its complexity. The more
+information your app surfaces, the more elements there are on the screen. But that’s not
+all. If there are variations in how you surface similar information, you’ll end up with
+more unique elements on your screen.
+
+You might have noticed this with the app teardown exercises. Airbnb used just two
+components to build the entire screen, whereas Pocketcasts used multiple design
+variations to surface the same information. In both these apps, their underlying
+information was similar, but how they surfaced it varied.
+So how do you decide on the component breakdown? A neat trick is to visualize the
+silhouette of the app. You did this in the teardown exercise. After tracing each screen,
+you hid the screenshot to view the app structure. Hiding the specific information helped
+you analyze how many components the screen uses.
+
+Once you’ve built a wireframe of a screen, it’s easier to notice these details. In the future,
+any time you use an element in more than one place with slight or no variations, you can
+extract it out as a component.
+
+
+
+Getting started
+From the project files for this chapter, load chapter-5-starter.fig into Figma. You can
+drag the file into the Figma window to import it.
+
+Open the imported project. The file contains the movie list and movie details wireframes
+along with the wireframe components.
+
+
+Building the movie list item
+Add a new Macbook frame (F) to the file. Name this frame Posters.
+Add a movie-list-item component to this frame by copying the movie-list-
+item component from the wireframe-components frame. Select the instance, right-click
+and select Detach instance (Option-Command-B/Alt-Control-B).
+
+
+
+
+Once you detach an instance from the main component, it stops behaving like an instance
+that can receive style updates from the main component and starts acting like a regular
+group. You’ll also notice the icon is no longer a diamond and the outline goes from
+purple to blue.
+
+Expand the movie-list-item group, select the movie-image, genre and rating instances
+and detach them from their instance (Option-Command-B/Alt-Control-B)
+
+Here’s how your Layers panel should look at this point:
+Expand the movie-image layer and delete the diagonal lines. Select the rectangle and
+remove the black stroke.
+
+
+
+
+Next, select the movie-image frame and give it an Image fill.
+
+
+
+
+The downloaded files come with a movie-images folder containing posters. Navigate to
+the folder and select the birds-of-prey poster.
+To finish, give the movie-image frame a corner radius of 4.
+
+
+
+
+Customizing the text and fill color
+Next, you’ll change the movie name to “Birds of Prey” and the weight to bold.
+
+
+
+
+Now, select the individual genre items and give them a corner radius of 12.
+
+
+
+
+Change the fill of the genre items to #DBDCB3.
+
+
+
+
+Next, from the rating group, select the first four stars and change their fill to #B3C63F.
+Great job! The list item is coming together nicely. For your final touch, select
+the container layer and remove its stroke. Give it a white fill and a drop shadow
+with X and Y values of 0, a Blur of 2, Spread of 1, and 25% opacity.
+
+
+
+
+Your movie list item should look like this:
+
+
+
+
+The list item you just created looks excellent, but it lacks the wow factor. One of the
+things that are compelling about movies is how bold and expressive the posters are. These
+posters subconsciously create an association with the film.
+
+Think about “Toy Story” and tell me you don’t picture Woody and the gang. Think about
+“Up”, and the first thing that comes to mind is Mr. Fredricksen and his house, floating
+away. Imagery is critical in building an association with the brand.
+
+Your goal in the next iteration is to amplify the movie posters.
+Iterating on the movie list item
+Add a rectangle (R) to the Posters frame measuring 414x263. Click the Fill option on the
+Properties panel and select Image.
+
+
+
+
+From the movie-images folder, pick the birds-of-prey poster. Now, click
+the Fill options, select Crop to adjust the part of the poster that will be visible in the
+rectangle and name this layer movie-image.
+
+
+
+
+Add another rectangle (R) measuring 414x263 on top of the movie image and align it
+horizontally and vertically. Give this layer a Linear Gradient fill.
+Use a black color with an opacity of 8% for the left handle and a color of #111111 and an
+opacity of 100% for the right handle. Call this layer backdrop-gradient. This layer will
+make the text more readable.
+
+
+
+
+Group the two layers (Command-G/Control-G) and call it Poster/Birds of Prey.
+Duplicate the group six times. You’ll need to resize your frame to house all six instances.
+
+Change the movie image for each instance, and follow the Poster/Movie Name naming
+convention. You’ll come back to this naming convention shortly.
+
+Make each group a component by selecting the group, right-clicking, and selecting
+the Create Component option (Option-Command-K/Control-Alt-K).
+Before moving forward, it’s time to do some housekeeping and tidy up your workspace.
+
+
+
+Organizing with pages
+If you keep creating multiple component frames on the same canvas, your workspace will
+eventually get cluttered and difficult to navigate. It’s good practice to continuously tidy
+up your workspace and organize it. As the Boy Scouts say, “Leave the campground
+cleaner than you found it.”
+
+To do so, you’ll use a handy feature in Figma called pages. Pages allow you to add a
+layer of hierarchy in your design files by separating things into their own space.
+
+
+Setting up your pages
+On the Layers panel, click + to add a new page and call it Components.
+If you can’t find the + button, collapse the Pages section by clicking the drop-down
+option, as shown below:
+
+
+
+
+Go back to Page 1 and rename it Cinematic App. Select the wireframe-
+components and the Posters frame on this canvas, cut them (Command-X/Control-X)
+and paste them into the Components page (Command-V/Control-V).
+
+Add another page and call it Wireframes. Cut the movie-list-wireframe and movie-
+details-wireframe from Cinematic App and paste them to Wireframes.
+
+You now have three different pages to organize your designs and their related
+components and iterations. Keeping components, wireframes and the actual designs in
+separate pages makes your working design canvas tidier.
+
+Next, add another Macbook frame (F) to your Components page and name it Movie
+Card. Add the Birds of Prey poster component to this frame. Now, add a text layer (T)
+to this frame with the text Birds of Prey. Use the font Roboto-Bold, font size of 24, and
+text color to white. Place it at a margin of 79 from the top and 16 from the left. Name this
+layer title.
+
+Copy the movie-info layer from the movie-details-wireframe in the Wireframe page
+and paste it below the title layer. Change the font color of the director, duration and year
+text to white. Place the movie-info layer at a margin of 16 from the top and left, aligning
+its left edge to the title.
+
+
+
+
+Reusing and restyling components
+You’ll now create the genre component. Instead of making it from scratch, you’ll reuse
+the wireframe’s genres component and style it.
+
+Create a new frame (F) measuring 250x50. Name this frame Genre and, in the Fill
+section, change the fill to gray.
+
+Now, click the Assets section in the Layers panel to view all the available components.
+
+
+
+
+In the newly created Genre frame, add the genres component. Select the added instance,
+right-click and chose the Detach Instance option (Option-Command-B/Alt-Control-B).
+
+
+
+
+Expand the genres’ Auto Layout frame and select the three genre groups while
+holding Shift to select them all at once.
+
+
+
+
+Apply a corner radius of 10, remove the fill and add a white stroke of thickness 2.
+
+
+
+
+Now, select the three text layers within each genre, give them a white fill and a letter
+spacing of 1, then change the weight to bold. From the Text properties, click the Type
+Details option represented by three dots. Under the Letter Case option, select Upper
+Case.
+Select the genres’ Auto Layout frame, right-click and make it a component by selecting
+the Create Component option (Option-Command-K/Control-Alt-K).
+
+
+
+
+Add the newly created genres component to the movie card and place it at a margin
+of 32 from the bottom and 16 from the left of movie-info.
+
+
+
+
+Creating the rating component
+Moving along, it’s time to build the rating component. Add a new frame (F) to the canvas
+measuring 250x50, give it a black fill and name it Rating.
+
+The black fill makes the rating text visible and helps differentiate between different
+components in the Assets section. Adding separate frames in the canvas for building each
+component, as you’ve done so far, also helps consolidate the elements and their related
+changes into their own section, keeping the Layers panel clean.
+
+Add the rating component you created for the wireframe to this frame and detach it from
+the instance (Option-Command-B/Alt-Control-B). Change the fill color of the first four
+stars to #89E045 and rename the layer to stars.
+
+Add a text layer (T) to the frame with the text 4.2 and place it at a margin of 16 from the
+left. Use the font Roboto-Black, with a font size of 32 and a letter spacing of 1. Align it
+vertically with the stars, separate them by 18 points horizontally and group the two,
+calling it rating. Finally, make this group a component (Option-Command-K/Alt-
+Control-K).
+Add the newly created rating component to the movie card and place it below
+the genres layer at a margin of 16 from the bottom of genres and 16 from the left. Group
+the poster, title, movie info, genres and rating and call this group movie card.
+
+
+
+
+Now, make the movie card group a component (Option-Command-K/Alt-Control-K).
+You can also select the group, right-click and click the Create Component option.
+
+
+
+
+Excellent job with your first fully-fleshed out component! Compared to the original
+version, it’s much more appealing and vibrant. Adding the full-width images gives the
+design more personality.
+Placing the new component in a screen
+It’s time to now use this component in a screen. Go to the Cinematic App page, add a
+new iPhone 11 Pro Max frame (F) to this page and increase its height to 1578. Call the
+frame movie-list.
+
+Add a movie card component to the movie-list frame. To fill up the list, duplicate the
+movie card component six times, then with all 6 cards selected, add a vertical Auto
+Layout (Shift-A).
+
+
+
+
+Make sure the vertical Auto Layout has no padding or spacing, as shown below.
+
+
+
+
+Now, it’s time for some fun! All items in the list represent one movie, “Birds of Prey”.
+You want to showcase multiple movies instead of the same one, over and over. To do so,
+you’ll use the instance swapping ability of components.
+Expand the second instance of the movie card component on the movie list frame, and
+select the Poster/Birds of Prey component.
+
+
+
+
+An instance menu will show up on the Properties panel on the right.
+
+
+
+
+Clicking the Go to Main Component option, which has four diamonds as its icon, will
+take you to the canvas that holds this component.
+To go back to the instance you were previously working on, just click the handy Return
+to instance option that appears at the bottom of your screen.
+
+
+
+
+With Poster/Birds of Prey selected, click the name of the instance in the Instance section
+and the Swap Instance menu will open with a drop-down of all your components. You
+can view your components as a list or as a grid. You can even search for components by
+name.
+From the Swap Instance menu, under the Poster category, select Avengers Endgame to
+swap the poster. Repeat the process of replacing the movie posters for the remaining
+cards and change the movie names to reflect the posters you use.
+
+
+Testing the power of components
+You may notice an abnormality in all six instances after you rename the movie’s title:
+The title text wraps over to the next line, overlapping with the movie info layer.
+There’s a simple fix. Select one of the instances and click the Go to Main
+Component option. Select the title layer and increase the width to 350. Click Return to
+Instance option and your list should now look correct.
+
+
+
+
+This is the power of components. Suppose this were a list of duplicated groups. To fix the
+title’s width, you’d have to make the change on each card individually. Changing the
+poster would also be a multi-step process that you’d have to perform six times. By
+breaking your designs into components, you can make a one-time investment in
+configuration and reap the benefits across your designs.
+
+Your list looks great. It just needs bottom navigation and a status bar on top. But instead
+of making them from scratch, you’ll see how to use third-party UI kits.
+
+
+
+Exploring UI kits & plugins
+When designing a product, it’s easy to get carried away and want to create everything
+from scratch. While that’s always an option, it’s certainly not the most efficient one.
+
+When developing apps, it’s helpful to focus on the app’s core business logic and use pre-
+built APIs and libraries for lower-level things like networking, I/O, etc. You could write
+the entire networking stack yourself, sure. But that has trade-offs, like the impact on the
+release timeline and maintainability over time. The more abstractions you eliminate and
+own yourself, the harder it gets to maintain them.
+
+The same applies to design. There are only a few circumstances where it makes sense to
+build simpler things, like icons, or platform-specific components, like dialogs and status
+bars. For the vast majority of components, you can and should use a UI kit or plugin.
+Doing so takes significantly less effort and lets you focus on more essential things like the
+app’s core experience.
+
+Figma has a lot of handy UI kits and plugins to make your life easier. You can find them
+at https://figma.com/resources.
+
+
+Using a design kit
+For the iOS status bar, you’ll use a design kit.
+Open https://www.figma.com/resources/assets/facebook-ios11-ui-kit/ in a different tab
+and click Open the UI Kit in Figma. The Figma file will open in a new editor.
+Note: Whenever you open a UI kit in Figma from the Figma resources, the file is copied over
+to your Figma account. You’ll find it in your Drafts section.
+
+Now, look for the Status Bar (iPhone X) frame in the Layers panel on the left, copy
+the status bars/iPhone X/status bar/dark component and paste it at the top of
+the movie-list.
+
+
+
+
+Increase the width to 414 and constrain it to the top and horizontal center. Select the Fix
+position when scrolling option to make sure it stays on top when you interact with this
+screen as a prototype.
+    Using an icon set
+    For the navigation bar, you’ll use an icon set.
+
+    Open https://www.figma.com/resources/assets/material-icons-fill/ and click the Open
+    Icon Set in Figma button at the bottom.
+
+
+
+
+    This file contains all of the icons that are part of the Material Design Icons suite. At the
+    moment, you only need four icons so instead of copying over the entire set, just pick the
+    ones you’ll use.
+
+    Create a 150×50 frame (F) and call it Icons, then:
+
+          From the Icons — Action frame, copy the bookmarks_24px icon.
+          From the Icons — Image frame, copy the remove_red_eye_24px icon.
+          From the Icons — Maps frame, copy the local_activity_24px icon.
+          From the Icons — Social, copy the whatshot_24px icon.
+Paste the icons mentioned above into your Icons frame.
+
+
+
+
+Copy the Icons frame and paste it into your components page. Select each icon and make
+it a component (Option-Command-K/Control-Alt-K).
+
+
+Creating the navigation items
+Add a new frame (F) measuring 450×90 and name it Bottom Navigation. Here, you’ll
+place navigation to bring the user to three different types of movies to browse.
+
+Start by adding a rectangle (R) to this frame measuring 414×56. Name this
+layer background.
+
+Give it a fill of white and a drop shadow with a blur of 2. Set all other values to zero.
+
+
+
+
+Now, you’ll set up the navigation to trending movies. Add the whatshot_24px icon.
+Now, add a text layer (T) with the text Trending. Give it a font size of 12 and a weight
+of Roboto-Regular. Place the text below the icon at a margin of 2 from the top and align
+their horizontal centers.
+
+Select the icon and the text, give each a fill of #0045D0, group them (Command-
+G/Control-G) and call the group icon. Add a new rectangle (R) measuring 120×56 and
+name it item-bounds. Align it horizontally and vertically with the icon, group it again
+(Command-G/Control-G) and name it trending. Place the trending group at a margin
+of 25 from the left.
+Next up are the top-rated movies. Duplicate the trending group and call it top-rated.
+Change the icon to local_activity_24px by swapping the icon component as you did in
+the previous section, then change the text to Top Rated. Change the icon and the text
+color to #6D6E70 and make sure to fix the alignment after changing the text.
+
+Finally, you’ll let the user view their watchlist. Repeat this process one more time, name
+the group watchlist, swap the icon to bookmarks_24px, change the text
+to Watchlist and, finally, change the icon and text color to #6D6E70.
+
+
+Implementing the navigation bar
+Now that you have the navigation bar looking the way you want, it’s time to use it in the
+movie list.
+
+Group the trending, top-rated and watchlist layers (Command-G/Control-G) and call the
+group navigation-items. Select the background layer and the navigation-items layer,
+right-click and select Frame selection (Option-Command-G/Alt-Control-G), and name
+it bottom-nav.
+
+For your final step, select the three item-bounds layers, remove their fill and make
+the bottom-nav frame a component.
+
+
+
+
+Return to your movie-list frame and add the bottom navigation component. Constrain it
+to the bottom and horizontal center and select the Fix position when scrolling option.
+Awesome job with the movie list! It looks really good and the app is starting to come
+alive. Next, you’ll work on giving the movie details screen a similarly impressive look.
+
+
+
+Designing the movie details screen
+Moving along, it’s time to build the movie details screen. Add a new iPhone 11 Pro
+Max frame (F) to the screen and name it movie-details. Increase the frame height
+to 1680.
+
+Add the Birds of Prey movie poster to this layer, then right-click and select Detach
+instance (Option-Command-B/Control-B).
+
+Increase the height of both the backdrop-gradient and the movie-image layers to 1107.
+This distorts the image, so fix the problem by changing the image fill option
+from Crop to Fill.
+Drag to change the picture’s dimensions to 486×1207. Group the gradient and the picture
+(Command-G/Control-G), name it backdrop and lock the layer to prevent accidental
+changes.
+
+
+Adding details to the background
+Add a rectangle (R) measuring 414×1314 and place it at a margin of 366 from the top.
+Give it a white fill and call it background-card.
+
+Double-click on the background-card layer to enter Vector Edit mode. You’ll see
+dashed lines on your layer at this point.
+
+
+
+
+Select the top-right and the top-left corners of the rectangle and give them a corner radius
+of 16.
+
+
+
+
+Press the Escape key or the Done button to exit Vector Edit mode. Give this layer
+a default drop shadow and lock it.
+Adding the movie picture
+Add a 157×221 rectangle (R) with a corner radius of 8. Place it at a margin of 16 from the
+left and 323 from the top.
+
+
+
+
+For the fill, select the Birds of Prey image from the movie-images directory and give it
+a default drop shadow. Add a white stroke of width 5 to this layer and name it movie-
+details-image.
+
+
+
+
+Adding the details
+Copy the title and movie info text layers from the movie-card component in the
+Components page, then place them to the right of the movie-details-image with a margin
+of 28 from the movie-details-image.
+
+Change the title fill to black and give it a top margin of 36. Change the movie-info fill
+to #827F7F and place it below the title with a margin of 16 at the top.
+Add the genre component to the frame from the Assets section in the Layers panel and
+place it below the movie-info layer. Give it a margin of 16 on the top and 28 on the left
+from the movie-details-image. Select the individual genre and change the stroke from
+white to #B9C95A.
+
+
+
+
+Similarly, select the individual genre texts and change their fill from white to #B9C95A.
+
+
+
+
+Group the title, movie-info and genre layers (Command-G/Control-G) and name the
+group info. Here’s what it should look like
+    At this point, you may wonder why the title and movie-info layers are not individual
+    components or why you modified the genre component’s colors instead of creating a new
+    component.
+
+    Those are great questions, let’s address them up before proceeding further.
+
+
+    When to use components
+    You could have made the movie-info and title layers into components, but that wouldn’t
+    have any added benefit. Even if they were components, you’d have to:
+
+          Change their fill color.
+          Change their positioning.
+
+    For the genre component, you could have created a separate component with the new fill
+    color, but doing so doesn’t add value because you’ll use that variant in only one place.
+
+    Components shine when they’re reused. If you’re only going to use a variation once or
+    twice, you’re better off using an override on an existing component by modifying its
+    attributes.
+
+
+    Setting up the overview
+    Add a text layer (T) with the text Overview to the movie-details frame. Use Roboto-
+    Bold as the font with a font size of 18. Place it below movie-details-image at a margin
+    of 40 from the top and 16 from the left. Name this layer overview-header.
+Add another text layer (T) for the movie overview. Place this layer below the overview-
+header at a margin of 16 from the top and left side. Copy the text from movie-
+overview.txt into this layer — you’ll find it in the project materials for this chapter.
+Use Roboto-Regular as the font with size 12. Finally, name this layer synopsis.
+
+
+
+
+Using masks
+The synopsis text is way too long to show in its entirety on this screen. It would save
+screen space and look cleaner if you show the first paragraph and allow the user to
+expand to read more.
+
+Another nifty Figma feature, masks, will help you do this.
+
+Think of masks as a stencil placed on top of an existing layer. Only the part of the
+background that’s within the stencil’s cutout region will be visible. You can achieve a
+bunch of nifty effects using masks that would otherwise be pretty difficult.
+Add a rectangle (R) measuring 380×174, place it behind the text and name
+it background. The placement is essential to get this right.
+
+
+
+
+Select both the synopsis and background layers and click the Mask button on the
+toolbar (Control-Command-M/Control-Alt-M).
+
+
+
+
+Alternatively, you can right-click while the layers are selected and select the Use as
+Mask option.
+
+This will clip the text and the rectangle’s icon on the Layers panel will change to a half-
+moon.
+
+
+
+
+It might not seem that impressive because you could have just copied a single paragraph
+for the synopsis — but that would make the text static. Now that the mask height
+influences the text length, you can show as much or as little of the text you want by
+selecting the background layer and modifying its height.
+Fading out the visible text
+Now, you’ll sprinkle some visual flair over this layer by making the text paler as it
+approaches the cut-off point.
+
+To do this, add another rectangle (R) measuring 380×174 inside the mask group, right
+above the synopsis. Name it gradient and give this layer a linear gradient. Instead of
+dragging the handle across the layer, drag it to the center.
+
+
+
+
+Give the left handle a white fill at 0% opacity and the right handle a white
+fill at 100% opacity.
+
+
+
+
+Making the cut-off text readable
+For the final piece of the overview section, add a text field (T) and enter Read More. Use
+the font Roboto-Bold with a font size of 12 and a letter spacing of 3px. Under the Type
+Details option, use Upper Case for the letter casing.
+Move this layer inside the mask group and place it above the gradient. Align it to the
+bottom of the gradient layer and name the mask group overview-text.
+
+
+
+
+Things are looking great! You’re finished with the overview section and ready to move
+on to displaying the cast of the movie.
+
+
+
+Adding the cast section
+Next up, the cast section. Copy the overview-header and change the text to Cast. Place it
+below the overview-text group at a margin of 32 from the bottom of the masked layer
+and 16 from the left. Name it cast-header.
+
+For the cast pictures, you’ll use a third-party plugin from Unsplash.
+
+
+Installing and using a third-party plugin
+Plugins are critical to a designer’s workflow. They help you automate your mundane and
+repetitive workflows, saving time and letting you concentrate on things that are more fun.
+
+You’ll be using the Unsplash plugin to populate the cast section with placeholder actor
+photos.
+
+Head to https://www.figma.com/@unsplash and install the Unsplash plugin.
+
+
+
+Once you get an installation confirmation, head back into the editor and, below the cast
+header, add an ellipse (O) measuring 70×70. Place it at a margin of 24 from the cast-
+header and 16 from the left.
+Duplicate this circle on the right at a margin of 16. Select the two circles and create an
+Auto Layout frame.
+
+
+
+
+Create a total of six instances of the circle in the frame by duplicating them.
+
+
+
+
+Now comes the fun part. Select all the circles in the Auto Layout frame, right-click and
+go to Plugins ▸ Unsplash.
+
+
+
+
+From the pop-up, select Portrait. The circles will populate with actual images. Cool!
+
+
+
+
+Adding the user ratings
+For the user rating section header, repeat the same process as you used for the cast-
+header and change the text to Ratings — 4. Place it below the cast-images at a margin
+of 40 from the top and 16 from the left. Finally, name it ratings-header.
+
+Add a rating component below the cast-images section, to the right of the ratings-
+header. Change the dimensions to 208×38 and change the text color to #727272. Place it
+at a margin of 32 from the top and 16 from the right.
+
+
+
+
+Next, you’ll add details about the people who left the ratings. Add a 35×35 ellipse (O)
+and place it below the ratings-header at a margin of 24 from the top and 16 from the left.
+Name it user-image.
+
+Add a text layer (T) to the canvas. Use a name and date of your choice as the text. Use the
+font Roboto-Regular with a size of 12 and a fill of #727272. Place it below the ratings-
+header at a margin of 24 from the top and 16 from the left of the user-image. Name
+it username.
+
+
+
+
+Add a rating component to the frame. Detach it from its instance (Option-Command-
+B/Control-B), then delete the text layer with the 4.2 rating value.
+
+
+
+
+Select the rating component on the canvas, right-click and select Ungroup.
+Now, select the stars Auto Layout frame, right-click and select Ungroup.
+
+
+
+
+Select the five individual stars in the layer panel, group it back and name the group stars.
+
+
+
+
+Change the dimensions of the stars group to 86×12. Place them below the username layer
+at a margin of 8 from the top and 16 from the user-image.
+
+
+
+
+Change the fill color of the stars to #F1C644
+
+
+
+
+Group (Command-G/Control-G) the user-image, username and stars and call the
+group ratings-row.
+Duplicate it vertically at a spacing of 16 using Auto Layout and then select all the user-
+image layers and use the Unsplash plugin to populate the images. Name the Auto Layout
+frame rating-list.
+
+
+
+
+Adding movie recommendations to the details
+For your next task, you’ll deviate a little from the mock-up. Wouldn’t it be nice to get
+recommendations for other movies within the movie’s details screen? It would go a long
+way toward increasing user engagement within the app.
+
+Go back to the Components page and, on the Movie Card frame, duplicate the movie card
+component and detach it from its instance (Option-Command-B/Control-B). Give it a
+corner radius of 8 and select Clip content.
+
+
+
+
+Select the frame, make it a component (Option-Command-K/Control-Alt-K), and rename
+it movie card/rounded. To make it more convenient to swap instances, rename the non-
+rounded variant to movie card/sharp. Resize the Movie Card frame to trim out any
+unused white space.
+Go back to the Cinematic App page and add a section header with the text You may also
+like. Place it at a margin of 32 from the top and 16 from the left. Name
+it recommendations-header.
+
+Below the recommendations-header, add a movie card/rounded component. Use the
+scale option to resize it to approximately 324×205. Place it at a margin of 16 from the top
+and left.
+
+
+
+
+Duplicate it three times horizontally with a spacing of 16, switch the movie posters as you
+like and change the movie name. Name the row recommendations.
+
+
+
+
+That’s a wrap! You’ve learned about components and how you can leverage them to
+create flexible designs. More importantly, you learned the value of reusability when
+building designs!
+    Why not test your knowledge with the following challenge?
+
+
+
+    Key points
+         Organize components and designs using pages.
+         Use compose components to build larger design elements and, when it makes
+  sense, to create a component.
+         Establishing naming conventions for components helps with instance swapping
+  and logical grouping.
+         The Figma community offers third-party icon sets and plugins to make your job
+  easier.
+
+
+
+    Challenge
+    All you need to finalize this screen is the Add to Watchlist button, a Back button and the
+    status bar. Instead of giving you instructions on creating these elements, I’ll leave that out
+    as a challenge for you. Here’s what they should look like.
+
+
+
+
+    If you get stuck, open chapter-5-final.fig and take a look at how it’s done there.
+
+    Fantastic job building out the movie list and details screens! Your designs are already
+    looking pretty good. While you’re still a few steps away from bringing the app to its final
+    form, you should be proud of how far you’ve come.
+
+    The next chapter will focus on even more nuanced details, like using typography and
+    colors to establish a brand identity and consistency for the app. Till then!
+

@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-label="Comparison table showing which information types are present or omitted in human documentation versus machine specification">
+  <title>Human Documentation vs. Machine Specification: What Each Omits</title>
+  <desc>A two-column comparison grid with eight information type rows. Human documentation is present for rows 1–3 and omits rows 4–8. Machine specification is present for all eight rows. Each cell shows a filled square for PRESENT or a dash for OMITTED.</desc>
+
+  <!-- canvas -->
+  <rect width="960" height="560" fill="#FFFFFF"/>
+
+  <!-- eyebrow + title -->
+  <text x="40" y="48" font-size="13" letter-spacing="1.5" fill="#545454" font-weight="700">FIGURE 12.2</text>
+  <text x="40" y="76" font-family="EB Garamond, Georgia, serif" font-size="26" fill="#121212">Human documentation vs. machine specification: what each omits</text>
+  <line x1="40" y1="94" x2="920" y2="94" stroke="#D4D4D4" stroke-width="1"/>
+
+  <!-- ============================================================
+       TABLE LAYOUT
+       Left col header:  x=40..340   (300px)  Human documentation
+       Center spine:     x=340..620  (280px)  Information type (label)
+       Right col header: x=620..920  (300px)  Machine specification
+
+       Rows: 8 rows × 44px = 352px
+       Table top: y=118, bottom: y=470
+       Row height: 44px
+  ============================================================ -->
+
+  <!-- COLUMN HEADERS -->
+  <!-- Left: Human documentation — light fill -->
+  <rect x="40" y="118" width="300" height="36" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="190" y="141" text-anchor="middle" font-size="13" font-weight="600" fill="#121212">Human documentation</text>
+
+  <!-- Center spine header -->
+  <rect x="340" y="118" width="280" height="36" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="480" y="141" text-anchor="middle" font-size="12" font-weight="600" fill="#545454">Information type</text>
+
+  <!-- Right: Machine specification — ink fill (featured column) -->
+  <rect x="620" y="118" width="300" height="36" fill="#121212"/>
+  <text x="770" y="137" text-anchor="middle" font-size="13" font-weight="600" fill="#FFFFFF">Machine specification</text>
+  <text x="770" y="151" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#D4D4D4">components.json</text>
+
+  <!-- ============================================================
+       ROW DATA
+       Row heights: y_top = 154 + (row * 44)
+       row 0 → y=154, row 1 → y=198, … row 7 → y=462
+       Cell content centered at y_top + 22
+  ============================================================ -->
+
+  <!-- PRESENT mark: 8×8 filled square -->
+  <!-- OMITTED mark: 8×8 hollow square with dashes "—" -->
+
+  <!-- Helper: row fills alternate white / #F5F5F5 -->
+  <!-- Rows 0,2,4,6 = #FFFFFF; Rows 1,3,5,7 = #F5F5F5 -->
+
+  <!-- ROW 0: Component name y=154..198 -->
+  <rect x="40" y="154" width="300" height="44" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="340" y="154" width="280" height="44" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="620" y="154" width="300" height="44" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="0.75"/>
+  <!-- row label -->
+  <text x="480" y="180" text-anchor="middle" font-size="12" fill="#121212">Component name</text>
+  <!-- Human: PRESENT (ink square) -->
+  <rect x="174" y="167" width="10" height="10" fill="#121212"/>
+  <text x="202" y="180" font-size="11" fill="#545454">present</text>
+  <!-- Machine: PRESENT (red square) -->
+  <rect x="754" y="167" width="10" height="10" fill="#C8102E"/>
+  <text x="782" y="180" font-size="11" fill="#545454">present</text>
+
+  <!-- ROW 1: Description y=198..242 -->
+  <rect x="40" y="198" width="300" height="44" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="340" y="198" width="280" height="44" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="620" y="198" width="300" height="44" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="0.75"/>
+  <text x="480" y="224" text-anchor="middle" font-size="12" fill="#121212">Description</text>
+  <!-- Human: PRESENT curated -->
+  <rect x="174" y="211" width="10" height="10" fill="#121212"/>
+  <text x="202" y="222" font-size="11" fill="#545454">present</text>
+  <text x="202" y="234" font-size="10" fill="#545454" font-style="italic">curated for humans</text>
+  <!-- Machine: PRESENT verbatim -->
+  <rect x="754" y="211" width="10" height="10" fill="#C8102E"/>
+  <text x="782" y="222" font-size="11" fill="#545454">present</text>
+  <text x="782" y="234" font-size="10" fill="#545454" font-style="italic">verbatim from Figma</text>
+
+  <!-- ROW 2: Variant dimensions y=242..286 -->
+  <rect x="40" y="242" width="300" height="44" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="340" y="242" width="280" height="44" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="620" y="242" width="300" height="44" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="0.75"/>
+  <text x="480" y="268" text-anchor="middle" font-size="12" fill="#121212">Variant dimensions</text>
+  <!-- Human: PRESENT (example only) -->
+  <rect x="174" y="255" width="10" height="10" fill="#121212"/>
+  <text x="202" y="266" font-size="11" fill="#545454">present</text>
+  <text x="202" y="278" font-size="10" fill="#545454" font-style="italic">example, not complete enumeration</text>
+  <!-- Machine: PRESENT complete enumeration -->
+  <rect x="754" y="255" width="10" height="10" fill="#C8102E"/>
+  <text x="782" y="266" font-size="11" fill="#545454">present</text>
+  <text x="782" y="278" font-size="10" fill="#545454" font-style="italic">complete variantProperties map</text>
+
+  <!-- DIVIDER between present/omitted blocks -->
+  <line x1="40" y1="286" x2="920" y2="286" stroke="#121212" stroke-width="1.5"/>
+
+  <!-- ROW 3: Token alias chain y=286..330 -->
+  <rect x="40" y="286" width="300" height="44" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="340" y="286" width="280" height="44" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="620" y="286" width="300" height="44" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="0.75"/>
+  <text x="480" y="312" text-anchor="middle" font-size="12" fill="#121212">Token alias chain</text>
+  <!-- Human: OMITTED -->
+  <text x="185" y="316" text-anchor="middle" font-size="16" fill="#D4D4D4">—</text>
+  <text x="202" y="312" font-size="10" fill="#545454" font-style="italic">resolved value only</text>
+  <!-- Machine: PRESENT -->
+  <rect x="754" y="299" width="10" height="10" fill="#C8102E"/>
+  <text x="782" y="310" font-size="11" fill="#545454">present</text>
+  <text x="782" y="322" font-size="10" fill="#545454" font-style="italic">full alias path → CSS custom property</text>
+
+  <!-- ROW 4: Node ID y=330..374 -->
+  <rect x="40" y="330" width="300" height="44" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="340" y="330" width="280" height="44" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="620" y="330" width="300" height="44" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="0.75"/>
+  <text x="480" y="356" text-anchor="middle" font-size="12" fill="#121212">Node ID</text>
+  <!-- Human: OMITTED -->
+  <text x="185" y="360" text-anchor="middle" font-size="16" fill="#D4D4D4">—</text>
+  <text x="202" y="356" font-size="10" fill="#545454" font-style="italic">not needed by human readers</text>
+  <!-- Machine: PRESENT -->
+  <rect x="754" y="343" width="10" height="10" fill="#C8102E"/>
+  <text x="782" y="354" font-size="11" fill="#545454">present</text>
+  <text x="782" y="366" font-size="10" fill="#545454" font-style="italic">required for code identity</text>
+
+  <!-- ROW 5: Layout constraints y=374..418 -->
+  <rect x="40" y="374" width="300" height="44" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="340" y="374" width="280" height="44" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="620" y="374" width="300" height="44" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="0.75"/>
+  <text x="480" y="400" text-anchor="middle" font-size="12" fill="#121212">Layout constraints</text>
+  <!-- Human: OMITTED -->
+  <text x="185" y="404" text-anchor="middle" font-size="16" fill="#D4D4D4">—</text>
+  <text x="202" y="400" font-size="10" fill="#545454" font-style="italic">not in human doc</text>
+  <!-- Machine: PRESENT -->
+  <rect x="754" y="387" width="10" height="10" fill="#C8102E"/>
+  <text x="782" y="398" font-size="11" fill="#545454">present</text>
+  <text x="782" y="410" font-size="10" fill="#545454" font-style="italic">raw + sizing mode</text>
+
+  <!-- ROW 6: Spacing values y=418..462 -->
+  <rect x="40" y="418" width="300" height="44" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="340" y="418" width="280" height="44" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="620" y="418" width="300" height="44" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="0.75"/>
+  <text x="480" y="444" text-anchor="middle" font-size="12" fill="#121212">Spacing values</text>
+  <!-- Human: OMITTED -->
+  <text x="185" y="448" text-anchor="middle" font-size="16" fill="#D4D4D4">—</text>
+  <text x="202" y="444" font-size="10" fill="#545454" font-style="italic">"16px" — not token name</text>
+  <!-- Machine: PRESENT -->
+  <rect x="754" y="431" width="10" height="10" fill="#C8102E"/>
+  <text x="782" y="442" font-size="11" fill="#545454">present</text>
+  <text x="782" y="454" font-size="10" fill="#545454" font-style="italic">raw value + token reference</text>
+
+  <!-- ROW 7: Code Connect path y=462..506 -->
+  <rect x="40" y="462" width="300" height="44" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="340" y="462" width="280" height="44" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="620" y="462" width="300" height="44" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="0.75"/>
+  <text x="480" y="488" text-anchor="middle" font-size="12" fill="#121212">Code Connect path</text>
+  <!-- Human: OMITTED (maybe) -->
+  <text x="185" y="492" text-anchor="middle" font-size="16" fill="#D4D4D4">—</text>
+  <text x="202" y="488" font-size="10" fill="#545454" font-style="italic">maybe — rarely included</text>
+  <!-- Machine: PRESENT -->
+  <rect x="754" y="475" width="10" height="10" fill="#C8102E"/>
+  <text x="782" y="486" font-size="11" fill="#545454">present</text>
+  <text x="782" y="498" font-size="10" fill="#545454" font-style="italic">required import path</text>
+
+  <!-- Bottom caption line -->
+  <text x="480" y="526" text-anchor="middle" font-size="12" fill="#545454" font-style="italic">Same component. Different omissions.</text>
+
+  <!-- LEGEND -->
+  <rect x="40" y="514" width="10" height="10" fill="#121212"/>
+  <text x="58" y="524" font-size="11" fill="#545454">present (human doc)</text>
+  <rect x="200" y="514" width="10" height="10" fill="#C8102E"/>
+  <text x="218" y="524" font-size="11" fill="#545454">present (machine spec)</text>
+  <text x="384" y="524" font-size="16" fill="#D4D4D4">—</text>
+  <text x="402" y="524" font-size="11" fill="#545454">omitted</text>
+
+  <!-- CAPTION -->
+  <text x="40" y="548" font-size="13" fill="#545454">Human documentation compresses or omits rows 4–8 as tacit knowledge — a code generator consuming those omissions will guess, and guessing produces wrong code.</text>
+</svg>

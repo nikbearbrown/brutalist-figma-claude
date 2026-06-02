@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" font-family="Inter, Helvetica, Arial, sans-serif">
+  <rect width="960" height="560" fill="#FFFFFF"/>
+
+  <!-- Eyebrow + title -->
+  <text x="40" y="48" font-size="13" letter-spacing="1.5" fill="#545454" font-weight="700">FIGURE 8.2</text>
+  <text x="40" y="76" font-family="EB Garamond, Georgia, serif" font-size="26" fill="#121212">DTCG Token JSON Structure (Annotated Example)</text>
+  <line x1="40" y1="94" x2="920" y2="94" stroke="#D4D4D4" stroke-width="1"/>
+
+  <!-- JSON panel background (light tint) -->
+  <rect x="40" y="116" width="360" height="310" fill="#F4F4F4" stroke="#D4D4D4" stroke-width="1"/>
+
+  <!-- JSON content in JetBrains Mono -->
+  <!-- Line by line, aligned left inside panel -->
+  <text x="60" y="148" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">{</text>
+  <text x="60" y="170" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">  <tspan fill="#121212">"color"</tspan><tspan fill="#545454">: {</tspan></text>
+  <text x="60" y="192" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">    <tspan fill="#121212">"brand"</tspan><tspan fill="#545454">: {</tspan></text>
+  <text x="60" y="214" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">      <tspan fill="#121212">"primary"</tspan><tspan fill="#545454">: {</tspan></text>
+  <text x="60" y="236" font-family="JetBrains Mono, monospace" font-size="13">
+    <tspan fill="#545454">        </tspan>
+    <tspan fill="#C8102E">"$value"</tspan>
+    <tspan fill="#545454">: </tspan>
+    <tspan fill="#545454">"#2563EB"</tspan>
+    <tspan fill="#545454">,</tspan>
+  </text>
+  <text x="60" y="258" font-family="JetBrains Mono, monospace" font-size="13">
+    <tspan fill="#545454">        </tspan>
+    <tspan fill="#C8102E">"$type"</tspan>
+    <tspan fill="#545454">: </tspan>
+    <tspan fill="#545454">"color"</tspan>
+    <tspan fill="#545454">,</tspan>
+  </text>
+  <text x="60" y="280" font-family="JetBrains Mono, monospace" font-size="13">
+    <tspan fill="#545454">        </tspan>
+    <tspan fill="#C8102E">"$description"</tspan>
+    <tspan fill="#545454">: </tspan>
+  </text>
+  <text x="60" y="298" font-family="JetBrains Mono, monospace" font-size="13">
+    <tspan fill="#545454">          </tspan>
+    <tspan fill="#545454">"Primary brand interactive color"</tspan>
+  </text>
+  <text x="60" y="316" font-family="JetBrains Mono, monospace" font-size="13" fill="#545454">      }</text>
+  <text x="60" y="334" font-family="JetBrains Mono, monospace" font-size="13" fill="#545454">    }</text>
+  <text x="60" y="352" font-family="JetBrains Mono, monospace" font-size="13" fill="#545454">  }</text>
+  <text x="60" y="370" font-family="JetBrains Mono, monospace" font-size="13" fill="#121212">}</text>
+  <text x="60" y="392" font-family="JetBrains Mono, monospace" font-size="13" fill="#545454">// written by extract-tokens.mjs</text>
+  <text x="60" y="410" font-family="JetBrains Mono, monospace" font-size="13" fill="#545454">// DTCG W3C Community Group draft</text>
+
+  <!-- ─── Annotation boxes (right side) ─── -->
+  <!-- Each annotation: white box with 1px border, connected by hairline leader -->
+
+  <!-- Annotation 1: key path -->
+  <!-- Circle marker at "color/brand/primary" level — mark the "primary" key -->
+  <circle cx="168" cy="210" r="7" fill="#121212"/>
+  <text x="168" y="214" font-size="9" fill="#FFFFFF" text-anchor="middle" font-weight="700">1</text>
+  <!-- Leader line -->
+  <line x1="175" y1="207" x2="432" y2="162" stroke="#D4D4D4" stroke-width="0.75"/>
+  <!-- Box -->
+  <rect x="432" y="140" width="228" height="46" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="444" y="157" font-size="12" font-weight="600" fill="#121212">Slash-separated key path</text>
+  <text x="444" y="172" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">color/brand/primary</text>
+
+  <!-- Annotation 2: $value field -->
+  <circle cx="137" cy="236" r="7" fill="#121212"/>
+  <text x="137" y="240" font-size="9" fill="#FFFFFF" text-anchor="middle" font-weight="700">2</text>
+  <line x1="144" y1="233" x2="432" y2="214" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="432" y="198" width="228" height="36" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="444" y="214" font-size="12" font-weight="600" fill="#121212">"$value"</text>
+  <text x="444" y="228" font-size="11" fill="#545454">Resolved raw value — no alias refs survive</text>
+
+  <!-- Annotation 3: hex value -->
+  <circle cx="282" cy="236" r="7" fill="#121212"/>
+  <text x="282" y="240" font-size="9" fill="#FFFFFF" text-anchor="middle" font-weight="700">3</text>
+  <line x1="289" y1="233" x2="432" y2="256" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="432" y="244" width="228" height="36" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="444" y="259" font-size="12" font-weight="600" fill="#121212">"#2563EB"</text>
+  <text x="444" y="273" font-size="11" fill="#545454">Hex string; DTCG color type uses hex</text>
+
+  <!-- Annotation 4: $type -->
+  <circle cx="130" cy="258" r="7" fill="#121212"/>
+  <text x="130" y="262" font-size="9" fill="#FFFFFF" text-anchor="middle" font-weight="700">4</text>
+  <line x1="137" y1="257" x2="432" y2="298" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="432" y="286" width="228" height="46" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="444" y="302" font-size="12" font-weight="600" fill="#121212">"$type"</text>
+  <text x="444" y="316" font-size="11" fill="#545454">W3C DTCG type: color · dimension ·</text>
+  <text x="444" y="328" font-size="11" fill="#545454">number · string · boolean · duration</text>
+
+  <!-- Annotation 5: $description -->
+  <circle cx="130" cy="280" r="7" fill="#121212"/>
+  <text x="130" y="284" font-size="9" fill="#FFFFFF" text-anchor="middle" font-weight="700">5</text>
+  <line x1="137" y1="279" x2="432" y2="356" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="432" y="344" width="228" height="36" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="444" y="359" font-size="12" font-weight="600" fill="#121212">"$description"</text>
+  <text x="444" y="373" font-size="11" fill="#545454">Populated from Figma variable description</text>
+
+  <!-- Annotation 6: outer nesting -->
+  <circle cx="55" cy="148" r="7" fill="#121212"/>
+  <text x="55" y="152" font-size="9" fill="#FFFFFF" text-anchor="middle" font-weight="700">6</text>
+  <line x1="62" y1="145" x2="432" y2="410" stroke="#D4D4D4" stroke-width="0.75"/>
+  <rect x="432" y="398" width="228" height="36" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <text x="444" y="413" font-size="12" font-weight="600" fill="#121212">Outer { } nesting</text>
+  <text x="444" y="427" font-size="11" fill="#545454">Nested object mirrors slash hierarchy</text>
+
+  <!-- Caption -->
+  <text x="40" y="480" font-size="13" fill="#545454">A single DTCG-format color token as written by <tspan font-family="JetBrains Mono, monospace">extract-tokens.mjs</tspan>: the slash-separated nesting path mirrors the Figma variable name,</text>
+  <text x="40" y="496" font-size="13" fill="#545454">and the three $-prefixed fields carry the resolved value, declared type, and Figma variable description.</text>
+</svg>

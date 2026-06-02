@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter, Helvetica, Arial, sans-serif">
+  <rect width="960" height="620" fill="#FFFFFF"/>
+
+  <!-- eyebrow / title -->
+  <text x="40" y="48" font-size="13" letter-spacing="1.5" fill="#545454" font-weight="700">FIGURE 9.1</text>
+  <text x="40" y="74" font-family="EB Garamond, Georgia, serif" font-size="26" fill="#121212">The asset export pipeline with operational hazards</text>
+  <line x1="40" y1="92" x2="920" y2="92" stroke="#D4D4D4" stroke-width="1"/>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#121212"/>
+    </marker>
+    <marker id="arrowgray" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#545454"/>
+    </marker>
+    <marker id="arrowred" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#C8102E"/>
+    </marker>
+  </defs>
+
+  <!-- ── MAIN FLOW NODES (left column, x=40–270) ── -->
+
+  <!-- Node 1: asset-manifest.json (source, gray fill) -->
+  <rect x="40" y="108" width="230" height="54" fill="#D4D4D4" stroke="#121212" stroke-width="1.5"/>
+  <text x="155" y="130" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" fill="#121212">asset-manifest.json</text>
+  <text x="155" y="150" text-anchor="middle" font-size="11" fill="#545454">node IDs · formats · output paths</text>
+
+  <!-- Node 2: Batch image request -->
+  <rect x="40" y="188" width="230" height="54" fill="#FFFFFF" stroke="#121212" stroke-width="1.5"/>
+  <text x="155" y="210" text-anchor="middle" font-size="13" font-weight="600" fill="#121212">Batch image request</text>
+  <text x="155" y="230" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">GET /v1/images — 50 nodes/batch</text>
+
+  <!-- Node 3: Receive expiring URLs -->
+  <rect x="40" y="268" width="230" height="54" fill="#FFFFFF" stroke="#121212" stroke-width="1.5"/>
+  <text x="155" y="290" text-anchor="middle" font-size="13" font-weight="600" fill="#121212">Receive expiring URLs</text>
+  <text x="155" y="310" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">&#123; [nodeId]: url | null &#125;</text>
+
+  <!-- Node 4: Download immediately (emphasized — primary critical action) -->
+  <rect x="40" y="348" width="230" height="54" fill="#FFFFFF" stroke="#C8102E" stroke-width="3"/>
+  <text x="155" y="370" text-anchor="middle" font-size="13" font-weight="600" fill="#C8102E">Download immediately</text>
+  <text x="155" y="390" text-anchor="middle" font-size="11" fill="#545454">URL expires — no deferred download</text>
+
+  <!-- SVGO conditional diamond -->
+  <polygon points="155,422 195,444 155,466 115,444" fill="#FFFFFF" stroke="#121212" stroke-width="1"/>
+  <text x="155" y="448" text-anchor="middle" font-size="10" fill="#121212">SVG + svgo:true?</text>
+
+  <!-- Node 5: SVGO post-process (YES path, shown below diamond) -->
+  <rect x="40" y="482" width="230" height="54" fill="#FFFFFF" stroke="#121212" stroke-width="1.5"/>
+  <text x="155" y="504" text-anchor="middle" font-size="13" font-weight="600" fill="#121212">SVGO post-process</text>
+  <text x="155" y="524" text-anchor="middle" font-size="11" fill="#545454">if svgo: true in manifest</text>
+
+  <!-- Node 6: Integrity check -->
+  <rect x="40" y="552" width="230" height="44" fill="#FFFFFF" stroke="#121212" stroke-width="1.5"/>
+  <!-- shared node — flows from both yes and no branches -->
+
+  <!-- ── RIGHT COLUMN: Integrity check + Write + PR flow offset ── -->
+  <!-- We need more height, restructure: place nodes 6-8 to the right for space -->
+
+  <!-- Actually let's route NO path and YES path to node 6 below -->
+  <!-- Node 6 placed below the SVGO node -->
+
+  <!-- Integrity check label inside the box already drawn -->
+  <text x="155" y="574" text-anchor="middle" font-size="13" font-weight="600" fill="#121212">Integrity check</text>
+  <text x="155" y="588" text-anchor="middle" font-size="11" fill="#545454">empty? malformed? wrong magic bytes?</text>
+
+  <!-- ── MAIN FLOW ARROWS ── -->
+  <!-- manifest → batch -->
+  <line x1="155" y1="162" x2="155" y2="186" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- batch → receive -->
+  <line x1="155" y1="242" x2="155" y2="266" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- receive → download -->
+  <line x1="155" y1="322" x2="155" y2="346" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- download → diamond -->
+  <line x1="155" y1="402" x2="155" y2="420" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- diamond YES → SVGO -->
+  <line x1="155" y1="466" x2="155" y2="480" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="161" y="477" font-size="10" fill="#121212">YES</text>
+  <!-- SVGO → integrity -->
+  <line x1="155" y1="536" x2="155" y2="550" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- diamond NO bypass (right side, horizontal then down) -->
+  <polyline points="195,444 240,444 240,574 270,574" fill="none" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="212" y="438" font-size="10" fill="#121212">NO</text>
+
+  <!-- ── RIGHT PANEL: Write + PR ── -->
+  <!-- Node 7: Write to output path -->
+  <rect x="360" y="520" width="230" height="54" fill="#FFFFFF" stroke="#121212" stroke-width="1.5"/>
+  <text x="475" y="542" text-anchor="middle" font-size="13" font-weight="600" fill="#121212">Write to output path</text>
+  <text x="475" y="562" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">mkdir -p + writeFileSync</text>
+
+  <!-- Node 8: Open PR (terminal, black fill) -->
+  <rect x="360" y="440" width="230" height="54" fill="#121212" stroke="#121212" stroke-width="1.5"/>
+  <text x="475" y="462" text-anchor="middle" font-size="13" font-weight="600" fill="#FFFFFF">Open PR</text>
+  <text x="475" y="482" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#D4D4D4">pr branch: figma/asset-update</text>
+
+  <!-- integrity → write (arrow from integrity box right to write) -->
+  <line x1="270" y1="574" x2="358" y2="548" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- write → PR -->
+  <line x1="475" y1="520" x2="475" y2="496" stroke="#121212" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ── NULL RENDER SIDE BRANCH ── -->
+  <!-- from "Receive expiring URLs" right side → Null render box -->
+  <rect x="620" y="258" width="160" height="44" fill="#545454" stroke="#545454" stroke-width="1.5"/>
+  <text x="700" y="277" text-anchor="middle" font-size="11" font-weight="600" fill="#FFFFFF">LOG · SKIP</text>
+  <text x="700" y="293" text-anchor="middle" font-size="10" fill="#D4D4D4">url === null → continue</text>
+
+  <!-- receive → null branch -->
+  <line x1="270" y1="295" x2="618" y2="280" stroke="#545454" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arrowgray)"/>
+  <text x="420" y="274" text-anchor="middle" font-size="10" fill="#545454">null render</text>
+
+  <!-- ── RETRY LOOP ── -->
+  <!-- from batch image request, curved arrow back to itself on the left -->
+  <path d="M 40,215 Q 10,215 10,215 Q 10,250 40,250" fill="none" stroke="#545454" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arrowgray)"/>
+  <text x="4" y="234" text-anchor="middle" font-size="9" fill="#545454" transform="rotate(-90, 4, 234)">429 retry</text>
+  <text x="26" y="260" font-size="9" fill="#545454">wait · max 3</text>
+
+  <!-- ── HAZARD ANNOTATIONS (right-side callouts) ── -->
+
+  <!-- H3: Node ID stability (on manifest) -->
+  <rect x="620" y="100" width="300" height="54" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <rect x="620" y="100" width="3" height="54" fill="#C8102E"/>
+  <text x="632" y="118" font-size="10" font-weight="700" fill="#121212">HAZARD: Node ID instability</text>
+  <text x="632" y="133" font-size="10" fill="#545454">Copy-paste creates new ID — null</text>
+  <text x="632" y="146" font-size="10" fill="#545454">render signals stale manifest entry</text>
+  <line x1="270" y1="135" x2="618" y2="127" stroke="#C8102E" stroke-width="0.75"/>
+
+  <!-- H2: Rate limits (on batch image request) -->
+  <rect x="620" y="178" width="300" height="54" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <rect x="620" y="178" width="3" height="54" fill="#C8102E"/>
+  <text x="632" y="196" font-size="10" font-weight="700" fill="#121212">HAZARD: Rate limits</text>
+  <text x="632" y="211" font-size="10" fill="#545454">Image endpoint rate-limited separately —</text>
+  <text x="632" y="224" font-size="10" fill="#545454">batch to 50, delay 1s between batches</text>
+  <line x1="270" y1="215" x2="618" y2="205" stroke="#C8102E" stroke-width="0.75"/>
+
+  <!-- H1: URL expires (on receive expiring URLs → download) -->
+  <rect x="620" y="340" width="300" height="54" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <rect x="620" y="340" width="3" height="54" fill="#C8102E"/>
+  <text x="632" y="358" font-size="10" font-weight="700" fill="#121212">HAZARD: URL expires</text>
+  <text x="632" y="373" font-size="10" fill="#545454">Download in the same execution —</text>
+  <text x="632" y="386" font-size="10" fill="#545454">not later, not in a separate CI step</text>
+  <line x1="270" y1="375" x2="618" y2="367" stroke="#C8102E" stroke-width="0.75"/>
+
+  <!-- H4: Raw SVG not production-ready (on SVGO node) -->
+  <rect x="620" y="474" width="300" height="54" fill="#FFFFFF" stroke="#D4D4D4" stroke-width="1"/>
+  <rect x="620" y="474" width="3" height="54" fill="#C8102E"/>
+  <text x="632" y="492" font-size="10" font-weight="700" fill="#121212">HAZARD: Raw Figma SVG not production-ready</text>
+  <text x="632" y="507" font-size="10" fill="#545454">Conflicting IDs, Figma-specific attrs —</text>
+  <text x="632" y="520" font-size="10" fill="#545454">SVGO post-processing is not optional</text>
+  <line x1="270" y1="509" x2="618" y2="501" stroke="#C8102E" stroke-width="0.75"/>
+
+  <!-- caption -->
+  <text x="40" y="610" font-size="13" fill="#545454">The pipeline reads a stable manifest, batches image requests, downloads expiring URLs immediately, post-processes SVGs, and verifies integrity — four operational hazards marked at the steps where they apply.</text>
+</svg>

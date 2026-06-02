@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" font-family="Inter, Helvetica, Arial, sans-serif">
+  <rect width="960" height="560" fill="#FFFFFF"/>
+
+  <!-- eyebrow / title -->
+  <text x="40" y="48" font-size="13" letter-spacing="1.5" fill="#545454" font-weight="700">FIGURE 5.2</text>
+  <text x="40" y="74" font-family="EB Garamond, Georgia, serif" font-size="26" fill="#121212">Audit report structure (annotated example)</text>
+  <line x1="40" y1="92" x2="920" y2="92" stroke="#D4D4D4" stroke-width="1"/>
+
+  <!-- ─── PANEL A — Finding object ─── -->
+  <text x="40" y="118" font-family="EB Garamond, Georgia, serif" font-size="14" fill="#121212">Finding object</text>
+  <rect x="40" y="126" width="400" height="280" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="1"/>
+
+  <!-- JSON lines -->
+  <text x="56" y="150" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">{</text>
+  <!-- category -->
+  <text x="56" y="170" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">  "category": "naming",</text>
+  <!-- severity — value in red -->
+  <text x="56" y="190" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">  "severity": </text>
+  <text x="165" y="190" font-family="JetBrains Mono, monospace" font-size="11" fill="#C8102E">"error"</text>
+  <text x="210" y="190" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">,</text>
+  <!-- nodeId -->
+  <text x="56" y="210" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">  "nodeId": "4:12",</text>
+  <!-- nodeName -->
+  <text x="56" y="230" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">  "nodeName": "Color 3",</text>
+  <!-- page (visible, not annotated) -->
+  <text x="56" y="250" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">  "page": "Foundations",</text>
+  <!-- message -->
+  <text x="56" y="270" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">  "message": "Unknown</text>
+  <text x="56" y="284" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">    category \"color 3\".",</text>
+  <!-- suggestion (visible, not annotated) -->
+  <text x="56" y="302" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">  "suggestion": "Rename to</text>
+  <text x="56" y="316" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">    match convention.",</text>
+  <!-- ruleId -->
+  <text x="56" y="334" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">  "ruleId": "NAME001"</text>
+  <text x="56" y="350" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">}</text>
+  <text x="56" y="368" font-family="JetBrains Mono, monospace" font-size="10" fill="#D4D4D4">  // page, suggestion also present</text>
+  <text x="56" y="382" font-family="JetBrains Mono, monospace" font-size="10" fill="#D4D4D4">  // (self-explanatory; omitted above)</text>
+
+  <!-- ─── Callout annotations from Panel A fields ─── -->
+
+  <!-- category callout -->
+  <line x1="230" y1="170" x2="470" y2="155" stroke="#D4D4D4" stroke-width="0.75" stroke-dasharray="4 3"/>
+  <text x="474" y="152" font-size="11" fill="#121212">which check module flagged it</text>
+
+  <!-- severity callout -->
+  <line x1="230" y1="190" x2="470" y2="190" stroke="#D4D4D4" stroke-width="0.75" stroke-dasharray="4 3"/>
+  <text x="474" y="187" font-size="11" fill="#121212">error / warning / info — drives exit code</text>
+
+  <!-- nodeId callout -->
+  <line x1="230" y1="210" x2="470" y2="225" stroke="#D4D4D4" stroke-width="0.75" stroke-dasharray="4 3"/>
+  <text x="474" y="222" font-size="11" fill="#121212">Figma deep-link target</text>
+
+  <!-- nodeName callout -->
+  <line x1="230" y1="230" x2="470" y2="258" stroke="#D4D4D4" stroke-width="0.75" stroke-dasharray="4 3"/>
+  <text x="474" y="255" font-size="11" fill="#121212">human-readable label</text>
+
+  <!-- message callout -->
+  <line x1="230" y1="270" x2="470" y2="292" stroke="#D4D4D4" stroke-width="0.75" stroke-dasharray="4 3"/>
+  <text x="474" y="289" font-size="11" fill="#121212">the finding text</text>
+
+  <!-- ruleId callout -->
+  <line x1="230" y1="334" x2="470" y2="325" stroke="#D4D4D4" stroke-width="0.75" stroke-dasharray="4 3"/>
+  <text x="474" y="322" font-size="11" fill="#121212">stable ID for CI baseline suppression</text>
+
+  <!-- ─── PANEL B — Report envelope ─── -->
+  <text x="40" y="432" font-family="EB Garamond, Georgia, serif" font-size="14" fill="#121212">Report envelope</text>
+  <rect x="40" y="440" width="400" height="88" fill="#F5F5F5" stroke="#D4D4D4" stroke-width="1"/>
+
+  <!-- Envelope JSON -->
+  <text x="56" y="460" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">{</text>
+  <text x="56" y="478" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">  "meta": { "counts": { "error": 12,</text>
+  <text x="56" y="494" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">    "warning": 34, "info": 8 }, … },</text>
+  <text x="56" y="510" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">  "findings": [ … ]</text>
+  <text x="56" y="526" font-family="JetBrains Mono, monospace" font-size="11" fill="#545454">}</text>
+
+  <!-- Envelope callouts -->
+  <!-- meta.counts callout -->
+  <line x1="290" y1="484" x2="470" y2="470" stroke="#D4D4D4" stroke-width="0.75" stroke-dasharray="4 3"/>
+  <text x="474" y="467" font-size="11" fill="#121212">CI reads counts to decide exit code</text>
+  <text x="474" y="481" font-size="10" fill="#545454">also: fileKey, fileName, auditDate, …</text>
+
+  <!-- findings callout -->
+  <line x1="290" y1="510" x2="470" y2="510" stroke="#D4D4D4" stroke-width="0.75" stroke-dasharray="4 3"/>
+  <text x="474" y="507" font-size="11" fill="#121212">full array — one Finding object per item</text>
+
+  <!-- caption -->
+  <text x="40" y="548" font-size="13" fill="#545454">Every finding carries ruleId for stable suppression, nodeId for deep-linking into Figma, and severity for CI exit-code decisions.</text>
+</svg>

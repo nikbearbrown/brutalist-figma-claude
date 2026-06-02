@@ -1,0 +1,1072 @@
+Course of
+Figma
+Santiago Camargo
+Hello☺
+1 - Introduction
+ Let's talk about design.
+What is good design?
+The process is essential
+  It is very common:
+
+
+● Have 6 versions of the same thing
+● All with ambiguous names_final43
+● Nobody has the updated fonts
+   You only need:
+    1 Computer
+ Internet connection
+Your favorite explorer
+?
+:(
+      In summary.
+      Figma is a
+editing tool
+  of online vectors.
+  (With a focus on the
+interface design
+(It's free)
+At the end of this
+you will be able to:
+ Understand all the
+features that
+    offers Figma.
+Collaborate in real time
+   with your team in the
+ co-creation of the design.
+Prototyping your concepts
+with real interactions.
+  Create components
+powerful to optimize
+   your workflow.
+Create living concepts of
+   your own ideas.
+Let's go!
+2 - Interface
+Is the best way to
+ learn to swim?
+Diving
+Download the Desktop App
+https://www.figma.com/downloads/
+  How to start?
+Sign up with your email / Google account
+Name your first team
+➔ View your team's dashboard
+The files exist inside
+of projects and teams.
+
+      Team
+
+        Project
+
+              Files
+
+                  Pages
+Moving files
+
+
+               .sketch bringing
+               Drag and Drop
+               Exporting in .fig
+Our mindset:
+ Open Source
+Overview: file
+Figma has 3 modes:
+
+
+             Design
+             ● Prototyping
+             ● Code
+  On a page there can exist:
+Layers
+   Frames(Artboards)
+   Groups
+   Soil Elements
+       Text
+       Shapes / Vectors
+       Images
+       Gifs
+   Components
+       Instances
+ Understand all the
+features that
+    offers Figma.
+Edit Pages
+Layers
+  How to create a frame?
+"F" or "A"
+Choose a size of
+   device
+And now: the project
+3 - Text
+Using the tool
+     of text(T)
+Properties of the text:
+
+
+                 Source
+                 Color
+                 Size
+Creating text
+
+
+                Tool T
+                T Command
+                Simple click
+                Click and drag
+  Editing text
+
+●Command / Ctrl + B > Bold
+●Command / Ctrl + I > Italicized
+●Command / Ctrl + U > Underlined
+Creation of Styles
+     Text
+Creating a style
+
+
+              ➔ Select element
+              ➔ Select text
+              ➔ Add Style
+              ➔ Select Name
+  What is a style?
+They are global properties of the
+elements that can be reusable to
+over several files and/or projects
+We are going to create
+  a piece of news
+It must contain:
+
+               ●Título
+               Author
+               ●Resumen
+               ●Text Content
+               References
+Let's get to work!
+4 - Objects and Effects
+Creating objects
+
+
+               R for rectangle
+               ➔ The oval
+               ➔ L for lines
+Other items
+
+
+              ➔ Polygons
+              ➔ Stars
+              ➔ Arrows
+  Properties of an object:
+
+Alignment
+Size
+Position
+Rotation
+Edge radius
+●Constraints
+Opacity
+Color
+Organizing Objects
+  Organizing objects
+
+Smart guides
+Smart selection
+Padding between elements
+Show / Hide
+Creating effects
+  Creating effects
+➔ Select element
+Properties panel
+   ◆ Effects
+        ● Inner Shadow
+        ● Drop Shadow
+        ● Layer Blur
+        ● Background Blur
+Let's get to work!
+We are going to create 4 objects
+  at different levels
+    It must contain:
+A   rectangle
+A   circle
+A   polygon
+A   line
+    Everyone with effects
+6 - Guides and grids
+Creating grids
+
+             Select frame
+             Properties panel
+                 Layout Grid
+                     ● Grid
+                     ● Columns
+                     ● Rows
+  Creating guides
+Shift + R
+   To show the rules
+➔ Pull from the vertical or horizontal rule
+   Take it to the target point within the frame
+Let's get to work!
+  We are going to create a
+responsive website
+  Must contain:
+Mobile version
+Tablet version
+Desktop Version
+  Using guides and grid for each
+7- Adding
+  images
+Adding images
+
+
+            Drag and drop
+            ➔ Copy / Paste
+            ➔ File > Place Image
+            ➔ Command + Shift + K
+   Editing images
+Overlay Mode
+    Pass Through
+Inside an object
+    ◆ Fill
+    Fit
+    Crop
+    Tile
+➔ Image adjustments
+    Exhibition, contrast, etc...
+Masks
+What are masks
+
+
+           ➔ Container objects
+             They limit visibility of
+                 the images or
+                 elements in our
+                 composition
+  Creating a mask
+➔ Have at least 2 elements in a frame
+  The object that hides below
+➔ Command + Control + M
+  The object that masks loses its others.
+      propiedades
+   Another way...
+➔ Create a frame within another frame
+  Select 'Clip Content'
+Let’s get to work!
+   Let's create a
+collage with different
+  shapes and images
+  It must contain:
+Minimum 2 types of objects
+Minimum 5 different images
+  ◆ www.unsplash.com
+Together they tell a story
+Selection
+Of Colors
+   Selecting a color
+➔ Selected object
+➔ Properties panel
+  Fill
+  Stroke
+  Effects
+       ● Detail
+➔ Eyedropper tool (i)
+Color modalities
+
+
+               ➔ HEX
+               ➔ RGB(A)
+               ➔ CSS
+               ➔ HSL
+               ➔ HSB
+Gradients
+  Creating a gradient
+➔ Selected object
+➔ Properties panel
+  Fill
+  Stroke
+➔ Select Color
+       ● Linear
+       ● Radial
+       ● Angular
+       ● Diamond
+Creation of Styles
+     of Color
+Creating a style
+
+             ➔ Select element
+             ➔ Select property
+               Fill
+               Stroke
+               Effect
+             ➔ Add Style
+             ➔ Select Name
+Let's get to work!
+Let's create the palette
+ the color of a new one
+        project
+  It must contain:
+➔ Inspirational moodboard
+Minimum 6 colors
+   ◆ 2 Colors for text
+  ◆ 2 Main Colors
+  ◆ 2 Secondary colors
+An applied example on interface
+Vector Networks
+ Operations
+Non-Destructive
+   Building vectors
+➔ P to use the "Pen" tool
+  ◆ Click anywhere to start
+  Escape to abandon
+
+
+
+➔ In Figma, a point can hold an infinite amount of
+   traces that come out from that point
+➔ When you select and move that point, all the
+   traces move with him
+Editing strokes
+              ➔ Stroke
+                Center
+                Inside
+                Outside
+              ➔ Cap
+                ◆ Round -Square - Arrows
+              ➔ Dashes
+Boolean Operations
+Types of operations
+
+
+              ➔ Additions and Subtractions
+                Union
+                Subtract
+              ➔ Combinatorics
+                Intersect
+                ◆ Exclude
+Let's get to work!
+ Let's create a
+Cube and the icon of the
+  tool (P)
+  The cube must contain:
+At least 7 points
+Minimum 9 strokes
+A fill color for the ceiling
+Another color for the bottom part
+  The icon must contain
+Minimum 3 items
+  Triangle
+  Circle
+  Line
+Combinations of these objects with
+   boolean operations
+Import and export
+    elements
+What can be imported?
+
+
+            Figma supports:
+              JPEG
+              ◆ PNG
+              SVG
+              .sketch
+  How to import?
+➔ Drag and drop
+   In files
+   ◆ In projects
+➔ Command + Shift + K
+➔ Import icon
+➔ Copy/Paste from:
+   Sketch
+   Illustrator
+   Other Figma files
+Export elements
+ What can be exported?
+
+Figma can export anything as:
+ JPEG
+ ◆ PNG
+ ◆ SVG
+ How to export?
+Op1
+ Select element
+ Add 'Export' property
+ Define parameters
+     ● JPEG, SVG
+     ● 1X, 2X, 3X
+  How to export?
+➔ Op2
+  Without any active selection
+  ◆ Command + Shift + E
+  Select elements to export
+
+
+➔ Transparent funds
+Can I export a file?
+
+
+               Yes, you can have one
+               offline version in .fig
+                 But for what?
+  Share a file
+➔ Editing permissions
+➔ View of frames
+  Allows creating new parameters of
+      export
+➔ Prototype view only
+  Limits and
+restrictions
+  Father-son relationships
+
+All the elements contained within a
+They are 'child' objects of the container that
+it supports them.
+
+Thus, their restrictions work with
+  based on the behavior of your "father".
+  Restrictions
+An element in Figma may be restricted in its
+horizontal space according to:
+
+   Left
+   Right
+   Left & Right
+   Center
+   Scale
+  Restrictions
+An element in Figma can be restricted in its
+vertical space according to:
+
+   Top
+   Bottom
+   Top & Bottom
+   Center
+   Scale
+And what is this for?
+  Consistency
+Each interface exists within a space
+dynamic and it is important to maintain a logic
+consistent when resizing
+of different objects.
+Let's get to work!
+We are going to create the interface
+ of an app in material
+design for 5 devices
+        different
+  The first frame must
+  to contain
+All the necessary constraints for the
+diseño escale correctamente en cada uno de los
+new devices.
+Creation of styles
+Styles help define:
+              ➔ Propiedades reutilizables
+                 throughout an entire
+                 project or file, such
+                 like:
+                Color
+                      ● Gradients
+                      ● Images
+                Typography
+                ◆ Effects
+                Grids
+Color styles
+
+               ➔ They can be applied within.
+                  de:
+                 Fills
+                 Strokes
+               ➔ They can be done
+                  detach
+                  moment
+Styles of effects
+
+               ➔ They can be applied within.
+                  de:
+                 Objects
+               ➔ They can be detached.
+                  at any moment
+Text styles
+
+              ➔ Only apply for boxes
+                 of text
+              ➔ They can be done
+                 detach in any
+                 moment
+Grid styles
+
+
+              ➔ They apply to be seen inside.
+                 the frames
+              ➔ They can be 'detached'
+                 at any time
+   Properties
+➔ Styles can be published
+  Within shared libraries for reuse
+       over several projects
+       ● They are updated from a master file
+       ● They can be detached from the objects
+       ● They can be updated in all their properties.
+➔ They are global regarding the file
+➔ They are not tied to particular elements
+   Creating styles
+➔ Select element
+➔ Within Fill / Properties
+  Select the 4 points
+  Symbol +
+  Name style
+  Create Style
+➔ To edit, view without selection
+Let's get to work!
+We are going to create a guide
+     new style
+  The style guide must have
+Minimum 5 color styles
+At least 5 text styles
+Minimum 3 grid styles
+Auto Layout
+Let's talk about the box model
+How do we create that?
+consistency?
+
+               ➔ Adding:
+                 Paddings
+                 Margins
+                 Behaviors
+   Auto Layout Properties
+➔ They are frames, not groups.
+➔ Frames have a vertical or horizontal alignment.
+  Elements inside a vertical frame: left, right,
+       center or stretch.
+  ◆ Elements within a horizontal frame: top,
+       bottom, center, or stretch.
+➔ They maintain symmetrical distance patterns between their
+   child elements.
+  Creating Auto Layout
+➔ Select elements
+➔ Shift + A
+➔ Define frame alignment
+   Default depends on existing elements
+➔ Define alignment elements
+➔ Justify the paddings
+   ◆ Padding is automated with midpoints
+➔ Justify distance between elements
+  Editing Auto-Layout
+
+➔ Hide / Show elements
+  This "removes" them from the lineup.
+➔ Reorganization with:
+  ◆ Drag
+  Arrows
+  Icons
+And what is this for?
+   Consistency
+➔ The components of an interface will exist within
+   a box model, regardless of the technology that
+   It is used to code them.
+➔ Replicating that 'box model' on an interface is a
+   gran lugar para empezar a comunicarse mejor con los
+   programmers
+Let's get to work!
+ We are going to create a
+dynamic form
+  The form must have:
+Minimum 4 fields of information
+Minimum 1 button as a call to action
+➔ All content within a large frame of
+   Auto Layout
+Shortcuts
+ (Shortcuts)
+  Different types of shortcuts
+Essentials
+2.Tools
+3.View
+4.Zoom
+5.Text
+6.Forms
+ Different types of shortcuts
+7. Selection
+8. Cursor
+Edit
+10. Transform
+11. Organize
+12. Components
+The most important
+  Essentials
+➔ Show / Hide UI
+  ◆ ⌘ + \
+➔ Choose color
+  ◆i
+➔ Search commands
+  ◆ ⌘ + /
+ Tools
+Movement cursor ( V )
+Create a frame (F)
+Use the pen tool (P)
+Use the pencil ( ⇧P)
+Objects ( R ) ( O ) ( L )
+Lines ( L ) ( ⇧L )
+ Visualization
+Show rules ( ⇧R)
+●Outlines ( ⌘Y)
+●View grids ( ^ G )
+Zoom
+
+       Space + Drag
+       ●Zoom ( + ) ( - )
+       ●Zoom at the
+         selection (⇧2)
+ Text
+Bold ( ⌘B )
+Italic ( ⌘I)
+●Underline ( ⌘U)
+●Create a link ( ⌘K)
+ Forms / Objects
+PenTool ( P )
+  BendTool ( ⌘)
+Pencil ( ⇧P)
+Remove Fill ( ⌘/ )
+●Separate Stroke ( ⌘ ⇧ O)
+ Selection
+Select all ( ⌘A)
+Deep select ( ⌘click)
+●Group ( ⌘G)
+  Ungroup ( ⌘ ⇧ G)
+●Create a frame ( ⌘option G)
+ Editing
+Cut, Copy and Paste ( ⌘X, C, V)
+Duplicate ( ⌘D)
+●Rename ( ⌘R)
+Export ( ⌘ ⇧ E )
+ Transform
+●1 (Opacity at 10%)
+●2 (Opacity at 20%)
+●5 (50% Opacity)
+0 (Opacity at 100%)
+ Organize
+Bring forward ( ⌘])
+Back ( ⌘[ )
+Add Auto Layout ( ⇧A)
+Remove Auto Layout ( option ⇧A )
+Comments in Figma
+  What are they for?
+To encourage the co-creation of products with
+different actors, without the need for everyone
+edit, but allowing their viewpoints
+in threads.
+  Adding comments
+➔(C)
+➔ Click
+➔ Write comment
+➔ Post
+  Involving your team
+➔ @ + Name
+➔ @ + Email
+➔ Replicas
+➔ Mark as resolved
+Why involve the
+team in the process?
+You don't have everything.
+  the answers
+ And your brain is quite limited
+Components
+ What is a component?
+
+They are reusable elements that help to:
+ Achieve greater consistency
+ Optimize speed in changes
+  Creating components
+➔ They can be created from:
+  Frames
+  ◆ Groups
+  Layers
+
+
+➔ (⌘ ⇧K )
+Creating Instances
+  How to create an instance
+
+●Option + Drag component
+● (⌘C ) + (⌘V )
+● Drag from the 'Assets' view
+   Father-Son Relationship
+
+➔ Properties of the master component are
+   they translate in all instances
+Changes regarding the instances are called
+   "overrides" exist for:
+  ◆ Text
+  Fill
+  Stroke
+  Effects
+They cannot be changed
+
+
+            ➔ Size
+            Position
+            Rotation
+            Constraints
+            Layer Hierarchy
+   But the instances can
+   to rebel
+
+➔ (⌘+ Option + B) to separate a
+   instance of your master
+Right-click and 'Reset Instance' to
+   cancel all the overrides you have
+   an instance and revert to the master
+  A component cannot
+  convert into an object
+
+To "detach" the elements of a
+   master component to a normal layer:
+  Create an instance
+  Detach the instance
+  Delete the teacher
+Organizing
+components
+   Organize the components
+➔ For fewer than 7 components, names
+   independents work.
+➔ For more, it is important to create frames and/or
+   pages to group in the differences.
+➔ We can also use " / " to create
+   internal hierarchies.
+  To use swap between instances
+Components
+ compounds
+ Components inside
+ otros componentes
+The most complex interfaces use
+components within components for
+replicate the consistency throughout an entire
+same system.
+  Components inside
+  other components
+Instances allow for flexibility in
+the most complex components, therefore
+it is key to differentiate its different states.
+Let's get to work!
+We are going to create a guide
+     in simple style
+  Must comply with:
+Header maestro
+  To adapt to different sizes
+1 master button
+  3 instances that represent their
+      different states
+1 master form field
+  3 instances for their different states
+Prototyping
+  Why do we prototype?
+➔ To reach a more real version of
+   our intention of code.
+➔ Para probar conceptos y experimentar
+   new ideas.
+➔ To learn about the decisions that
+   we have taken.
+What do we need for
+to prototype?
+
+             Different frames that
+             demonstrate an interaction
+             particular among them.
+                Connect sayings
+                   frames.
+  What do we need for
+  prototype?
+➔ Create the interaction parameters:
+  How it is visualized
+  When does it start?
+  When does it end?
+Scroll Interactions
+   (displacement)
+  We need:
+
+➔ A frame with content higher than the
+  original device.
+
+
+➔ A frame with content longer than its
+  container.
+  Fixed positions in scroll
+
+They are used to delimit elements.
+"sticky" within an interface, like a
+top bar or a fab button.
+Connecting frames
+   Initial position
+
+➔ Select 'Prototype' mode
+➔ Select source element
+  The object from which it will start the
+     interaction
+     ● (e.g.: the button that will be pressed or the
+         carousel that is going to move
+➔ Drag to the destination frame
+  Trigger parameters
+
+➔ None
+➔ On tap
+➔ While Hovering / Pressing
+➔ Mouse Enter / Leave
+➔ Touch Down / Up
+  Action parameters
+
+➔ None
+➔ Navigate to
+➔ Open Overlay
+➔ Swap with
+➔ Back
+➔ Close Overlay
+➔ Open link
+  Animation parameters
+
+➔ Instant
+➔ Dissolve
+Smart Animate
+➔ Move In / Out
+➔ Push
+➔ Slide In / Out
+  Animation parameters
+
+➔ Direction
+➔ Type of animation
+  Ease in / out
+  Ease in and out
+  Linear
+➔ Duration in ms
+➔ Overflow behavior (scrolling)
+  Prototype configuration
+
+➔ Device
+➔ Model
+➔ Background
+➔ Initial frame
+   If a picture is worth
+1000 words, a prototype
+is worth 1000 meetings
+Types of prototypes more
+       used
+Horizontal carousel
+Interactions with Hover
+Bottom Sheets
+Confirmations
+
+
+                x
+Let's get to work!
+   Let's create a
+travel application (v1)
+  Must comply with:
+All frames must remain connected
+At least 1 use of overlays
+At least 1 fixed element
+At least 1 type of scroll used
+   Horizontal
+   Vertical
+Prototyping with Smart
+     Animate⚡
+  How does a
+  element in real life?
+➔ It moves from point A to a
+   point B, taking speed at the beginning and
+   decelerating at the end.
+  What do we need to make
+  a smart animate?
+➔ Two frames with the same amount of
+   frames and their corresponding names
+  One will be point A
+  The other will be point B
+➔ Define an interaction that causes the
+   animation trigger
+  Trigger parameters
+
+➔ None
+➔ OnTap / Drag
+➔ While Hovering / Pressing
+➔ Key / Gamepad
+➔ Mouse Enter / Leave
+➔ Touch Down / Up
+The key is in the rhythm
+  How do we remove elements
+  of an interface
+➔ An element disappears when its
+   opacity moves from 100% to 0%.
+➔ Itcanalsodisappearwith
+   movement, taking it out of the frame.
+  Combining both
+  Recommendations
+
+➔ Name your layers very well
+ This will help you easily identify
+    the different objects that are being
+    moving along the frames.
+  Recommendations
+
+➔ The maximum response time to a
+  action / trigger must be 400 ms.
+ Doherty Threshold
+Let's get to work!
+  Let's improve
+our travel app
+  Must comply with:
+At least 3 interactions of smart
+   animate using triggers:
+  After delay
+  On drag
+  On tap
+Versioning in
+       Figma
+   Is it possible to travel in the
+   time?
+➔ It depends on what your definition of it is.
+   time, Marty.
+  For a file of
+Figma, time is a
+      straight line
+Start of
+project
+
+
+
+A               B
+
+           State
+           actual
+  At any time
+  can we go back to a point
+➔ By means of:
+  ◆ Autosave that Figma does
+  ◆ Manual versions that the user
+     Can you document?
+How to access the version
+history?
+  How to save a version
+  specific to my work?
+➔ (⌘+ Option + S )
+Add title
+Add description
+Save
+  How to restore a version
+  of the file?
+Show version history
+Select version
+Restore this version
+  What is this for?
+
+➔ Multiple team members
+   editing a single file can generate
+   different mistakes
+  Versioning helps to see where
+      the damage was done and reversed
+  What is this for?
+
+➔ Unexpected changes in the development
+   they can ask for everything to be reversed to a
+   previous version
+  It is key that the design can also
+      revert to a previous version for
+      understand the context
+Style libraries and
+   components
+  Why work with styles
+  and components?
+
+➔ Styles:
+  They refer to parameters
+     versatile of a brand.
+
+➔ Components:
+  They refer to the different
+     parts that make up an interface.
+  Both concepts
+they evolve and must
+work in parallel.
+Platzi Dogs
+
+   Enter
+   Reviewing: Styles
+
+➔ A style library contains:
+  Colors
+  ◆ Textos
+  Effects
+  Grills
+Platzi Dogs
+
+   Enter
+H1
+H2
+  Reviewing: Components
+
+➔ A component library contains:
+  Components
+     ● Atoms
+     ● Molecules
+     ● Organisms
+Platzi Dogs
+
+   Log in
+        Platzi Dogs
+
+Enter      Enter
+How to publish a library?
+How to publish a library?
+How to publish a library?
+  How to update a
+  bookstore?
+➔ Every time you make changes to the styles
+   the master components, all of them
+   files that use said libraries
+   they will receive an update.
+How to update a
+bookstore?
+How to update a
+bookstore?
+  How to update a
+  bookstore?
+➔ Click on 'Review'
+➔ Then in 'Update'
+How to publish a library?
+Paid version vs.
+    free
+Plugins
+Extending all the
+    possibilities
+  Types of plugins
+➔ Efficiency
+➔ Organization
+➔ Design
+➔ Animation
+Autoflow
+Blobs
+Blush
+Content Reel
+Feather Icons
+Figma Chat
+Mapsicle
+Stark
+Community (Beta)
+Reusable designs and
+  co-created by the
+     community
+  File types
+➔ Interface Templates
+➔ Style Guides
+➔ Device Mockups
+➔ Tutorials
+➔ Resources for Workshops
+➔ Board Games
+➔ ???
+Ant Design System
+Base Gallery
+Contra Wireframe Kit
+Design Sprint Templates
+Figma Design Principles
+Figma for Education
+TaskLists
+Marvie
+Modern Device Mockup Kit
+Sitemap
+Final Project:
+  Budgetrip
+You finished :-)
+@santiecam
+

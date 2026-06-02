@@ -1,104 +1,84 @@
 # Chapter 6 — Fixing the File with the Plugin API
 
-> "The REST API reads the file. The Plugin API writes it. This is how you apply the audit findings programmatically — with a human in the loop before anything is changed."
+*The audit tells you what is wrong. The plugin is the only tool that can fix it — and why the human in the loop is not optional.*
 
 ---
 
-## The Production Failure
+Forty-five minutes. Eleven variables. Your wrist is starting to complain, and the audit report has 247 items on it.
 
-The audit ran. The report has 247 naming errors. Every one of them is a variable with a name like `Color 4`, `Text Style - Large Bold`, or `Spacing / 8px`. They all need to be renamed to follow the convention from Chapter 4. You know exactly what the new names should be. You have the mapping.
+This is not a time-management problem. It is an architectural one. The Figma REST API — the same API that produced the audit report in Chapter 5 — is read-only for canvas content. You can read every node, every variable, every component description. You cannot change any of them through REST. Write access to the canvas belongs exclusively to the Plugin API: the JavaScript environment that runs inside the Figma editor itself.
 
-You open Figma and start renaming manually. Forty-five minutes later you have fixed eleven variables and your wrist hurts. At this rate it will take a week. Worse: while you are renaming, another designer is adding new variables, and the file is changing under you.
+That boundary is intentional. Understanding why it exists is the first thing this chapter has to explain, because the design of the fix tool follows directly from it.
 
-This is exactly the situation the Plugin API was designed for. You can write a plugin that reads the audit findings, generates the rename mapping, shows you every proposed change in a preview panel, and — only after you confirm — applies all of them at once.
-
-The dangerous word in that sentence is "confirm." Figma does not have undo for plugin writes in the way a text editor does. A bulk rename that touches 247 variables is not easily reversed. The human approval gate is not a UX nicety. It is a safety requirement.
+<!-- → [FIGURE: Diagram showing the architectural split between REST API (read-only, runs outside Figma) and Plugin API (read/write, runs inside Figma editor) — with arrows showing which operations each enables and where the human approval gate sits] -->
 
 ---
 
-## What This Chapter Lets You Do
+## Why REST Can Read but Not Write
 
-After this chapter you can:
+The Figma REST API is a query interface. It answers questions about a file's current state. The Plugin API is the editor interface — it operates on the file with the full authority of the editor itself, meaning changes appear immediately on the canvas and propagate to every other editor in the file via Figma's multiplayer sync. [verify — current REST API write capabilities; as of writing, write operations via REST are limited to comments and a small number of specific endpoints]
 
-- Understand the Plugin API runtime: what it is, what it can do, what it cannot
-- Build `figma-fix-plugin/` — a staged rename and metadata plugin that requires human approval before writing anything
-- Read the audit JSON from Chapter 5 and generate a preview of proposed fixes
-- Apply fixes to variables, component descriptions, and layer names in bulk
-- Recognize which fixes must not be automated and why
+Figma drew this line deliberately. When a script modifies a file through the REST API, nothing about the execution context ensures a human is present or paying attention. When a plugin runs inside the Figma editor, the editor is open, the file is visible, and a human made a deliberate choice to run the plugin. Writes belong in the context where the consequences are visible.
 
-The named CLI artifact for this chapter is `figma-fix-plugin/` — a Figma plugin directory, not a Node.js script. It runs inside the Figma editor, not the terminal. It consumes the `audit-report.json` produced by `figma-audit.js`.
+This reasoning has a practical implication that the plugin in this chapter takes seriously: Figma does not provide batch undo for plugin operations. You can Ctrl+Z individual operations after a plugin run, but if a plugin renames 247 variables in a loop, you cannot reverse that as a unit. The only safe pattern is: preview every proposed change, require explicit human approval, then apply.
 
----
-
-## Diagnosis: Why REST Can Read but Not Write
-
-The Figma REST API is read-only for file content. [verify — current REST API write capabilities; as of 2025, write operations via REST are limited to comments and specific endpoints] You can fetch the document graph, the variables, the components, the styles. You cannot rename a variable, update a component description, or change any canvas property via REST.
-
-Write access to the canvas requires the Plugin API. This is an intentional architectural boundary. The REST API is a query interface; the Plugin API is the editor interface. Figma's reasoning is clear: writes to a file are consequential, and the editor is the appropriate context for them — where a human is present, can see the state of the file, and can stop an operation.
-
-The Plugin API runs inside the Figma editor as a JavaScript sandbox. It has direct access to the document object model — nodes, variables, components, styles — and can modify them. When a plugin writes to a node, the change appears immediately in the canvas. Other editors of the file see the change in real time via Figma's multiplayer sync.
-
-This is why the human approval gate matters. There is no "undo last plugin run" in Figma. There is Ctrl+Z for individual operations, but a plugin that executes 247 renames in a loop cannot be easily reversed as a batch. The only safe pattern is: preview first, approve explicitly, then apply.
+The dangerous word in "apply all" is "all." This chapter builds a plugin that treats it with the caution it deserves.
 
 ---
 
 ## The Plugin API Runtime
 
-Before writing plugin code, understand the environment it runs in. [Source: developers.figma.com/docs/plugins/api/api-reference/]
+The Plugin API runs in a QuickJS WebAssembly sandbox inside the Figma desktop application. [verify — current runtime; Figma has used different sandboxes at different points in its history] The desktop app is required — the plugin sandbox is not available in the browser editor.
 
-**The sandbox:**
-Figma plugins run in a QuickJS WebAssembly sandbox. [verify — current runtime; Figma has used different sandboxes at different times] This means:
+What this sandbox can do: read and write node properties (`name`, `fills`, `strokes`, `opacity`, `visible`, `locked`, `effects`, layout constraints); read and write variable names, descriptions, values, and collection structure; read and write component descriptions; traverse the full document tree; create, delete, and move nodes. [verify — full writable property list and variable write support in current Plugin API release]
 
-- ES2020+ syntax is supported in current Figma plugin builds, but confirm with the Figma plugin bundler requirements at time of development [verify]
-- Browser APIs (DOM, `fetch`, `localStorage`) are not available in the plugin sandbox directly
-- Network access from the sandbox requires using `figma.ui.postMessage` to communicate with the plugin UI frame, which runs in a separate browser context with full browser API access
-- File system access is not available — you cannot read local files directly from the sandbox
+What this sandbox cannot do: access browser APIs directly. There is no `fetch`, no `localStorage`, no DOM. The sandbox can only access the Figma document model through `figma.*`.
 
-**The two-process model:**
-Plugin code runs in two environments that communicate via `postMessage`:
+This creates the two-process model that every non-trivial Figma plugin uses. Plugin code splits into two environments that communicate via `postMessage`:
 
 ```
-Plugin Sandbox (figma.*)     Plugin UI (iframe)
-     │                              │
-     │  figma.ui.postMessage()      │
-     │ ────────────────────────── ► │
-     │                              │
-     │  parent.postMessage()        │
-     │ ◄ ────────────────────────── │
+Plugin Sandbox (figma.*)          Plugin UI (iframe)
+        │                                │
+        │  figma.ui.postMessage() ────► │  (browser APIs available here)
+        │                                │
+        │ ◄──── parent.postMessage()     │
 ```
 
-The sandbox has access to `figma.*` — the document, nodes, variables, components. The UI iframe has access to browser APIs — fetch, DOM rendering, local storage. If your plugin needs to fetch external data (like your audit JSON), it does so from the UI iframe, then posts it to the sandbox.
+The sandbox has `figma.*`. The UI iframe has the browser. If the plugin needs to load external data — like the audit JSON from Chapter 5 — it fetches that data in the UI iframe and posts it to the sandbox. The sandbox applies the changes and posts results back to the UI for display.
 
-**What the Plugin API can do:**
-- Read and write node properties: `name`, `fills`, `strokes`, `opacity`, `visible`, `locked`, `effects`, `layoutMode`, layout constraints [verify — full writable property list in current API]
-- Read and write variable names, descriptions, values, and collection structure [verify — variable write support in Plugin API]
-- Read and write component descriptions and metadata
-- Traverse the full document tree recursively
-- Create, delete, and move nodes
-- Publish changes to team libraries [verify — library publish via plugin requires specific permissions]
+<!-- → [FIGURE: Two-process plugin architecture diagram — sandbox with figma.* on the left, UI iframe with browser APIs on the right, postMessage channel in the middle — annotated with which operations happen where] -->
 
-**What the Plugin API cannot do:**
-- Operate outside the Figma editor (no CLI, no CI runner)
-- Access files other than the currently open file
-- Run on a schedule or respond to webhooks
-- Create or delete Figma accounts or team resources
+This split is not a quirk to work around. It is the plugin model. The approach taken here is to do everything we can in the UI iframe — loading and parsing the audit JSON, generating fix proposals, rendering the preview, managing approval state — and to send only the final approved change list to the sandbox for execution.
 
 ---
 
-## Building `figma-fix-plugin/`
+## The Staged Workflow
 
-### Directory Structure
+The fix plugin follows a strict three-phase sequence. No write happens until Phase 3, and Phase 3 requires explicit human confirmation.
+
+**Phase 1 — Load:** The user pastes the `audit-report.json` produced by `figma-audit.js`. The UI parses it and generates fix proposals for every finding that can be automatically addressed. Findings that require design judgment are excluded — flagged for manual review, not proposed for automation.
+
+**Phase 2 — Preview:** Every proposed fix is displayed with its current value, its proposed new value, and its rule ID and severity from the audit. The user can approve or reject each fix individually. Nothing changes in the Figma file during this phase.
+
+**Phase 3 — Apply:** The user clicks "Apply Approved Changes." A confirmation dialog appears showing the count. After confirmation, only the approved fixes are sent to the sandbox for execution. Results — successes and failures — are reported back to the UI.
+
+Phase 2 is not a courtesy. It is where the human exercises judgment that the tool cannot substitute for. A variable named `Color 4` needs a human to determine that it should become `color/primitive/blue-500` rather than `color/palette/brand-primary` — those are different semantic claims, and the naming convention rules alone cannot make the distinction. Phase 2 is where that decision happens.
+
+---
+
+## `figma-fix-plugin/`
+
+The named artifact for this chapter is a plugin directory, not a Node.js script. It runs inside the Figma editor.
 
 ```
 figma-fix-plugin/
-├── manifest.json          — plugin metadata (name, permissions, entry points)
-├── code.js                — plugin sandbox code (the figma.* operations)
-├── ui.html                — plugin UI (preview panel + approval controls)
-├── ui.js                  — UI logic (bundled separately or inline in ui.html)
-└── README.md              — how to load and use the plugin
+├── manifest.json
+├── code.js
+├── ui.html
+└── README.md
 ```
 
-### `manifest.json`
+### manifest.json
 
 ```json
 {
@@ -114,29 +94,15 @@ figma-fix-plugin/
 
 [verify — current manifest format and required permissions for variable write access]
 
-### The Staged Workflow
+### code.js — The Sandbox
 
-The plugin follows a strict three-phase sequence:
-
-```
-Phase 1 — Load      : Read audit-report.json. Parse proposed fixes.
-Phase 2 — Preview   : Show every proposed change. User reviews. User approves or rejects.
-Phase 3 — Apply     : Apply only the approved changes. Log results. Re-render UI.
-```
-
-Phase 3 does not start until the user clicks "Apply Approved Changes." No write happens in Phase 1 or Phase 2.
-
-### `code.js` — The Sandbox
-
-```js
+```javascript
 // code.js
-// Plugin sandbox — has access to figma.* but not browser APIs.
-// Illustrative code — adapt node traversal to your file structure.
+// Plugin sandbox — accesses figma.* but not browser APIs.
+// Illustrative — adapt to your file structure.
 
-// Show the UI panel (600 × 700 px)
 figma.showUI(__html__, { width: 600, height: 700 });
 
-// Listen for messages from the UI
 figma.ui.onmessage = async (msg) => {
   switch (msg.type) {
     case 'APPLY_FIXES':
@@ -148,25 +114,18 @@ figma.ui.onmessage = async (msg) => {
   }
 };
 
-// Build a map of node ID → node for variable lookups
-// [verify — figma.variables API shape in current release]
 async function buildVariableMap() {
   const collections = await figma.variables.getLocalVariableCollectionsAsync();
   const variableMap = new Map();
-
   for (const collection of collections) {
     for (const varId of collection.variableIds) {
       const variable = await figma.variables.getVariableByIdAsync(varId);
-      if (variable) {
-        variableMap.set(varId, variable);
-      }
+      if (variable) variableMap.set(varId, variable);
     }
   }
-
   return variableMap;
 }
 
-// Apply approved fixes
 async function applyFixes(fixes) {
   const results = { applied: [], failed: [] };
   const variableMap = await buildVariableMap();
@@ -208,16 +167,22 @@ async function applyFixes(fixes) {
     }
   }
 
-  figma.ui.postMessage({ type: 'APPLY_RESULTS', results });
+  figma.ui.postMessage({
+    type: 'APPLY_RESULTS',
+    results,
+    log: {
+      appliedAt: new Date().toISOString(),
+      appliedBy: figma.currentUser?.name ?? 'unknown', // [verify — currentUser property]
+      fileKey: figma.fileKey ?? 'unknown',             // [verify — figma.fileKey availability]
+      changeCount: results.applied.length,
+    }
+  });
 }
 ```
 
-### `ui.html` — The Preview Panel
-
-The UI runs in a browser iframe. It loads the audit JSON (pasted or fetched), generates the fix preview, and controls the approval flow.
+### ui.html — The Preview Panel
 
 ```html
-<!-- ui.html — Illustrative markup. Style as appropriate. -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -247,7 +212,7 @@ The UI runs in a browser iframe. It loads the audit JSON (pasted or fetched), ge
   <div id="preview-section" style="display:none;">
     <p id="summary"></p>
     <div id="fix-list"></div>
-    <button id="approve-all-btn" onclick="approveAll()">Approve All</button>
+    <button onclick="approveAll()">Approve All</button>
     <button id="apply-btn" disabled onclick="applyApproved()">Apply Approved Changes</button>
   </div>
 
@@ -270,13 +235,12 @@ The UI runs in a browser iframe. It loads the audit JSON (pasted or fetched), ge
       }
     }
 
-    // Generate fix proposals from audit findings
-    // Only auto-fixable rules generate proposals.
-    // Rules that require designer judgment (e.g., semantic meaning) are excluded.
+    // Only rules that are deterministically fixable from structure — no design judgment required.
+    const AUTO_FIXABLE_RULES = ['TOK002', 'COMP001'];
+
     function generateFixes(findings) {
-      const autoFixableRules = ['NAME001', 'TOK002', 'COMP001'];
       return findings
-        .filter(f => autoFixableRules.includes(f.ruleId))
+        .filter(f => AUTO_FIXABLE_RULES.includes(f.ruleId))
         .map(f => ({
           id: f.nodeId,
           ruleId: f.ruleId,
@@ -285,28 +249,20 @@ The UI runs in a browser iframe. It loads the audit JSON (pasted or fetched), ge
           currentValue: f.nodeName,
           newValue: proposedValue(f),
           severity: f.severity,
-          approved: null, // null = not yet decided, true = approved, false = rejected
+          approved: null,
         }))
-        .filter(f => f.newValue !== null); // Exclude fixes with no proposal
+        .filter(f => f.newValue !== null);
     }
 
     function fixTypeForRule(ruleId) {
-      const map = {
-        'NAME001': 'RENAME_VARIABLE',
-        'TOK002': 'SET_VARIABLE_DESCRIPTION',
-        'COMP001': 'SET_COMPONENT_DESCRIPTION',
-      };
-      return map[ruleId] ?? null;
+      return { 'TOK002': 'SET_VARIABLE_DESCRIPTION', 'COMP001': 'SET_COMPONENT_DESCRIPTION' }[ruleId] ?? null;
     }
 
     function proposedValue(finding) {
-      // NAME001: generate proposed name. For illustration — real implementation
-      // uses the naming convention rules to suggest a corrected name.
-      // Many NAME001 findings cannot be auto-proposed (ambiguous intent).
-      // Return null if no safe proposal can be made.
-      if (finding.ruleId === 'NAME001') return null; // Require manual input
-      if (finding.ruleId === 'TOK002') return '(no description set — add one manually in this panel)';
-      if (finding.ruleId === 'COMP001') return '(no description set — add one manually in this panel)';
+      // Description rules: flag that a description is needed but require manual input.
+      // NAME001 (rename) is never auto-proposed — the correct name requires design judgment.
+      if (finding.ruleId === 'TOK002') return '(no description — add one in this panel before approving)';
+      if (finding.ruleId === 'COMP001') return '(no description — add one in this panel before approving)';
       return null;
     }
 
@@ -314,88 +270,70 @@ The UI runs in a browser iframe. It loads the audit JSON (pasted or fetched), ge
       document.getElementById('load-section').style.display = 'none';
       document.getElementById('preview-section').style.display = 'block';
 
-      const auto = fixes.filter(f => f.newValue !== null);
-      const manual = fixes.filter(f => f.newValue === null);
-
       document.getElementById('summary').textContent =
-        `${fixes.length} fixable findings. ${auto.length} can be previewed. ${manual.length} require manual input and are excluded from bulk apply.`;
+        `${fixes.length} auto-fixable findings. NAME001 (rename) findings excluded — require manual input.`;
 
       const list = document.getElementById('fix-list');
       list.innerHTML = '';
-
-      for (const fix of auto) {
+      for (const fix of fixes) {
         const div = document.createElement('div');
         div.className = `finding ${fix.severity}`;
         div.id = `fix-${fix.id}`;
         div.innerHTML = `
           <strong>${fix.ruleId}</strong> · ${fix.nodeName}<br/>
-          <em>Proposed: ${fix.newValue}</em><br/>
+          <em>${fix.newValue}</em><br/>
           <button onclick="approve('${fix.id}')">Approve</button>
           <button onclick="reject('${fix.id}')">Reject</button>
         `;
         list.appendChild(div);
       }
-
       updateApplyButton();
     }
 
     function approve(id) {
       const fix = fixes.find(f => f.id === id);
       if (fix) fix.approved = true;
-      document.getElementById(`fix-${id}`).className =
-        `finding ${fix.severity} approved`;
+      document.getElementById(`fix-${id}`).className = `finding ${fix.severity} approved`;
       updateApplyButton();
     }
 
     function reject(id) {
       const fix = fixes.find(f => f.id === id);
       if (fix) fix.approved = false;
-      document.getElementById(`fix-${id}`).className =
-        `finding ${fix.severity} rejected`;
+      document.getElementById(`fix-${id}`).className = `finding ${fix.severity} rejected`;
       updateApplyButton();
     }
 
-    function approveAll() {
-      for (const fix of fixes) {
-        if (fix.newValue !== null) approve(fix.id);
-      }
-    }
+    function approveAll() { for (const fix of fixes) approve(fix.id); }
 
     function updateApplyButton() {
-      const approved = fixes.filter(f => f.approved === true).length;
+      const count = fixes.filter(f => f.approved === true).length;
       const btn = document.getElementById('apply-btn');
-      btn.disabled = approved === 0;
-      btn.textContent = `Apply ${approved} Approved Change${approved === 1 ? '' : 's'}`;
+      btn.disabled = count === 0;
+      btn.textContent = `Apply ${count} Approved Change${count === 1 ? '' : 's'}`;
     }
 
     function applyApproved() {
       const approved = fixes.filter(f => f.approved === true);
-      if (approved.length === 0) return;
-
+      if (!approved.length) return;
       const confirmed = confirm(
-        `You are about to apply ${approved.length} changes to this Figma file.\n\n` +
-        `This cannot be batch-undone. Continue?`
+        `You are about to apply ${approved.length} changes to this Figma file.\n\nThis cannot be batch-undone. Continue?`
       );
       if (!confirmed) return;
-
       parent.postMessage({ pluginMessage: { type: 'APPLY_FIXES', fixes: approved } }, '*');
     }
 
-    // Receive results from sandbox
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
       if (!msg) return;
-      if (msg.type === 'APPLY_RESULTS') {
-        renderResults(msg.results);
-      }
+      if (msg.type === 'APPLY_RESULTS') renderResults(msg.results);
     };
 
     function renderResults(results) {
       document.getElementById('preview-section').style.display = 'none';
       document.getElementById('results-section').style.display = 'block';
-      const list = document.getElementById('results-list');
-      list.innerHTML = `
-        <p>${results.applied.length} applied successfully. ${results.failed.length} failed.</p>
+      document.getElementById('results-list').innerHTML = `
+        <p>${results.applied.length} applied. ${results.failed.length} failed.</p>
         ${results.failed.map(f => `<p class="finding error">${f.nodeName}: ${f.reason}</p>`).join('')}
       `;
     }
@@ -406,124 +344,114 @@ The UI runs in a browser iframe. It loads the audit JSON (pasted or fetched), ge
 
 ---
 
-## Loading the Plugin into Figma
+## Loading the Plugin
 
-To run `figma-fix-plugin/` during development: [verify — current plugin development load flow]
+During development: open Figma Desktop, go to Plugins → Development → Import plugin from manifest, navigate to `figma-fix-plugin/manifest.json`. Run it from Plugins → Development → Figma Fix. [verify — current plugin development load flow]
 
-1. Open Figma desktop application (the plugin sandbox requires the desktop app, not the browser)
-2. Menu → Plugins → Development → Import plugin from manifest
-3. Navigate to `figma-fix-plugin/manifest.json`
-4. Run: Menu → Plugins → Development → Figma Fix
+For team distribution, publish to your organization's private plugin library through the Figma admin panel. [verify — organization plugin publishing flow]
 
-For team distribution, publish the plugin to your organization's private plugin library through the Figma admin panel. [verify — organization plugin publishing flow]
+The desktop application is required. The plugin sandbox is not available in the browser-based Figma editor.
+
+<!-- → [INFOGRAPHIC: Step-by-step plugin loading flow — numbered steps from manifest import through plugin execution, with callouts for "development only" vs "production distribution" paths] -->
+
+---
+
+## What the Approval Gate Is For
+
+The approval gate is not a UX nicety. It is where two things happen that the tool cannot substitute for.
+
+The first is judgment about semantic meaning. The audit can tell you that a variable is named `Color 4`, which violates the naming convention from Chapter 4. It cannot tell you whether `Color 4` should become `color/primitive/blue-500` or `color/semantic/action-primary` — those are different claims about what the color means in the design system. One of them may be correct. Only someone who understands the design system knows which one.
+
+The second is awareness of consequences. When you rename a variable in Figma, alias references to that variable within the same file update automatically. [verify — current alias update behavior on rename] Aliases from other library consumer files may not update immediately. [verify — cross-file alias update behavior on rename] The person approving the rename needs to know whether this variable is referenced by other files and whether those consumers are prepared for the change. The tool has no visibility into that.
+
+The `generateFixes` function above deliberately excludes `NAME001` (naming violations) from auto-proposals. This is the right call. Naming errors are the most common finding, but they are the ones that most require judgment. The plugin surfaces them in the audit summary and tells you how many there are. It does not propose specific new names, because it has no basis for choosing.
+
+<!-- → [TABLE: Fix types by rule ID — columns: rule ID, what it flags, whether auto-fixable, why or why not — covering NAME001, TOK002, COMP001, and rules that require design judgment (alias targets, value changes, component restructuring)] -->
 
 ---
 
 ## What to Never Automate
 
-The plugin should auto-apply only structural fixes: naming normalization, description text, layer name corrections. It must not auto-apply decisions that require design judgment.
+Structural fixes — description text, a description where there was none — are safe to automate because the only question is "does this field have content?" The answer is deterministic.
 
-**Never automate:**
+The following are not safe to automate, regardless of how confident the audit findings look:
 
-- **Alias target changes.** If a semantic token aliases the wrong primitive, the correct alias requires understanding what the token is supposed to represent. A script cannot know this.
-- **Value changes.** Changing a color value, spacing value, or typography value is a design decision. The audit can flag it; the fix requires a designer.
-- **Component restructuring.** Merging two similar components, adding or removing variants, changing the component API — these require design and engineering alignment.
-- **Mode value corrections.** If the dark-mode value of a token is wrong, fixing it requires knowing what the correct dark-mode value is. The audit can flag that a value looks inconsistent; it cannot propose the correct one.
-- **Deleting variables or components.** Deletion is irreversible. Even if the audit identifies orphaned or unused variables, the cleanup should be manual. What looks unused to a static analysis may have runtime uses the API does not see.
+**Alias target changes.** If a semantic token aliases the wrong primitive, the correct alias requires understanding what the token is supposed to represent. A script cannot know this.
 
-The rule: automate what is deterministic from the naming convention. Ask a human for everything else.
+**Value changes.** Changing a color value, a spacing value, a typography scale — these are design decisions. The audit can flag that a value looks inconsistent with its peer variables; it cannot propose the correct value.
+
+**Component restructuring.** Merging similar components, adding or removing variants, changing a component's API surface — these require design and engineering alignment that cannot be captured in a JSON rule.
+
+**Deletions.** What looks unused to a static analysis may have runtime uses the REST API does not see. Deletion is irreversible. Cleanup should always be manual.
+
+The rule is: automate what is deterministic from structure and naming convention alone. Ask a human for everything else. When in doubt, put it in the preview and let the human reject it, rather than silently excluding it.
 
 ---
 
 ## The Backup Pattern
 
-Before running any bulk fix, export a version history checkpoint. Figma's built-in version history (Version History panel, available on Professional plan and above) [verify — current plan requirements for version history] is your primary backup. Create a named version before running the plugin:
+Before any bulk fix run, create a version history checkpoint in Figma. File menu → Save to Version History → add a note like "Pre-audit-fix 2026-06-01." [verify — current plan requirements for version history access]
 
-In Figma: File menu → Save to Version History → add a note like "Pre-audit-fix 2026-06-01".
+If your plan does not include version history: File → Save local copy to export the file as `.fig`. This is a manual snapshot, not a live backup, but it is a restore point.
 
-If your plan does not support version history: export the file as `.fig` before running the plugin. Menu → File → Save local copy. This is a manual export, not a live backup, but it gives you a restore point.
+For teams with this in a structured workflow, a pre-fix call to the Figma REST API `/v1/files/:key/versions` endpoint can capture a programmatic version snapshot before the plugin runs. [verify — whether REST API supports creating version history snapshots]
 
-For teams running this in a structured workflow, wire a pre-fix REST API call to the `/v1/files/:key/versions` endpoint to programmatically capture a version snapshot before the plugin runs. [verify — whether REST API supports creating version history snapshots]
+The log that `code.js` emits after a successful apply run — `appliedAt`, `appliedBy`, `fileKey`, `changeCount` — should be saved to `./reports/fix-log-<date>.json` alongside the audit reports from Chapter 5. When someone asks who renamed `Color 3` to `color/palette/blue-500` and when, the log has the answer. This is not nice to have. It is the paper trail that makes bulk automation auditable by the people who are responsible for the design system.
 
 ---
 
-## The Approval Log
+## Failure Modes
 
-After the plugin applies fixes, emit an approval log — a JSON record of what was changed, by whom, and when. This log is the audit trail.
+Understanding how this plugin fails is as important as understanding how it works.
 
-```js
-// In code.js, after applyFixes completes, post the log to the UI:
-figma.ui.postMessage({
-  type: 'APPLY_RESULTS',
-  results,
-  log: {
-    appliedAt: new Date().toISOString(),
-    appliedBy: figma.currentUser?.name ?? 'unknown', // [verify — currentUser property]
-    fileKey: figma.fileKey ?? 'unknown', // [verify — figma.fileKey availability]
-    changeCount: results.applied.length,
-  }
-});
+<!-- → [TABLE: Failure modes reference — columns: failure mode, symptom, mitigation — covering ID mismatch, sandbox memory limit, multiplayer collision, alias propagation lag — one row per failure mode with specific diagnostic signals and concrete mitigations] -->
+
+**The ID mismatch.** The audit report captures node IDs at the time the fixture was created. If the file was modified between fixture creation and plugin execution, some IDs may have changed or been deleted. The `Variable not found by ID` error in the `failed` results is the signal. If more than 10% of proposed fixes report this error, stop the run — re-audit against a fresh fixture before continuing.
+
+**The sandbox memory limit.** A plugin processing thousands of nodes in a loop can hit the QuickJS memory ceiling. [verify — current memory limits for the Figma plugin sandbox] The symptom is the plugin freezing or crashing without an error message. The mitigation is to process fixes in batches of 50, yielding between batches:
+
+```javascript
+for (let i = 0; i < fixes.length; i += 50) {
+  const batch = fixes.slice(i, i + 50);
+  await processBatch(batch);
+  await new Promise(r => setTimeout(r, 0)); // yield to event loop
+}
 ```
 
-The UI should offer to download this log as JSON. Store it alongside your audit reports in `./reports/fix-log-<date>.json`. When someone asks "who renamed `Color 3` to `color/palette/blue-500`?" — the log has the answer.
+**The multiplayer collision.** If another editor has the file open during the plugin run, their concurrent edits and the plugin's writes may interleave. Figma's multiplayer generally handles this safely at the data level, but the audit findings were generated before their edits — fix proposals may be stale. The mitigation is social, not technical: announce "running fix plugin" in your team channel and ask for five minutes of clear ownership.
+
+**The alias propagation lag.** After a bulk variable rename, aliases in other library consumer files may take time to resolve to the new names. [verify — current cross-file alias update behavior on rename] Do not run the plugin and immediately check consumer files expecting everything to be updated. Give Figma's sync infrastructure time to propagate the changes, then validate.
 
 ---
 
-## Failure Modes of the Fix Plugin
+## The AI Wayback Machine: Refactoring Tools and the Approval Gate
 
-**The rename-breaks-alias problem.** When you rename a variable in Figma, alias references to that variable update automatically within the same file. [verify — current behavior; this is documented behavior but verify it is not plan-gated] Aliases from other files (library consumers) may not update immediately. [verify — cross-file alias update behavior on rename] Test with a non-critical variable first before running a bulk rename.
+The preview-approve-apply pattern did not originate in design tooling. It is the standard pattern for IDE refactoring tools — established in the early JetBrains IDEs (IntelliJ IDEA, ReSharper for .NET) during the early 2000s. "Rename this method" would enumerate every call site in every file before making a single change. You confirmed the list. Only then did the rename propagate.
 
-**The ID mismatch problem.** The audit report captures node IDs at the time the fixture was created. If the file was modified between fixture creation and plugin execution, some node IDs may have changed or been deleted. The plugin handles this with the `Variable not found by ID` error in the `failed` results. After a bulk fix, re-run the audit against a fresh fixture to verify.
+The reason was not caution for its own sake. It was recognition that a rename is a semantic act. Renaming `getUserId()` to `getCustomerId()` is a statement about the conceptual model — these are different entities, and the method's purpose has changed. A tool that does it without showing you the consequences is making that assertion on your behalf, invisibly. The preview panel makes the assertion visible and gives it back to you.
 
-**The sandbox memory limit.** A plugin processing thousands of nodes in a loop can hit the QuickJS sandbox memory limit. [verify — current memory limits for Figma plugin sandbox] Symptom: the plugin freezes or crashes without an error message. Mitigation: process fixes in batches of 50 and yield between batches using `await new Promise(r => setTimeout(r, 0))`.
+Database migration tooling added the irreversibility constraint. Flyway and Liquibase enforce that migrations are forward-only: once you apply a schema change, you do not undo it — you write a new migration that reverses it. The changelog is the migration record. The Figma fix plugin inherits the same discipline: the approval log is the change record; fixing a bad fix means running the plugin again with the corrected proposal, not silently rolling back.
 
-**The multiplayer collision.** If another editor has the file open during the plugin run, their concurrent edits and the plugin's writes may interleave. Figma's CRDT-based multiplayer generally handles this safely, but the audit findings were generated before their edits — the fix proposals may be stale. Mitigation: announce "running fix plugin" in your team channel and ask others to close the file for five minutes.
-
-**The description-overwrites-existing problem.** The `SET_COMPONENT_DESCRIPTION` fix sets a description on components that have none. If a component already has a description (however thin), the plugin preview shows the existing description alongside the proposed one, and the user must decide whether to overwrite. The current implementation above does not handle this — it needs a comparison between the current description and the proposed value before displaying the preview item.
+The NIST AI Risk Management Framework formalized the underlying principle as "human oversight for consequential decisions." [Source: NIST AI Risk Management Framework] In design system terms: the audit pipeline runs automatically; the canvas modification does not. The boundary between them is the approval gate — not because the software cannot cross it, but because the software lacks the context to cross it safely.
 
 ---
 
-## Decision Rules
+## What Comes Next
 
-Before running the plugin:
-- [ ] Version history snapshot created in Figma (or `.fig` export saved locally)
-- [ ] Audit report JSON is recent (generated from a fixture no more than 24 hours old)
-- [ ] Other editors notified and not actively working in the file
-- [ ] All proposed changes reviewed in the preview panel — no "approve all" without reading
-
-During the plugin run:
-- [ ] Approve only naming and description fixes
-- [ ] Reject any proposal that touches semantic meaning or design values
-- [ ] Stop if more than 10% of fixes fail (signals an ID mismatch — re-audit before continuing)
-
-After the plugin run:
-- [ ] Fix log downloaded and saved to `./reports/`
-- [ ] Figma fixture updated: re-run `figma-read.mjs` to pull the corrected file state
-- [ ] Audit re-run against the new fixture: all previously-fixed errors should be gone
-- [ ] Alias chain validation run: `npm run figma:validate-names` exits 0
+The plugin gives you the write path. The audit gives you the findings. What you do not yet have is a way to run this loop continuously — not as a one-time remediation effort, but as an ongoing check that fires whenever the file changes. Chapter 7 covers webhooks and event-driven automation: how Figma notifies external systems when a file is updated, and how to use those notifications to trigger the audit pipeline automatically so that the 247 errors never accumulate in the first place.
 
 ---
 
-## AI Wayback Machine: Refactoring Tools and the Human Approval Gate
+## LLM Exercises
 
-The staged fix pattern — preview, approve, apply — has deep roots in software engineering. The refactoring tools in the early 2000s JetBrains IDEs (IntelliJ IDEA, later ReSharper for .NET) made this pattern standard. "Rename this method" would show you every call site, in every file, before making a single change. You confirmed. Only then did the rename propagate.
+**Exercise 1 — Generate and examine.**
+Paste the `applyFixes` function from `code.js` into a conversation with an LLM. Ask it to walk through what happens when `fix.type` is `RENAME_VARIABLE` and `variableMap.get(fix.nodeId)` returns `undefined`. Ask: what would the function do if the `if (!variable)` guard was absent? What class of runtime error would result, and would it be caught by the outer `try/catch`? Ask the LLM to propose a version of the function that logs a structured warning for each skipped fix rather than pushing to `results.failed`.
 
-The reason was not technical caution. It was recognition that a rename is a semantic act, not a mechanical one. Renaming `getUserId()` to `getCustomerId()` is a statement about the conceptual model. A tool that does it without showing you the consequences is making that statement on your behalf, invisibly.
+**Exercise 2 — Apply to known context.**
+Take the approval log format from this chapter — `appliedAt`, `appliedBy`, `fileKey`, `changeCount`. Ask an LLM to extend the log schema to also capture, per individual fix: the rule ID, the old value, and the new value. Then ask it to write a short Node.js script that reads a directory of fix log files and produces a summary: total changes applied across all runs, broken down by rule ID. Run the script against two or three fabricated log files to verify it works.
 
-The same reasoning applies to bulk Figma renames. Renaming `Color 3` to `color/palette/blue-500` is not just a string substitution. It is asserting that this particular shade of blue belongs in the primitive palette at the 500 scale. That assertion might be correct. It might also be wrong — the color might actually be a one-off used only in a deprecated component. The tool cannot know. You can.
+**Exercise 3 — Stress-test a specific claim.**
+The chapter claims that `NAME001` findings should never be auto-proposed — that the correct name always requires design judgment. Ask an LLM to argue the opposite: under what conditions could a tool safely auto-propose a rename for a naming violation? What information would the tool need to have, and what constraints would need to hold, for the proposal to be reliably correct? Evaluate the argument against the actual naming violations in your own design system (or a plausible fabricated example).
 
-Database migration tooling added the irreversibility constraint. Flyway and Liquibase enforce that migrations are forward-only: once you have applied a schema change, you cannot un-apply it; you can only apply a new migration that reverses it. The changelog is the audit trail. The Figma fix plugin inherits this discipline: the log is the migration record; fixing a bad fix requires running the plugin again with the corrected proposal, not silently undoing.
-
-The NIST AI Risk Management Framework (AI RMF) [Source: research-ch-06, NIST AI Risk Management Framework] formalized the principle as "human oversight for consequential decisions." In the design system context: the pipeline can run automatically; the canvas modification cannot. The boundary between them is the approval gate.
-
----
-
-## Try This
-
-**Exercise 1 — Build and load the plugin**
-
-Clone the `figma-fix-plugin/` directory from this chapter into a local folder. Load it into Figma Desktop via Plugins → Development → Import plugin from manifest. Open a test Figma file (not your production file). Run the plugin and paste a minimal audit JSON with two or three manufactured findings. Verify that the preview panel renders, approve one fix, reject another, and apply. Verify the change appears in the Figma canvas.
-
-**Exercise 2 — Connect audit to fix**
-
-Run `figma-audit.js` against your real design system fixture. Count the `NAME001` findings. Manually write the rename mapping for five of them (old name → new name). Add those five as fix proposals to the plugin (by modifying `proposedValue()` to return the correct new name for those specific ruleIds). Run the full staged workflow: load, preview, approve, apply. Re-run `figma-audit.js` against a fresh fixture. Verify those five findings no longer appear.
+**Exercise 4 — Draft a professional deliverable.**
+You have just run the fix plugin on your team's design system file and applied 89 approved changes. Write a brief message to your design and engineering teams explaining: what was fixed, how the process worked, what was excluded and why, and what they should do if they notice something has changed unexpectedly. Ask an LLM to draft the first version, then revise it to match the communication norms of your team.

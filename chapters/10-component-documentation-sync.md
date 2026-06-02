@@ -1,95 +1,52 @@
 # Chapter 10 — Component Documentation Sync
 
-*Keeping living documentation in sync with the Figma file — without manually updating it every time a component changes.*
+*The Figma file knows what exists. The documentation site knows what existed. The gap between them widens every sprint.*
 
 ---
 
-## The Failure
+The design system has a documentation site. Someone wrote usage guidance for the Button component, added a do/don't example for the Modal, documented the four variants of the Card. The site looks authoritative. It has a clean nav, a search bar, a "last updated" timestamp.
 
-The design system has a documentation site. It is built with care. Someone wrote usage guidance for the Button component, added a do/don't example for the Modal, documented the four variants of the Card. The site looks authoritative.
+Then the design team ships a quarter. The Button gets a `destructive` variant. The Card acquires a `compact` density option. The Modal's dismiss behavior changes. Nobody updates the documentation site. Nobody has time. The site is now lying — not dramatically, not in ways that cause immediate failures, but steadily and invisibly, in the way that documentation always lies when it is maintained by hand in a system that changes faster than the people maintaining it.
 
-Then the design team ships a quarter. The Button gets a new `destructive` variant. The Card acquires a `compact` density option. The Modal's dismiss behavior changes. Nobody updates the documentation site. Nobody has time. The documentation site is now lying.
+This is not negligence. It is the predictable outcome of a documentation artifact that is structurally disconnected from its source. The Figma file changes. The code changes. The documentation lags — by days, then weeks, then permanently. By the time a new engineer asks "what variants does this component support?", the documentation site is an artifact of a design file that no longer exists.
 
-This is not negligence. It is the predictable outcome of documentation maintained by hand in a repository separate from the design file. The Figma file changes. The code changes. The documentation lags — by days, then weeks, then permanently. By the time a new engineer asks "what variants does this component support?", the documentation is an artifact of a Figma file that no longer exists.
+Documentation drift is the same synchronization problem as token drift, just slower-moving and therefore easier to ignore until it becomes embarrassing at a design review, a new-engineer onboarding, or an audit.
 
-The documentation drift problem is the same synchronization problem as token drift, just slower-moving and therefore easier to ignore until it is embarrassing.
-
-This chapter builds `sync-docs.mjs`, a CLI tool that reads your Figma library directly and generates three machine-readable artifacts: a component inventory, variant property tables, and a missing-description report. These artifacts give documentation platforms — Storybook, Zeroheight, Supernova [verify — current as of writing], and custom portals — machine-verifiable facts to build from. The human work of writing usage guidance still belongs to humans. The machine work of knowing what exists, what its properties are, and what has not been documented yet belongs to the CLI.
+This chapter builds a CLI tool that reads the Figma library directly and generates three machine-readable artifacts: a component inventory, variant property tables, and a missing-description report. These give documentation platforms — Storybook, Zeroheight, Supernova, custom portals — machine-verifiable facts to build from. The human work of writing usage guidance still belongs to humans. The machine work of knowing what exists, what its properties are, and what has not been documented yet belongs to the CLI.
 
 ---
 
-## What This Chapter Lets You Do
+## What the API Actually Knows
 
-By the end of this chapter you can:
+Before writing a line of extraction code, it is worth being precise about what the Figma REST API exposes about components and what it does not. The boundary between machine-knowable and human-required facts is the architecture decision that determines everything about how the tool should work.
 
-- Extract a complete component inventory from a published Figma library using the REST API
-- Generate variant property tables for every component with variants
-- Produce a missing-description report that shows exactly which components have no description, which descriptions are too short to be useful, and which published components have no Code Connect link
-- Run this as a scheduled CI task so documentation staleness becomes a CI failure, not a human discovery
-- Know exactly which parts of the documentation still require human writing and which facts the machine can supply reliably
+The API exposes, for every published component: its name, its description field (whatever the designer typed into Figma's component description box), the node ID, the component key used for library references, and — if the component belongs to a component set — the ID of that set. [verify — current as of writing] It exposes variant properties as a key-value map: for a button that exists in the set as `Size=Large, Variant=Primary`, the `variantProperties` field on that specific component node is `{ "Size": "Large", "Variant": "Primary" }`. Collect the variant properties across all components in a set and you have the complete variant dimensions table.
 
----
+<!-- → [TABLE: What the Figma REST API exposes vs. does not expose about components — rows: name, description, variant properties, component set membership, Code Connect link, usage guidance, accessibility semantics, do/don't examples, whether documentation is correct] -->
 
-## Diagnosis: What the API Actually Knows About Your Components
+What the API does not expose is harder to list because the absence is invisible. It does not know what the component is for. The description field holds whatever a designer typed — which may be a thorough explanation, a placeholder, or nothing at all. It does not know when to use a compact card versus a default card, or why the destructive button variant is red. It does not know whether the documentation on the site matches engineering reality. It knows what exists in the file. Intent is not a property the file graph stores.
 
-The Figma REST API exposes several facts about components that are directly useful for documentation. Understanding which facts are available, and at what access level, determines what your CLI can do without human input.
+This is the contract that governs the whole chapter. The CLI can tell you "the Button component set has 47 variants and 12 of them have no description." It cannot write the missing descriptions. That boundary is not a temporary limitation waiting for a more capable model — it is a structural fact about what "description" means. A generated description that says "This is the primary large button component" is technically a non-empty string, but it is not documentation. It is the appearance of documentation, which is worse than a clearly empty field because it satisfies coverage metrics without communicating anything useful.
 
-**What the API exposes** [verify — current as of writing]:
-
-- `GET /v1/files/:key` returns `components` at the top level, keyed by node ID. Each entry includes `name`, `description`, `key` (the component key used in library references), and `componentSetId` if the component belongs to a component set.
-- `GET /v1/files/:key/components` returns the same set with additional `containing_frame` metadata.
-- Component sets (the Figma object that holds variants) appear in the `componentSets` top-level map, again keyed by node ID. Each set has `name` and `description`.
-- The `GET /v1/files/:key?depth=N` parameter controls how deep the node tree is fetched. For component inventory purposes, depth 2 or 3 is typically enough to see component sets and their children.
-- Variant properties are embedded in component nodes as `variantProperties`: a key-value map of the variant dimensions and their values for that specific component.
-
-**What the API does not expose**:
-
-- Usage guidance. The description field holds whatever a designer typed in Figma's component description box. It does not know what the component is for, when to use it, or when not to.
-- Accessibility semantics. The API cannot tell you whether a button needs an `aria-label`, or whether a tooltip has a keyboard-accessible trigger. These require human authoring.
-- Do/don't examples. These are editorial decisions.
-- Whether the documentation is correct. The API knows what exists in the Figma file. It does not know whether the guidance on the documentation site matches engineering reality.
-
-This distinction matters because it defines the boundary of what your CLI can automate. The CLI can tell you "the Button component has 47 descriptions filled in out of 48 components" and identify which one is missing. It cannot write the missing description. That is the contract.
-
-**Publication state**: For library components, only published components are available to other files via `GET /v1/files/:key/components` [verify — current as of writing]. Draft components — components in the file but not yet published — appear in the full file response but not in the library endpoint. Your CLI should handle both cases.
-
-**Code Connect**: Figma's Code Connect feature [verify — current as of writing] links a Figma component to its real codebase implementation. When Code Connect is configured, the Figma API can surface the code snippet or component path associated with a design component. This is high-value for documentation: it closes the loop between the visual design and the actual import statement. However, Code Connect requires setup per-component and is not automatically inferred. The missing-description report should flag components without Code Connect links as a separate category — it is a gap worth knowing about, distinct from missing descriptive text.
+Publication state is one more fact worth understanding before building the tool. Library components — the ones available to other files via `GET /v1/files/:key/components` [verify — current as of writing] — are only the published subset. Draft components exist in the full file response but not in the library endpoint. If your team works in a file where components are built but not yet published, the library endpoint will undercount the full component set. The full file response includes everything. Both are useful for different purposes; the tool needs to handle both cases.
 
 ---
 
-## Building `sync-docs.mjs`
+## The Structure of the Tool
 
-The script does four things in sequence: fetch the component list, extract variant structures, compute coverage metrics, and write output in three formats.
-
-### Environment
-
-```bash
-# .env
-FIGMA_TOKEN=figd_your_personal_access_token
-FIGMA_FILE_KEY=your_design_system_file_key
-```
-
-```bash
-npm run docs:sync
-# package.json entry:
-# "docs:sync": "node sync-docs.mjs --out=docs-sync-output"
-```
-
-### The Script
+The CLI, `sync-docs.mjs`, does four things in sequence: fetch the component list from the full file response, extract variant structures by aggregating across component sets, compute coverage metrics, and write output in three formats. The fourth thing — writing output — is where the value is: not in the API call, but in the structured, diffable artifacts that downstream systems can consume without making their own API calls.
 
 ```javascript
 // sync-docs.mjs
+// [verify — current as of writing] Variables API endpoint and component response shape
 // [illustrative — adapt to your file structure and documentation platform]
 
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import 'dotenv/config';
 
-const TOKEN = process.env.FIGMA_TOKEN;
+const TOKEN    = process.env.FIGMA_TOKEN;
 const FILE_KEY = process.env.FIGMA_FILE_KEY;
-const OUT_DIR = process.argv.includes('--out=') 
-  ? process.argv.find(a => a.startsWith('--out=')).split('=')[1]
-  : 'docs-sync-output';
+const OUT_DIR  = (process.argv.find(a => a.startsWith('--out=')) || '--out=docs-sync-output').split('=')[1];
 
 if (!TOKEN || !FILE_KEY) {
   console.error('ERROR: FIGMA_TOKEN and FIGMA_FILE_KEY required.');
@@ -108,89 +65,63 @@ async function figmaGet(path) {
     await new Promise(r => setTimeout(r, retry * 1000));
     return figmaGet(path);
   }
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Figma API ${res.status}: ${body}`);
-  }
+  if (!res.ok) throw new Error(`Figma API ${res.status}: ${await res.text()}`);
   return res.json();
 }
 
 async function main() {
   mkdirSync(OUT_DIR, { recursive: true });
-
   console.log('Fetching file...');
-  // Fetch full file with depth limit — components are typically within depth 3
-  const fileData = await figmaGet(`/files/${FILE_KEY}`);
-  
-  const rawComponents = fileData.components || {};
-  const rawComponentSets = fileData.componentSets || {};
 
-  // Build inventory
-  const inventory = [];
-  const variantTables = [];
-  const missingDocs = [];
+  const fileData        = await figmaGet(`/files/${FILE_KEY}`);
+  const rawComponents   = fileData.components     || {};
+  const rawSets         = fileData.componentSets  || {};
 
-  // Index component sets by ID for lookup
+  // Index component sets
   const setIndex = {};
-  for (const [nodeId, set] of Object.entries(rawComponentSets)) {
+  for (const [nodeId, set] of Object.entries(rawSets)) {
     setIndex[nodeId] = {
       nodeId,
-      name: set.name,
+      name:        set.name,
       description: set.description || '',
-      components: []
+      components:  []
     };
   }
 
   // Process components
-  for (const [nodeId, comp] of Object.entries(rawComponents)) {
-    const name = comp.name;
-    const description = comp.description || '';
-    const setId = comp.componentSetId || null;
-    const variantProps = comp.variantProperties || null;
+  const inventory  = [];
+  const missingDocs = [];
 
+  for (const [nodeId, comp] of Object.entries(rawComponents)) {
+    const description = comp.description || '';
     const entry = {
       nodeId,
-      name,
+      name:              comp.name,
       description,
-      setId,
-      variantProperties: variantProps,
-      hasDescription: description.trim().length > 0,
+      setId:             comp.componentSetId || null,
+      variantProperties: comp.variantProperties || null,
+      hasDescription:    description.trim().length > 0,
       descriptionLength: description.trim().length,
-      isVariant: !!setId
+      isVariant:         !!comp.componentSetId
     };
 
     inventory.push(entry);
-
-    if (setId && setIndex[setId]) {
-      setIndex[setId].components.push(entry);
+    if (entry.setId && setIndex[entry.setId]) {
+      setIndex[entry.setId].components.push(entry);
     }
 
-    // Flag missing or thin descriptions
     if (!entry.hasDescription) {
-      missingDocs.push({
-        nodeId,
-        name,
-        type: 'component',
-        issue: 'no-description',
-        setId
-      });
+      missingDocs.push({ nodeId, name: comp.name, type: 'component', issue: 'no-description', setId: entry.setId });
     } else if (entry.descriptionLength < 20) {
-      missingDocs.push({
-        nodeId,
-        name,
-        type: 'component',
-        issue: 'description-too-short',
-        description,
-        setId
-      });
+      missingDocs.push({ nodeId, name: comp.name, type: 'component', issue: 'description-too-short', description, setId: entry.setId });
     }
   }
 
-  // Build variant property tables for each component set
+  // Build variant tables
+  const variantTables = [];
   for (const [setId, set] of Object.entries(setIndex)) {
     if (set.components.length === 0) continue;
 
-    // Collect all variant dimensions across components in this set
     const dimensionValues = {};
     for (const comp of set.components) {
       if (!comp.variantProperties) continue;
@@ -200,134 +131,85 @@ async function main() {
       }
     }
 
-    const dimensions = Object.entries(dimensionValues).map(([dim, vals]) => ({
-      dimension: dim,
-      values: [...vals].sort()
-    }));
-
     variantTables.push({
       setId,
-      setName: set.name,
+      setName:        set.name,
       setDescription: set.description,
-      hasSetDescription: set.description.trim().length > 0,
-      dimensions,
+      dimensions:     Object.entries(dimensionValues).map(([d, v]) => ({ dimension: d, values: [...v].sort() })),
       componentCount: set.components.length
     });
 
-    // Flag sets without descriptions
     if (!set.description.trim()) {
-      missingDocs.push({
-        nodeId: setId,
-        name: set.name,
-        type: 'component-set',
-        issue: 'no-description'
-      });
+      missingDocs.push({ nodeId: setId, name: set.name, type: 'component-set', issue: 'no-description' });
     }
   }
 
   // Coverage summary
-  const totalComponents = inventory.length;
-  const withDescription = inventory.filter(c => c.hasDescription).length;
-  const withoutDescription = inventory.filter(c => !c.hasDescription).length;
-  const thinDescription = inventory.filter(c => c.hasDescription && c.descriptionLength < 20).length;
   const totalSets = Object.keys(setIndex).length;
-  const setsWithDescription = Object.values(setIndex)
-    .filter(s => s.description.trim().length > 0).length;
-
   const summary = {
-    generatedAt: new Date().toISOString(),
-    fileKey: FILE_KEY,
-    totalComponents,
-    withDescription,
-    withoutDescription,
-    thinDescriptions: thinDescription,
-    totalComponentSets: totalSets,
-    setsWithDescription,
-    setsWithoutDescription: totalSets - setsWithDescription,
-    missingDocCount: missingDocs.length,
-    coveragePercent: totalComponents > 0
-      ? Math.round((withDescription / totalComponents) * 100)
+    generatedAt:           new Date().toISOString(),
+    fileKey:               FILE_KEY,
+    totalComponents:       inventory.length,
+    withDescription:       inventory.filter(c => c.hasDescription).length,
+    withoutDescription:    inventory.filter(c => !c.hasDescription).length,
+    thinDescriptions:      inventory.filter(c => c.hasDescription && c.descriptionLength < 20).length,
+    totalComponentSets:    totalSets,
+    setsWithDescription:   Object.values(setIndex).filter(s => s.description.trim().length > 0).length,
+    missingDocCount:       missingDocs.length,
+    coveragePercent:       inventory.length > 0
+      ? Math.round((inventory.filter(c => c.hasDescription).length / inventory.length) * 100)
       : 0
   };
 
   // Write outputs
-  const inventoryOut = { summary, components: inventory };
-  writeFileSync(join(OUT_DIR, 'component-inventory.json'), JSON.stringify(inventoryOut, null, 2));
-
+  writeFileSync(join(OUT_DIR, 'component-inventory.json'), JSON.stringify({ summary, components: inventory }, null, 2));
   writeFileSync(join(OUT_DIR, 'variant-tables.json'), JSON.stringify(variantTables, null, 2));
+  writeFileSync(join(OUT_DIR, 'missing-docs.json'), JSON.stringify({ summary, findings: missingDocs }, null, 2));
+  writeFileSync(join(OUT_DIR, 'docs-sync-report.md'), buildMarkdownReport(summary, missingDocs, variantTables));
 
-  writeFileSync(join(OUT_DIR, 'missing-docs.json'), JSON.stringify({
-    summary,
-    findings: missingDocs
-  }, null, 2));
+  console.log(`\nDone. ${summary.totalComponents} components. ${summary.coveragePercent}% have descriptions.`);
+  console.log(`${missingDocs.length} documentation gaps. Output: ${OUT_DIR}/`);
 
-  // Generate markdown report
-  const md = generateMarkdownReport(summary, missingDocs, variantTables);
-  writeFileSync(join(OUT_DIR, 'docs-sync-report.md'), md);
-
-  // Exit with failure if there are errors (missing descriptions on component sets)
   const errorCount = missingDocs.filter(f => f.type === 'component-set').length;
-  console.log(`\nDone. ${totalComponents} components. ${summary.coveragePercent}% have descriptions.`);
-  console.log(`${missingDocs.length} documentation gaps found.`);
-  console.log(`Output: ${OUT_DIR}/`);
-
   if (errorCount > 0) {
-    console.error(`\n${errorCount} component sets have no description (CI-blocking).`);
+    console.error(`\n${errorCount} component set(s) have no description — CI blocking.`);
     process.exit(1);
   }
 }
 
-function generateMarkdownReport(summary, missingDocs, variantTables) {
-  const lines = [];
-  lines.push('# Component Documentation Sync Report');
-  lines.push(`\nGenerated: ${summary.generatedAt}`);
-  lines.push(`\n## Coverage Summary\n`);
-  lines.push(`| Metric | Value |`);
-  lines.push(`|--------|-------|`);
-  lines.push(`| Total components | ${summary.totalComponents} |`);
-  lines.push(`| With description | ${summary.withDescription} (${summary.coveragePercent}%) |`);
-  lines.push(`| Without description | ${summary.withoutDescription} |`);
-  lines.push(`| Thin descriptions (<20 chars) | ${summary.thinDescriptions} |`);
-  lines.push(`| Component sets | ${summary.totalComponentSets} |`);
-  lines.push(`| Sets with description | ${summary.setsWithDescription} |`);
+function buildMarkdownReport(summary, missingDocs, variantTables) {
+  const lines = [
+    '# Component Documentation Sync Report',
+    `\nGenerated: ${summary.generatedAt}`,
+    '\n## Coverage Summary\n',
+    '| Metric | Value |', '|--------|-------|',
+    `| Total components | ${summary.totalComponents} |`,
+    `| With description | ${summary.withDescription} (${summary.coveragePercent}%) |`,
+    `| Without description | ${summary.withoutDescription} |`,
+    `| Thin descriptions (<20 chars) | ${summary.thinDescriptions} |`,
+    `| Component sets | ${summary.totalComponentSets} |`,
+    `| Sets with description | ${summary.setsWithDescription} |`
+  ];
 
   if (missingDocs.length > 0) {
-    lines.push(`\n## Documentation Gaps (${missingDocs.length})\n`);
-    const errors = missingDocs.filter(f => f.type === 'component-set');
+    const errors   = missingDocs.filter(f => f.type === 'component-set');
     const warnings = missingDocs.filter(f => f.type === 'component' && f.issue === 'no-description');
-    const infos = missingDocs.filter(f => f.issue === 'description-too-short');
+    const infos    = missingDocs.filter(f => f.issue === 'description-too-short');
 
-    if (errors.length > 0) {
-      lines.push(`### Errors — Component Sets Without Description (${errors.length})\n`);
-      for (const f of errors) {
-        lines.push(`- **${f.name}** \`${f.nodeId}\``);
-      }
-    }
-    if (warnings.length > 0) {
-      lines.push(`\n### Warnings — Components Without Description (${warnings.length})\n`);
-      for (const f of warnings) {
-        lines.push(`- ${f.name} \`${f.nodeId}\``);
-      }
-    }
-    if (infos.length > 0) {
-      lines.push(`\n### Info — Thin Descriptions (${infos.length})\n`);
-      for (const f of infos) {
-        lines.push(`- ${f.name}: "${f.description}" \`${f.nodeId}\``);
-      }
-    }
+    lines.push(`\n## Documentation Gaps (${missingDocs.length})\n`);
+    if (errors.length)   { lines.push(`### Errors — Sets Without Description (${errors.length})\n`);   errors.forEach(f => lines.push(`- **${f.name}** \`${f.nodeId}\``)); }
+    if (warnings.length) { lines.push(`\n### Warnings — Components Without Description (${warnings.length})\n`); warnings.forEach(f => lines.push(`- ${f.name} \`${f.nodeId}\``)); }
+    if (infos.length)    { lines.push(`\n### Info — Thin Descriptions (${infos.length})\n`); infos.forEach(f => lines.push(`- ${f.name}: "${f.description}" \`${f.nodeId}\``)); }
   }
 
   if (variantTables.length > 0) {
-    lines.push(`\n## Variant Property Tables\n`);
+    lines.push('\n## Variant Property Tables\n');
     for (const vt of variantTables) {
       lines.push(`### ${vt.setName} (${vt.componentCount} variants)\n`);
       if (vt.setDescription) lines.push(`*${vt.setDescription}*\n`);
       if (vt.dimensions.length > 0) {
-        lines.push(`| Dimension | Values |`);
-        lines.push(`|-----------|--------|`);
-        for (const d of vt.dimensions) {
-          lines.push(`| ${d.dimension} | ${d.values.join(', ')} |`);
-        }
+        lines.push('| Dimension | Values |', '|-----------|--------|');
+        vt.dimensions.forEach(d => lines.push(`| ${d.dimension} | ${d.values.join(', ')} |`));
       }
       lines.push('');
     }
@@ -336,147 +218,86 @@ function generateMarkdownReport(summary, missingDocs, variantTables) {
   return lines.join('\n');
 }
 
-main().catch(err => {
-  console.error('Fatal:', err.message);
-  process.exit(1);
-});
+main().catch(err => { console.error('Fatal:', err.message); process.exit(1); });
 ```
 
-Run it:
-
-```bash
-node sync-docs.mjs --out=docs-sync-output
-```
-
-Or via npm:
+Wire it into CI:
 
 ```json
 {
   "scripts": {
-    "docs:sync": "node sync-docs.mjs --out=docs-sync-output",
-    "docs:sync:ci": "node sync-docs.mjs --out=docs-sync-output && cat docs-sync-output/docs-sync-report.md"
+    "docs:sync":     "node sync-docs.mjs --out=docs-sync-output",
+    "docs:sync:ci":  "node sync-docs.mjs --out=docs-sync-output && cat docs-sync-output/docs-sync-report.md"
   }
 }
 ```
 
-### What You Get
+---
 
-After one run you have three files in `docs-sync-output/`:
+## What You Get
 
-**`component-inventory.json`** — the full component list with name, description, variant properties, and set membership. Feed this to a documentation site generator or diff it in CI to detect new components.
+After one run, four files land in `docs-sync-output/`.
 
-**`variant-tables.json`** — for each component set, the complete set of variant dimensions and their possible values. A documentation platform can render this as a property table without any additional API calls.
+`component-inventory.json` is the full component list: name, description, variant properties, set membership, coverage flags. Feed this to a documentation site generator or diff it in CI to detect new components added since the last sync.
 
-**`missing-docs.json`** — the actionable gap report. Grouped by severity: errors (component sets with no description — these gate the pipeline), warnings (individual components missing descriptions), and info (descriptions present but too short to be useful).
+`variant-tables.json` is the structured variant data. For each component set, it contains every variant dimension and the complete set of possible values for that dimension. A documentation platform can render this as a property table without any additional API calls. It is also the diff target: run the tool before and after a library publish, compare the two files, and every new variant value is a documentation task.
+
+`missing-docs.json` is the actionable gap report. Three severity tiers: errors are component sets with no description — these gate the pipeline; warnings are individual components missing descriptions; info is descriptions present but fewer than twenty characters, which is almost always a placeholder rather than real documentation.
+
+`docs-sync-report.md` is a human-readable summary of the above, suitable for attaching to a PR comment or posting in Slack when the sync job runs.
+
+<!-- → [TABLE: Three severity tiers in missing-docs.json — columns: tier, what it covers, CI behavior, who fixes it, typical examples] -->
 
 ---
 
 ## Connecting to Documentation Platforms
 
-### Storybook
+The three JSON files are the integration point. How they connect depends on which platform owns the documentation.
 
-Storybook does not consume the Figma API directly. The connection works through two paths:
+Storybook does not consume the Figma API directly. The connection works through Code Connect — a Figma feature [verify — current as of writing] that links a Figma component to its codebase implementation by embedding a code snippet in Figma's Dev Mode panel. When configured, a developer opening the Button component in Dev Mode sees the actual import statement and usage example alongside the design. Code Connect requires explicit configuration per component: installing the CLI (`npm install --save-dev @figma/code-connect`), creating a `.figma.connect.ts` file that maps the Figma node ID to the real component and its prop mappings, and running `figma connect publish` to push the mappings to Figma. It is not inferred automatically, and the missing-docs report should flag components without Code Connect links as documentation debt separate from missing descriptive text.
 
-1. **Code Connect** [verify — current as of writing]: Figma Code Connect links a Figma component to its Storybook story by embedding a code snippet in the Figma component description or through a separate Code Connect configuration file. When configured, the Figma Dev Mode panel shows the story link and the live code snippet next to the design. Code Connect requires explicit setup per component — it is not inferred automatically.
+<!-- → [FIGURE: Diagram showing Code Connect data flow — Figma component node → Code Connect config file → figma connect publish → Figma Dev Mode panel showing code snippet. Caption: Code Connect closes the gap between the visual component and the import statement. It requires explicit setup; the sync tool can detect its absence.] -->
 
-2. **Storybook + generated metadata**: Your `component-inventory.json` can serve as a source of truth for Storybook's `parameters.docs.description.component` field. A separate generator script reads the JSON and writes or patches `.stories.ts` files with the canonical description from Figma. This is a documentation-as-code pattern: the Figma file drives the description, the generator keeps the story in sync.
+Zeroheight and Supernova both have native Figma integrations that sync component thumbnails and some metadata. [verify — current as of writing for both platforms] The native sync does not expose variant property tables or coverage metrics. The `variant-tables.json` from `sync-docs.mjs` supplements the native data with structured property tables that editors can incorporate into component pages. The more automated path, where available, uses the platform's API to push descriptions from the inventory JSON directly — but this requires deciding which system owns the canonical description. If Figma owns it, the CLI drives the sync. If the documentation platform owns it, the CLI produces a report but does not push.
 
-### Zeroheight [verify — current as of writing]
-
-Zeroheight has a native Figma integration that syncs component thumbnails and some metadata from the Figma file directly. However, the native sync does not expose variant property tables or coverage metrics. The `variant-tables.json` from `sync-docs.mjs` can supplement Zeroheight's native data by providing a structured property table that editors paste into Zeroheight's content blocks. A more automated approach uses Zeroheight's API (where available) to push descriptions from the inventory JSON.
-
-### Supernova [verify — current as of writing]
-
-Supernova's Figma integration imports component data and links it to a design system documentation structure. Like Zeroheight, it has a native sync but limited programmatic control of content. The machine-readable output from `sync-docs.mjs` serves as the audit layer: you run it before each Supernova sync to confirm that the Figma file is in a state worth syncing from.
-
-### Custom portals
-
-If you maintain a custom documentation site (a Next.js or Astro static site is common for design systems), the inventory JSON is directly consumable. A build step reads `component-inventory.json` and generates component pages, variant tables, and gap reports. This pattern gives you the most control but requires the most maintenance of the generator itself.
+Custom portals — a Next.js or Astro static site is common for design systems — can consume the inventory JSON as a build step. A generator script reads `component-inventory.json` and produces component pages, variant tables, and gap indicators. This gives the most control but requires maintaining the generator alongside the documentation platform. The tradeoff is explicit: more automation, more code to own.
 
 ---
 
-## Code Connect: The Link You Still Have to Make
+## The Failure Modes
 
-Code Connect [verify — current as of writing] is worth addressing directly because it closes the gap that documentation sites cannot close automatically: the connection between the Figma component and the real import path in the codebase.
+The most common failure is not a script error. It is the empty description field. In practice, most Figma files have large numbers of components with empty or placeholder descriptions. The designer who built the component knew what it was for; they did not write it down in a field that felt optional at the time. The sync tool surfaces this systematically and accurately, but the fix requires a human opening Figma and typing. This is design-side work. The CLI produces the report. It cannot do the writing.
 
-Without Code Connect, a developer looking at a Figma component in Dev Mode sees the visual design but has to guess the correct import. With Code Connect, the Dev Mode panel shows something like:
+Published versus draft confusion is the second most common operational problem. The `GET /v1/files/:key/components` library endpoint returns only published components. [verify — current as of writing] The full file response includes draft components as well. Running the sync against the full file will include components that are not yet available for use — which inflates the inventory and may produce documentation for components that engineers cannot actually import. A `--published-only` flag that filters to components in published sets is the clean solution; the implementation is a membership check against `componentSetId` cross-referenced against the set's publication state.
 
-```typescript
-import { Button } from '@acme/design-system';
+Variant property drift is the failure mode that the diff workflow is specifically designed to catch. When a designer adds a new variant value in Figma, the variant tables generated by the next sync run will include the new value immediately. If Code Connect mappings and Storybook stories do not account for the new value, the documentation is stale by one sprint before the sync even runs. The operational discipline is to treat a variant table diff as a trigger for documentation work, not just a informational notification.
 
-<Button variant="primary" size="medium">
-  Label
-</Button>
-```
+The documentation platform de-sync is subtler: if description content has been edited directly in the documentation platform — descriptions written in Zeroheight's editor rather than in Figma — running a sync that overwrites platform content with Figma's description will destroy human-authored content. This is the canonical reason to decide ownership explicitly before automating: Figma owns the descriptions, or the platform does, and only one of those is acceptable for a given team. Mixed ownership is not a policy; it is deferred conflict.
 
-Setting up Code Connect requires:
-
-1. Installing the Code Connect CLI: `npm install --save-dev @figma/code-connect` [verify — current as of writing]
-2. Creating a `.figma.connect.ts` file per component that maps the Figma component node ID to the real component and its prop mappings
-3. Running `figma connect publish` to push the mappings to Figma
-
-This is not a one-time operation. When a Figma component gets new variants, the Code Connect file needs updating. The missing-docs report from `sync-docs.mjs` should flag components without Code Connect links as a documentation debt item, not just missing descriptive text. You can detect the absence of Code Connect data in the API response by checking whether the component's metadata includes code snippets in the Dev Mode endpoint [verify — current as of writing].
+<!-- → [FIGURE: Decision tree for documentation ownership — does the team want descriptions authored in Figma or in the documentation platform? Each branch shows CI behavior, sync direction, and what happens when both sources have content.] -->
 
 ---
 
-## Failure Modes
+## The Living Style Guide, Thirty Years Later
 
-**The description field is the most common failure.** In practice, most Figma files have large numbers of components with empty description fields. The designer who built the component knew what it was for; they did not write it down. `sync-docs.mjs` surfaces this systematically, but the fix requires human effort: someone has to write descriptions in Figma for every component that needs them. This is design-side work. The CLI gives you the report; it cannot do the writing.
+The documentation drift problem is not new. It is the same problem that motivated the living style guide concept in the mid-2010s, which was itself the same problem that motivated annotated CSS documentation tools before that. The insight — that hand-maintained documentation becomes stale, and that the solution is to generate documentation from source — has been rediscovered repeatedly as the definition of "source" has expanded.
 
-**Published vs. draft confusion.** If your team works in a file where components exist but are not published to the library, the `GET /v1/files/:key/components` endpoint returns only published components [verify — current as of writing]. The full file response includes everything. Running sync-docs against the full file will include draft components that are not yet available for use — which inflates the inventory and may produce confusing documentation. Add a `--published-only` flag to filter components that belong to published component sets.
+The living style guide tools of the 2010s — KSS, Hologram, Storybook in its early form — generated documentation from annotated CSS and component code. The source was the code. If the code changed, the docs changed. This was a genuine improvement over static documentation wikis, and it solved the problem for everything that lived in code.
 
-**Variant property drift.** When a designer adds a new variant value in Figma without updating any connected documentation or Code Connect mappings, the variant tables generated by `sync-docs.mjs` will include the new value immediately. Documentation sites and Storybook stories will be stale. This is exactly what the diff is for: run `sync-docs.mjs` before and after a library publish event, diff the `variant-tables.json` files, and treat new variant values as documentation tasks.
+The gap it did not close was the design side. Design files existed in Figma as a separate artifact. The living style guide documented code reality; it did not document design intent. When the design changed and the code did not yet reflect it, the style guide showed what was built, not what was decided. The synchronization problem lived in the gap between the design file and the code, and the living style guide straddled neither.
 
-**Rate limits on large files.** A design system library with hundreds of components fetches cleanly with a single `GET /v1/files/:key` call. But if your file is very large and you are paginating through nested nodes, you will hit rate limits. The backoff logic in the example script handles 429 responses, but the Figma REST API rate limit architecture [verify — current as of writing] differs by plan: Professional plan users have lower limits than Enterprise. Structure your requests to minimize round-trips — the full file fetch is almost always more efficient than fetching components individually.
-
-**The documentation platform de-syncs.** `sync-docs.mjs` generates facts from the Figma file. If your documentation platform has content that was edited directly in the platform (descriptions written in Zeroheight's editor, for example), running a sync can overwrite human-written content with Figma's thinner description. Decide once which system owns the canonical description: Figma, or the documentation platform. If Figma owns it, the CLI drives the sync. If the platform owns it, the CLI produces a report but does not push.
+Code Connect and programmatic component inventory are the current generation of this idea applied to the design-side gap. The Figma file is now the upstream source; the CLI extracts structured facts from it. The boundary between machine-knowable and human-required has not moved — facts are machine-extractable, intent is not. The living style guide could tell you the CSS custom property values; it could not tell you why the primary button is that particular shade of blue. The sync tool can tell you the variant dimensions; it cannot tell you when to use `size=compact` versus `size=default`. Only the machine's territory has expanded. The human's territory is the same.
 
 ---
 
-## Decision Rules
+**LLM Exercises**
 
-**Use `sync-docs.mjs` in CI when**: your design system has more than a dozen components, the library publishes more than once per sprint, or you have onboarded a new documentation platform and need a baseline coverage report.
+*Use these with Claude or any capable language model to deepen your understanding of the concepts in this chapter.*
 
-**Run it manually before**: a major library version release, onboarding new documentation contributors, or reviewing documentation before a design system audit.
+**1. Generate and examine.** Run `sync-docs.mjs` against your design system file, or describe your file's component structure to the model and ask it to generate a plausible `missing-docs.json` output based on what you've described. Ask the model to identify which findings are most urgent and why, and compare its prioritization to the three-tier severity structure in this chapter.
 
-**Let the machine generate**: component inventories, variant property tables, coverage percentages, missing-description reports, and component-to-code-path gap reports.
+**2. Apply to known context.** Describe your documentation platform — Storybook, Zeroheight, a custom site, or something else — and ask the model to design the integration between the three output files from `sync-docs.mjs` and that platform's data model. Ask it to identify the specific step where ownership ambiguity (Figma versus platform) is most likely to cause a conflict, and propose a decision rule for resolving it.
 
-**Keep humans responsible for**: usage guidance, do/don't examples, accessibility notes, rationale for design decisions, and anything that requires knowing what the component is actually for in the product.
+**3. Stress-test a specific claim.** This chapter argues that generating descriptions using an LLM — filling in the empty description fields automatically — produces the appearance of documentation without communicating anything useful, and is therefore worse than leaving fields empty. Present this argument to the model and ask it to construct the strongest counterargument: a scenario where auto-generated descriptions are genuinely better than empty fields. Then evaluate whether the counterargument changes how you would configure the CI failure threshold.
 
-**Make CI fail on**: component sets with no description. A component set with no description is undocumented in the most basic sense — you cannot tell from the API what it is. This is a blocking issue.
-
-**Make CI warn on**: individual component variants with no description (especially common for auto-generated variant nodes), descriptions under 20 characters, and components without Code Connect links.
-
-**Do not try to automate**: writing descriptions, writing usage guidance, or generating do/don't examples. These require design judgment that the API cannot supply.
-
----
-
-## Try This
-
-1. Run `sync-docs.mjs` against your design system file. Note the coverage percentage. If it is below 70%, the documentation work has been deferred. You now know exactly where.
-
-2. Add `npm run docs:sync` to your CI pipeline as a check that runs after every library publish event (triggered via webhook, or on a schedule). Fail the build if any component set has no description.
-
-3. Take the `variant-tables.json` output and render it in your documentation site's component page template. Compare the generated table to whatever is currently written by hand. The gaps will be obvious.
-
-4. For three of your highest-traffic components, configure Code Connect and re-run the sync. Check the Figma Dev Mode panel to confirm the code snippet is visible. Note how much the experience changes for a developer who opens that component in Figma.
-
-5. Run `sync-docs.mjs` before and after a library publish. Diff the two `component-inventory.json` files. Decide whether those changes required documentation updates — and whether your process currently produces them.
-
----
-
-## AI Wayback Machine — The Living Style Guide
-
-Before automated pipeline tooling existed, documentation drift was addressed by a concept called the **living style guide**: a documentation artifact that was generated directly from source code or design tokens, theoretically staying in sync by construction.
-
-The living style guide emerged in the mid-2010s as teams using CSS preprocessors and component libraries discovered that hand-maintained style guides became stale within days of release. Tools like KSS (Knyle Style Sheets), Hologram, and later Storybook generated documentation directly from annotated CSS and component code. The source was the documentation — if the code changed, the docs changed.
-
-The problem was that the design side of the living style guide was never truly live. Design files existed in Figma (or earlier, in Sketch) as a separate artifact. The style guide documented code, not design intent. When the design changed and the code did not yet reflect it, the living style guide showed the code reality, not the design intent.
-
-Code Connect and programmatic component inventory are the current generation of this idea, applied to the design side. The Figma file is now the upstream source; the CLI extracts structured facts from it. The gap that living style guides could not close — between the design file and the documentation — is what this chapter's tooling is built to address.
-
-The same problem remains: facts are machine-extractable, intent is not. The living style guide could tell you the CSS custom property values; it could not tell you why the primary button is that particular shade of blue. Programmatic docs sync can tell you the variant dimensions; it cannot tell you when to use `size=compact` versus `size=default`. The boundary between what the machine knows and what the human must write has not moved. Only the machine's territory has expanded.
-
----
-
-*Next chapter: monitoring the whole file for brand drift, not just documentation gaps — color, type, spacing, and contrast as continuous compliance checks.*
+**4. Draft or audit a professional deliverable.** Write the onboarding documentation for a new design system contributor that explains how the documentation sync pipeline works, what they are responsible for maintaining (descriptions in Figma), and what the machine handles automatically. Ask the model to critique it for clarity and completeness, and to identify the single most common mistake a new contributor would make based on how the documentation is written.

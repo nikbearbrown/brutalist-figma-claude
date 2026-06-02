@@ -1,0 +1,133 @@
+<svg viewBox="0 0 700 660" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig14-1-title fig14-1-desc">
+  <title id="fig14-1-title">Full extraction stack — Figma file through audit gate to CI pipeline and human approval gate</title>
+  <desc id="fig14-1-desc">Diagram showing the complete extraction pipeline: Figma file at top feeds through a blocking audit gate; passing files branch into parallel extraction layers (tokens, assets, docs, brand, spec); streams converge at the CI layer which opens pull requests; the human approval gate in red is the final required step before production.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#C8102E"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="700" height="660" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="32" y="28" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="13" font-weight="700" fill="#000000">Full extraction stack</text>
+  <text x="32" y="44" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#555555">Figma file → audit gate → parallel extraction → CI → human approval</text>
+
+  <!-- ══ FIGMA FILE ══ -->
+  <rect x="228" y="60" width="244" height="44" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="350" y="80" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">Figma File</text>
+  <text x="350" y="95" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">source of truth — variables, components, styles</text>
+
+  <!-- Arrow: File → Audit -->
+  <line x1="350" y1="104" x2="350" y2="140" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ══ AUDIT GATE ══ -->
+  <rect x="228" y="140" width="244" height="52" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="350" y="162" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">Audit Gate</text>
+  <text x="350" y="176" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">figma-audit.js — Ch 5</text>
+  <text x="350" y="188" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Blocking errors stop flow</text>
+
+  <!-- Blocking error branch (left, dashed) -->
+  <line x1="228" y1="166" x2="148" y2="166" stroke="#000000" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="188" y="158" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">BLOCKING ERROR</text>
+  <rect x="32" y="148" width="116" height="36" fill="#FFFFFF" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="90" y="165" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000" text-anchor="middle">Stops here.</text>
+  <text x="90" y="178" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Fix file first.</text>
+
+  <!-- Arrow: Audit → parallel fan-out -->
+  <line x1="350" y1="192" x2="350" y2="232" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="362" y="215" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">PASS</text>
+
+  <!-- ══ PARALLEL EXTRACTION LAYER ══ -->
+  <text x="32" y="228" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" letter-spacing=".08em">PARALLEL EXTRACTION</text>
+
+  <!-- Horizontal spreader line -->
+  <line x1="80" y1="244" x2="620" y2="244" stroke="#CCCCCC" stroke-width=".75"/>
+  <line x1="80" y1="244" x2="80" y2="260" stroke="#CCCCCC" stroke-width=".75"/>
+  <line x1="215" y1="244" x2="215" y2="260" stroke="#CCCCCC" stroke-width=".75"/>
+  <line x1="350" y1="244" x2="350" y2="260" stroke="#CCCCCC" stroke-width=".75"/>
+  <line x1="485" y1="244" x2="485" y2="260" stroke="#CCCCCC" stroke-width=".75"/>
+  <line x1="620" y1="244" x2="620" y2="260" stroke="#CCCCCC" stroke-width=".75"/>
+
+  <!-- Tokens box -->
+  <rect x="32" y="260" width="116" height="56" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="90" y="280" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">Tokens</text>
+  <text x="90" y="293" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">extract-tokens.mjs</text>
+  <text x="90" y="305" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">validate-tokens.mjs</text>
+  <text x="90" y="312" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#555555" text-anchor="middle">Ch 8</text>
+
+  <!-- Assets box -->
+  <rect x="167" y="260" width="116" height="56" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="225" y="280" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">Assets</text>
+  <text x="225" y="293" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">export-assets.mjs</text>
+  <text x="225" y="305" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">SVGO · manifest</text>
+  <text x="225" y="312" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#555555" text-anchor="middle">Ch 9</text>
+
+  <!-- Docs box -->
+  <rect x="302" y="260" width="96" height="56" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="350" y="280" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">Docs</text>
+  <text x="350" y="293" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">sync-docs.mjs</text>
+  <text x="350" y="305" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">variant tables</text>
+  <text x="350" y="312" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#555555" text-anchor="middle">Ch 10</text>
+
+  <!-- Brand box -->
+  <rect x="417" y="260" width="116" height="56" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="475" y="280" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">Brand</text>
+  <text x="475" y="293" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">monitor-brand.mjs</text>
+  <text x="475" y="305" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">compliance report</text>
+  <text x="475" y="312" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#555555" text-anchor="middle">Ch 11</text>
+
+  <!-- Spec box -->
+  <rect x="552" y="260" width="116" height="56" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="610" y="280" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">Spec</text>
+  <text x="610" y="293" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">build-spec.mjs</text>
+  <text x="610" y="305" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">spec.json → agents</text>
+  <text x="610" y="312" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#555555" text-anchor="middle">Ch 12</text>
+
+  <!-- Converge arrows to CI layer -->
+  <line x1="90" y1="316" x2="90" y2="388" stroke="#CCCCCC" stroke-width=".75"/>
+  <line x1="225" y1="316" x2="225" y2="388" stroke="#CCCCCC" stroke-width=".75"/>
+  <line x1="350" y1="316" x2="350" y2="388" stroke="#CCCCCC" stroke-width=".75"/>
+  <line x1="475" y1="316" x2="475" y2="388" stroke="#CCCCCC" stroke-width=".75"/>
+  <line x1="610" y1="316" x2="610" y2="388" stroke="#CCCCCC" stroke-width=".75"/>
+  <line x1="90" y1="388" x2="610" y2="388" stroke="#CCCCCC" stroke-width=".75"/>
+  <line x1="350" y1="388" x2="350" y2="408" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ══ CI LAYER ══ -->
+  <text x="32" y="404" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" letter-spacing=".08em">CI LAYER</text>
+
+  <rect x="148" y="408" width="404" height="56" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="350" y="428" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">GitHub Actions — figma-audit.yml</text>
+  <text x="350" y="442" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">PR-triggered · push to main · weekly schedule</text>
+  <text x="350" y="456" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">preflight → token-pipeline → asset-pipeline → spec-build</text>
+
+  <!-- Arrow: CI → PR Gate -->
+  <line x1="350" y1="464" x2="350" y2="504" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ══ PR GATE (opens pull requests) ══ -->
+  <rect x="228" y="504" width="244" height="40" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="350" y="522" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">Pull Request opened</text>
+  <text x="350" y="536" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">peter-evans/create-pull-request@v6</text>
+
+  <!-- Arrow: PR Gate → Human Gate -->
+  <line x1="350" y1="544" x2="350" y2="572" stroke="#C8102E" stroke-width="2" marker-end="url(#arrow-red)"/>
+
+  <!-- ══ HUMAN APPROVAL GATE (RED) ══ -->
+  <rect x="164" y="572" width="372" height="52" fill="#C8102E" stroke="#C8102E" stroke-width="1"/>
+  <text x="350" y="594" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">HUMAN APPROVAL GATE</text>
+  <text x="350" y="610" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#FFFFFF" text-anchor="middle">Engineer reviews diff · decides · merges · is accountable for what ships</text>
+
+  <!-- MCP annotation (right side, Ch 13) -->
+  <rect x="560" y="408" width="108" height="52" fill="#FFFFFF" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="614" y="426" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">+ MCP layer</text>
+  <text x="614" y="440" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">FIGMA.md</text>
+  <text x="614" y="452" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">mcp-check.md</text>
+  <text x="614" y="456" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="8" fill="#555555" text-anchor="middle">Ch 13</text>
+
+  <!-- Caption -->
+  <text x="32" y="644" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">The audit gate is blocking. Extraction cannot run until the file passes. The human gate is mandatory — the pipeline opens PRs; engineers merge them.</text>
+</svg>

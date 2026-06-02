@@ -1,0 +1,97 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig09-01-title fig09-01-desc">
+  <title id="fig09-01-title">Informal asset management vs. pipeline-driven management</title>
+  <desc id="fig09-01-desc">A split diagram contrasting informal asset management on the left, where designer exports manually and paths diverge, against pipeline-driven management on the right, where a manifest maps node IDs to deterministic paths verified on every publish.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#C8102E"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="32" y="44" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="13" font-weight="700" fill="#000000">Asset management: informal vs. pipeline-driven</text>
+
+  <!-- LEFT PANEL: Informal -->
+  <rect x="32" y="56" width="296" height="300" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="180" y="80" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#C8102E" text-anchor="middle" letter-spacing="0.06em">INFORMAL — BEFORE PIPELINE</text>
+
+  <!-- Figma node (informal) -->
+  <rect x="64" y="96" width="108" height="44" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="118" y="117" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">Figma frame</text>
+  <text x="118" y="130" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">"Close Icon" (nodeId A)</text>
+
+  <!-- Arrow: manual export -->
+  <line x1="118" y1="140" x2="118" y2="165" stroke="#C8102E" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+  <text x="132" y="158" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E">manual export</text>
+
+  <!-- Design system file -->
+  <rect x="64" y="165" width="108" height="36" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="118" y="183" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000" text-anchor="middle">design-sys/</text>
+  <text x="118" y="196" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">close-icon.svg ✓</text>
+
+  <!-- Arrow: developer copies file manually -->
+  <line x1="172" y1="183" x2="205" y2="183" stroke="#C8102E" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-red)"/>
+  <text x="210" y="178" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E">dev copies</text>
+  <text x="210" y="191" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E">manually</text>
+
+  <!-- Legacy component hardcoded path -->
+  <rect x="64" y="222" width="108" height="44" fill="#FFFFFF" stroke="#C8102E" stroke-width="1"/>
+  <text x="118" y="240" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" text-anchor="middle">LegacyButton.tsx</text>
+  <text x="118" y="254" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">hardcoded: ../../old/close.svg</text>
+
+  <!-- Broken path consequence -->
+  <text x="118" y="288" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E" text-anchor="middle">File moved → 404 in prod</text>
+  <text x="118" y="301" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">No one knew two files existed</text>
+  <text x="118" y="316" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">No manifest. No verification.</text>
+
+  <!-- Divider -->
+  <line x1="332" y1="56" x2="332" y2="356" stroke="#CCCCCC" stroke-width="1" stroke-dasharray="4 3"/>
+
+  <!-- RIGHT PANEL: Pipeline-driven -->
+  <rect x="340" y="56" width="328" height="300" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="504" y="80" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle" letter-spacing="0.06em">PIPELINE-DRIVEN — THIS CHAPTER</text>
+
+  <!-- Figma node (pipeline) -->
+  <rect x="360" y="96" width="108" height="44" fill="#FFFFFF" stroke="#000000" stroke-width="1"/>
+  <text x="414" y="117" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">Figma frame</text>
+  <text x="414" y="130" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">"icon-close" (nodeId 1:234)</text>
+
+  <!-- Arrow to manifest -->
+  <line x1="468" y1="118" x2="508" y2="118" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Manifest box -->
+  <rect x="508" y="96" width="140" height="72" fill="#FFFFFF" stroke="#000000" stroke-width="1"/>
+  <text x="578" y="115" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">asset-manifest.json</text>
+  <text x="578" y="130" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">nodeId: "1:234"</text>
+  <text x="578" y="143" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">outputPath: src/assets/</text>
+  <text x="578" y="156" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">icons/icon-close.svg</text>
+
+  <!-- Arrow: manifest → export-assets.mjs -->
+  <line x1="414" y1="140" x2="414" y2="192" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- export-assets.mjs -->
+  <rect x="360" y="192" width="130" height="44" fill="#FFFFFF" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="425" y="212" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" text-anchor="middle">export-assets.mjs</text>
+  <text x="425" y="226" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">reads manifest, downloads, verifies</text>
+
+  <!-- Arrow: output -->
+  <line x1="425" y1="236" x2="425" y2="266" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Repository file -->
+  <rect x="360" y="266" width="130" height="36" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="425" y="284" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000" text-anchor="middle">src/assets/icons/</text>
+  <text x="425" y="298" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">icon-close.svg — verified ✓</text>
+
+  <!-- Outcome annotation -->
+  <text x="504" y="330" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000" text-anchor="middle">Rename in Figma? Node ID stable.</text>
+  <text x="504" y="343" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Manifest unchanged. Path unchanged.</text>
+
+  <!-- Caption -->
+  <text x="32" y="390" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">The manifest maps node IDs to deterministic paths. The export script reads and trusts it. CI verifies integrity on every publish.</text>
+  <text x="32" y="404" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">The 11:47 PM Slack message was not an SVG problem — it was a missing-manifest problem.</text>
+</svg>

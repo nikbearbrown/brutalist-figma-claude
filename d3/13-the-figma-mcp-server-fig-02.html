@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 13.2 — Agent Decision Tree: Component Without Code Connect</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1E1E1E;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+
+      const container = document.getElementById('chart');
+      const totalWidth = container.clientWidth || 700;
+      const totalHeight = Math.max(420, totalWidth * 0.62);
+      const margin = { top: 48, right: 32, bottom: 32, left: 32 };
+      const W = totalWidth - margin.left - margin.right;
+      const H = totalHeight - margin.top - margin.bottom;
+
+      const svg = d3.select('#chart')
+        .append('svg')
+          .attr('width', totalWidth)
+          .attr('height', totalHeight)
+          .attr('role', 'img')
+          .attr('aria-labelledby', 'fig13-2-title fig13-2-desc');
+
+      svg.append('title').attr('id', 'fig13-2-title')
+        .text('Figure 13.2 — Agent decision tree: component without Code Connect');
+      svg.append('desc').attr('id', 'fig13-2-desc')
+        .text('Three-branch decision tree: Code Connect present → generate; no mapping but clear description → escalate to human (red); no mapping and empty description → refuse and explain.');
+
+      const defs = svg.append('defs');
+      defs.append('marker').attr('id', 'arrow').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+
+      svg.append('text').attr('x', margin.left).attr('y', 26)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('Figure 13.2 — Agent decision tree: component without Code Connect');
+
+      const gChart = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      const cx = W / 2; // center x
+      const nodeW = Math.min(W * 0.34, 190);
+      const nodeH = 44;
+      const diaH = 28; // diamond half-height
+
+      // ── Row y positions ──
+      const r0 = H * 0.03;  // start node
+      const r1 = H * 0.22;  // decision 1
+      const r2 = H * 0.50;  // decision 2
+      const r3 = H * 0.78;  // outcome C
+
+      // Helper: draw diamond
+      function diamond(g, x, y, w, h, label1, label2) {
+        g.append('polygon')
+          .attr('points', `${x},${y - h} ${x + w/2},${y} ${x},${y + h} ${x - w/2},${y}`)
+          .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 1);
+        g.append('text').attr('x', x).attr('y', y - 5)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('fill', 'var(--color-ink)').text(label1);
+        g.append('text').attr('x', x).attr('y', y + 11)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('fill', 'var(--color-ink)').text(label2);
+      }
+
+      function box(g, x, y, w, h, title, sub, type) {
+        const fill = type === 'red' ? 'var(--color-red)' : type === 'outline' ? 'var(--color-white)' : 'var(--color-fill)';
+        const stroke = type === 'outline' ? 'var(--color-ink)' : type === 'red' ? 'var(--color-red)' : 'var(--color-border)';
+        const tf = type === 'red' ? 'var(--color-white)' : 'var(--color-ink)';
+        const sf = type === 'red' ? 'rgba(255,255,255,0.82)' : 'var(--color-secondary)';
+        g.append('rect').attr('x', x - w/2).attr('y', y - h/2).attr('width', w).attr('height', h)
+          .attr('fill', fill).attr('stroke', stroke).attr('stroke-width', type === 'outline' ? 1.5 : 1);
+        g.append('text').attr('x', x).attr('y', y - 6)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 11).attr('font-weight', 700).attr('fill', tf).text(title);
+        if (sub) {
+          g.append('text').attr('x', x).attr('y', y + 9)
+            .attr('text-anchor', 'middle')
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 9).attr('fill', sf).text(sub);
+        }
+      }
+
+      function label(g, x, y, text, anchor) {
+        g.append('text').attr('x', x).attr('y', y)
+          .attr('text-anchor', anchor || 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('fill', 'var(--color-secondary)').text(text);
+      }
+
+      function arrow(g, x1, y1, x2, y2, dashed) {
+        g.append('line').attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)
+          .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+          .attr('stroke-dasharray', dashed ? '4 3' : 'none')
+          .attr('marker-end', 'url(#arrow)');
+      }
+
+      // ── Start node ──
+      box(gChart, cx, r0 + nodeH/2, nodeW, nodeH, 'Agent receives component', 'request via MCP context', 'neutral');
+
+      // Arrow: start → decision 1
+      arrow(gChart, cx, r0 + nodeH, cx, r1 - diaH);
+
+      // ── Decision 1 ──
+      const diaW = nodeW * 1.1;
+      diamond(gChart, cx, r1, diaW, diaH, 'Code Connect', 'mapping published?');
+
+      // YES branch → left → Outcome A
+      const leftX = W * 0.12;
+      arrow(gChart, cx - diaW/2, r1, leftX + nodeW/2, r1);
+      label(gChart, cx - diaW/2 - 4 + (leftX + nodeW/2 - (cx - diaW/2))/2, r1 - 8, 'YES');
+      box(gChart, leftX + nodeW/2, r1, nodeW, nodeH + 8, 'Generate', 'correct props + import path', 'neutral');
+
+      // NO branch → down → Decision 2
+      arrow(gChart, cx, r1 + diaH, cx, r2 - diaH);
+      label(gChart, cx + 14, r1 + diaH + (r2 - diaH - r1 - diaH)/2, 'NO');
+
+      // ── Decision 2 ──
+      diamond(gChart, cx, r2, diaW, diaH, 'Description field', 'clear and complete?');
+
+      // YES branch → right → Outcome B (ESCALATE / human gate / RED)
+      const rightX = W * 0.88;
+      arrow(gChart, cx + diaW/2, r2, rightX - nodeW/2, r2);
+      label(gChart, cx + diaW/2 + (rightX - nodeW/2 - cx - diaW/2)/2, r2 - 8, 'YES');
+      box(gChart, rightX - nodeW/2, r2, nodeW, nodeH + 8, 'Escalate to human', 'flag missing mapping', 'red');
+
+      // NO branch → down → Outcome C
+      arrow(gChart, cx, r2 + diaH, cx, r3 - nodeH/2);
+      label(gChart, cx + 14, r2 + diaH + (r3 - nodeH/2 - r2 - diaH)/2, 'NO');
+
+      // ── Outcome C: Refuse ──
+      box(gChart, cx, r3, nodeW * 1.1, nodeH + 8, 'Refuse and explain', 'No mapping + empty description. Cannot safely infer props.', 'outline');
+
+      // ── FIGMA.md annotation ──
+      const annX = W * 0.04;
+      const annY = r3 - 24;
+      const annW = nodeW * 0.9;
+      const annH = 56;
+      gChart.append('rect')
+        .attr('x', annX).attr('y', annY).attr('width', annW).attr('height', annH)
+        .attr('fill', 'var(--color-white)').attr('stroke', 'var(--color-border)').attr('stroke-width', .75);
+      gChart.append('text').attr('x', annX + 8).attr('y', annY + 16)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('FIGMA.md governs each branch.');
+      gChart.append('text').attr('x', annX + 8).attr('y', annY + 30)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Without it, the agent');
+      gChart.append('text').attr('x', annX + 8).attr('y', annY + 44)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('chooses for itself.');
+
+      // Dashed line from annotation to decision 2
+      gChart.append('line')
+        .attr('x1', annX + annW).attr('y1', annY + annH/2)
+        .attr('x2', cx - diaW/2).attr('y2', r2)
+        .attr('stroke', 'var(--color-secondary)').attr('stroke-width', 1)
+        .attr('stroke-dasharray', '4 3');
+
+      // Caption
+      svg.append('text').attr('x', margin.left).attr('y', totalHeight - 10)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('The governance file determines which branch the agent takes. Without it, the agent chooses for itself.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

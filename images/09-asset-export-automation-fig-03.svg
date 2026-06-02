@@ -1,0 +1,100 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig09-03-title fig09-03-desc">
+  <title id="fig09-03-title">CI workflow sequence for asset export: webhook to conditional PR creation</title>
+  <desc id="fig09-03-desc">A sequence diagram of the CI workflow showing webhook trigger, preflight check, export-assets.mjs, git diff, and conditional PR creation, with annotations marking where null renders and failures halt the sequence.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="32" y="44" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="13" font-weight="700" fill="#000000">CI workflow — asset export sequence</text>
+
+  <!-- Plot area -->
+  <rect x="32" y="56" width="636" height="300" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+
+  <!-- Row 1 — trigger + preflight + export -->
+  <!-- Webhook trigger -->
+  <rect x="52" y="92" width="108" height="52" fill="#FFFFFF" stroke="#000000" stroke-width="1"/>
+  <text x="106" y="114" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">TRIGGER</text>
+  <text x="106" y="128" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">LIBRARY_PUBLISH</text>
+  <text x="106" y="140" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">or workflow_dispatch</text>
+
+  <line x1="160" y1="118" x2="182" y2="118" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Preflight -->
+  <rect x="182" y="92" width="108" height="52" fill="#FFFFFF" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="236" y="114" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" text-anchor="middle">PREFLIGHT</text>
+  <text x="236" y="128" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">figma-preflight.mjs</text>
+  <text x="236" y="140" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#C8102E" text-anchor="middle">exit 1 → halt all steps</text>
+
+  <line x1="290" y1="118" x2="312" y2="118" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Export assets -->
+  <rect x="312" y="92" width="120" height="52" fill="#FFFFFF" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="372" y="114" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" text-anchor="middle">EXPORT ASSETS</text>
+  <text x="372" y="128" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">export-assets.mjs</text>
+  <text x="372" y="140" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">batch · verify · SVGO</text>
+
+  <!-- Failure path from Export -->
+  <line x1="372" y1="92" x2="372" y2="72" stroke="#C8102E" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="380" y="68" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#C8102E">integrity fail → exit 1</text>
+
+  <line x1="432" y1="118" x2="454" y2="118" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- git diff -->
+  <rect x="454" y="92" width="100" height="52" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="504" y="114" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">GIT DIFF</text>
+  <text x="504" y="128" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">src/assets/</text>
+  <text x="504" y="140" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">changed=true?</text>
+
+  <line x1="554" y1="118" x2="576" y2="118" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Conditional check -->
+  <rect x="576" y="92" width="76" height="52" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="614" y="112" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">IF CHANGED</text>
+  <text x="614" y="126" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">no diff →</text>
+  <text x="614" y="137" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">no PR noise</text>
+
+  <!-- Arrow down from IF CHANGED -->
+  <line x1="614" y1="144" x2="614" y2="188" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="620" y="172" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">changed=true</text>
+
+  <!-- PR created -->
+  <rect x="468" y="188" width="192" height="52" fill="#000000" stroke="none"/>
+  <text x="564" y="210" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">PR OPENED</text>
+  <text x="564" y="224" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#CCCCCC" text-anchor="middle">design asset update from Figma</text>
+  <text x="564" y="236" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#CCCCCC" text-anchor="middle">labels: design-assets, automated</text>
+
+  <!-- Arrow from PR to human review -->
+  <line x1="468" y1="214" x2="400" y2="214" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Human review -->
+  <rect x="244" y="188" width="156" height="52" fill="#FFFFFF" stroke="#A0522D" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="322" y="210" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#A0522D" text-anchor="middle">HUMAN REVIEW</text>
+  <text x="322" y="224" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">null renders · unexpected changes</text>
+  <text x="322" y="236" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">new assets not yet in manifest</text>
+
+  <!-- Null render annotation -->
+  <text x="372" y="170" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">null render → logged, not blocking</text>
+  <text x="372" y="180" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">critical asset null render → investigate before merge</text>
+
+  <!-- workflow_dispatch note -->
+  <text x="106" y="170" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">workflow_dispatch:</text>
+  <text x="106" y="181" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">setup / dry-run / recovery</text>
+
+  <!-- Legend -->
+  <rect x="52" y="270" width="12" height="12" fill="none" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="70" y="281" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Pipeline step — exits non-zero on failure</text>
+  <rect x="52" y="288" width="12" height="12" fill="none" stroke="#A0522D" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="70" y="299" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Human review step — only checkpoint before merge</text>
+  <rect x="52" y="306" width="12" height="12" fill="#000000"/>
+  <text x="70" y="317" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Automated PR — opened only when src/assets/ has changed</text>
+
+  <!-- Caption -->
+  <text x="32" y="376" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">The git diff step prevents a PR from being opened when the export produces byte-for-byte identical output.</text>
+  <text x="32" y="390" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Null renders halt the sequence only for critical production assets. All others are logged for investigation.</text>
+</svg>

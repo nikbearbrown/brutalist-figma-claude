@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 7.1 — Machine-Readiness Severity Matrix</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1C1C1C;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #B8622D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute;
+      pointer-events: none;
+      opacity: 0;
+      background: var(--color-white);
+      border: 1px solid var(--color-border);
+      padding: 8px 12px;
+      font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px;
+      color: var(--color-ink);
+      max-width: 260px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const categories = [
+      'Naming contract',
+      'Variable architecture',
+      'Publication state',
+      'Component documentation',
+      'Export targets'
+    ];
+
+    const data = [
+      {
+        category: 'Naming contract',
+        blocking: 'Spaces, uppercase, or missing slash hierarchy in variable names. Pipeline drops or misclassifies tokens silently.',
+        advisory: 'Violations on non-exported, non-variable nodes the pipeline does not touch. Log and schedule remediation.'
+      },
+      {
+        category: 'Variable architecture',
+        blocking: 'Broken alias — referenced variable deleted or renamed out of scope. CSS writes unresolved var() reference.',
+        advisory: 'Duplicate values — same color at two names with no semantic distinction. Signals architectural confusion.'
+      },
+      {
+        category: 'Publication state',
+        blocking: 'Components consumed by downstream pipelines are unpublished. Generators receive incomplete data silently.',
+        advisory: 'Library not re-published in more than fourteen days. Warn; consumers may lag behind design intent.'
+      },
+      {
+        category: 'Component documentation',
+        blocking: 'Empty descriptions when pipeline is a documentation generator or MCP context provider.',
+        advisory: 'Empty descriptions on published components in non-doc pipelines. Log; improves handoff quality.'
+      },
+      {
+        category: 'Export targets',
+        blocking: 'Missing export settings on intended export targets. Asset pipeline sees nothing to export.',
+        advisory: 'Missing export settings for non-pipeline assets. Monitor; no immediate pipeline impact.'
+      }
+    ];
+
+    const tooltip = d3.select('body')
+      .append('div')
+        .attr('class', 'tooltip');
+
+    function showTooltip(event, html) {
+      tooltip.html(html)
+        .style('left', (event.pageX + 14) + 'px')
+        .style('top',  (event.pageY - 32) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 14) + 'px').style('top', (event.pageY - 32) + 'px');
+    }
+    function hideTooltip() {
+      tooltip.transition().duration(100).style('opacity', 0);
+    }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+
+      const w = document.getElementById('chart').clientWidth || 800;
+      const margin = { top: 80, right: 40, bottom: 56, left: 200 };
+      const totalHeight = 480;
+      const chartWidth  = w - margin.left - margin.right;
+      const chartHeight = totalHeight - margin.top - margin.bottom;
+
+      const svg = d3.select('#chart')
+        .append('svg')
+          .attr('width',  w)
+          .attr('height', totalHeight)
+          .attr('role',   'img')
+          .attr('aria-labelledby', 'fig01-title fig01-desc');
+
+      svg.append('title').attr('id', 'fig01-title').text('Machine-readiness severity matrix — five categories by blocking vs. advisory');
+      svg.append('desc').attr('id', 'fig01-desc').text('Grid of five pipeline-readiness categories showing blocking consequences in the left column and advisory consequences in the right column.');
+
+      // Chart title
+      svg.append('text')
+        .attr('x', margin.left)
+        .attr('y', 36)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13)
+        .attr('font-weight', 700)
+        .attr('fill', 'var(--color-ink)')
+        .text('Severity matrix — machine-readiness categories');
+
+      svg.append('text')
+        .attr('x', margin.left)
+        .attr('y', 54)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 11)
+        .attr('fill', 'var(--color-secondary)')
+        .text('Hover each cell for the full consequence. Red border = blocking.');
+
+      const gChart = svg.append('g')
+        .attr('class', 'g-chart')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+
+      // Plot area
+      gChart.append('rect')
+        .attr('width',  chartWidth)
+        .attr('height', chartHeight)
+        .attr('fill',   'var(--color-fill)')
+        .attr('stroke', 'var(--color-border)')
+        .attr('stroke-width', 0.75);
+
+      const columns = ['blocking', 'advisory'];
+      const colLabels = ['BLOCKING', 'ADVISORY'];
+
+      const xScaleBand = d3.scaleBand()
+        .domain(columns)
+        .range([0, chartWidth])
+        .padding(0.04);
+
+      const yScaleBand = d3.scaleBand()
+        .domain(categories)
+        .range([0, chartHeight])
+        .padding(0.06);
+
+      // Column headers
+      const gColHeaders = gChart.append('g').attr('class', 'g-col-headers');
+      columns.forEach((col, i) => {
+        gColHeaders.append('rect')
+          .attr('x', xScaleBand(col))
+          .attr('y', -36)
+          .attr('width',  xScaleBand.bandwidth())
+          .attr('height', 32)
+          .attr('fill',   i === 0 ? 'var(--color-ink)' : 'var(--color-secondary)');
+
+        gColHeaders.append('text')
+          .attr('x', xScaleBand(col) + xScaleBand.bandwidth() / 2)
+          .attr('y', -36 + 20)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10)
+          .attr('font-weight', 700)
+          .attr('fill', 'var(--color-white)')
+          .attr('letter-spacing', '0.08em')
+          .text(colLabels[i]);
+      });
+
+      // Category labels (left axis)
+      const gLabels = gChart.append('g').attr('class', 'g-labels');
+      categories.forEach(cat => {
+        gLabels.append('text')
+          .attr('x', -8)
+          .attr('y', yScaleBand(cat) + yScaleBand.bandwidth() / 2 + 4)
+          .attr('text-anchor', 'end')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 11)
+          .attr('font-weight', 700)
+          .attr('fill', 'var(--color-red)')
+          .text(cat);
+      });
+
+      // Cells
+      const gCells = gChart.append('g').attr('class', 'g-cells');
+
+      data.forEach(row => {
+        columns.forEach((col, ci) => {
+          const isBlocking = col === 'blocking';
+          const cellText   = row[col];
+          const x = xScaleBand(col);
+          const y = yScaleBand(row.category);
+          const bw = xScaleBand.bandwidth();
+          const bh = yScaleBand.bandwidth();
+
+          const cell = gCells.append('g')
+            .attr('transform', `translate(${x},${y})`)
+            .attr('class', 'cell')
+            .attr('tabindex', 0)
+            .attr('aria-label', `${row.category} ${col}: ${cellText}`)
+            .style('cursor', 'pointer');
+
+          cell.append('rect')
+            .attr('width',  bw)
+            .attr('height', bh)
+            .attr('fill',   'var(--color-white)')
+            .attr('stroke', isBlocking ? 'var(--color-red)' : 'var(--color-border)')
+            .attr('stroke-width', isBlocking ? 1.5 : 0.75);
+
+          // Truncated label inside cell
+          const words = cellText.split(' ');
+          let line = '', lines = [], maxChars = Math.floor(bw / 7);
+          words.forEach(word => {
+            if ((line + word).length > maxChars) { lines.push(line.trim()); line = word + ' '; }
+            else line += word + ' ';
+          });
+          lines.push(line.trim());
+          const displayLines = lines.slice(0, 2);
+          if (lines.length > 2) displayLines[1] = displayLines[1].slice(0, maxChars - 3) + '…';
+
+          displayLines.forEach((l, li) => {
+            cell.append('text')
+              .attr('x', 8)
+              .attr('y', 18 + li * 16)
+              .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+              .attr('font-size', 11)
+              .attr('fill', 'var(--color-ink)')
+              .text(l);
+          });
+
+          // Severity badge
+          cell.append('text')
+            .attr('x', 8)
+            .attr('y', bh - 8)
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 10)
+            .attr('fill', isBlocking ? 'var(--color-red)' : 'var(--color-secondary)')
+            .attr('letter-spacing', '0.06em')
+            .text(isBlocking ? 'BLOCKING' : 'ADVISORY');
+
+          // Hover interactions
+          cell
+            .on('mouseover', function(event) {
+              d3.select(this).select('rect').attr('opacity', 0.85);
+              showTooltip(event, `<strong>${row.category} — ${col}</strong><br>${cellText}`);
+            })
+            .on('mousemove', moveTooltip)
+            .on('mouseout', function() {
+              d3.select(this).select('rect').attr('opacity', 1);
+              hideTooltip();
+            })
+            .on('keydown', function(event) {
+              if (event.key === 'Enter' || event.key === ' ') {
+                showTooltip(event, `<strong>${row.category} — ${col}</strong><br>${cellText}`);
+              }
+            });
+        });
+
+        // Row divider
+        gCells.append('line')
+          .attr('x1', 0).attr('x2', chartWidth)
+          .attr('y1', yScaleBand(row.category) + yScaleBand.bandwidth() + yScaleBand.paddingInner() * yScaleBand.step() / 2)
+          .attr('y2', yScaleBand(row.category) + yScaleBand.bandwidth() + yScaleBand.paddingInner() * yScaleBand.step() / 2)
+          .attr('stroke', 'var(--color-border)')
+          .attr('stroke-width', 0.5)
+          .attr('aria-hidden', 'true');
+      });
+
+      // Caption
+      svg.append('text')
+        .attr('x', margin.left)
+        .attr('y', totalHeight - 12)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10)
+        .attr('fill', 'var(--color-secondary)')
+        .text('Not every violation stops the pipeline, but every violation degrades the output. Blocking violations make the degradation immediate and detectable.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

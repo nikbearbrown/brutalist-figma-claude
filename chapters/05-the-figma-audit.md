@@ -32,7 +32,14 @@ The categories cover six kinds of assertion:
 
 **Structural completeness** — are required pages present? Required variable collections? Export layers named? These are the load-bearing expectations your pipeline has about the file's shape.
 
-<!-- → [TABLE: Six audit categories — columns: category, what it checks, example error, example warning, example info] -->
+| Category | What it checks | Example error | Example warning | Example info |
+|---|---|---|---|---|
+| Naming | Variable, component, style, and layer names conform to the three-tier convention from Chapter 4 | `Color 3` fails segment pattern and category rules; ruleId NAME001 | Component named `Button hover` uses spaces around the slash — technically parseable but inconsistent | Variable description is empty on a passing name — readable but undocumented |
+| Token hygiene | Alias chains intact; no hardcoded values on semantic tokens | Semantic token aliases a deleted variable (orphaned alias); ruleId TOK001 | Semantic token has no description field; ruleId TOK002 | Primitive token description is absent — low priority since primitives are not consumed directly |
+| Component hygiene | Components have descriptions; components are published to the library | — | Component has no description field; ruleId COMP001 — missing description degrades searchability and AI agent context | Component description exists but is fewer than ten words — technically present, worth expanding |
+| Brand compliance | Solid fill nodes have a `boundVariables` reference; no hardcoded hex values bypassing the token system | — | Node fill is `#0066ff` with no `boundVariables` entry — hardcoded hex bypasses token system; ruleId BRD001 | Fill matches a token value but is not bound to it — likely a copy-paste remnant |
+| Accessibility | Text/background pairings meet WCAG contrast minimums: 4.5:1 for normal text, 3:1 for large text | Text `#555555` on `#777777` background — contrast ratio ~1.8:1, well below AA minimum; ruleId ACC001 | Large text (18pt) at 2.8:1 — below the 3:1 large-text threshold | Small text at exactly 4.5:1 — passing, but zero margin for value drift |
+| Structural completeness | Required pages, variable collections, and export layer names are present | Variable collection `Brand` missing — pipeline expects it; ruleId STR001 | Export layer `icons/arrow-right` renamed to `icons/arrow-right-v2` — breaks all codebase references | Page `_Archive` present but not excluded from audit — produces noise in findings |
 
 ---
 
@@ -53,7 +60,8 @@ figma-audit.js
 └── report (markdown + JSON output)
 ```
 
-<!-- → [FIGURE: Audit pipeline diagram — data flows from Figma API or fixture through six check functions into a findings array, then into parallel markdown and JSON renderers; annotated with severity levels at the findings stage] -->
+![Figma audit pipeline showing data flowing from the Figma API or a local fixture through six check functions into a findings array, then rendered in parallel as a markdown report and a JSON file with severity levels annotated](images/05-the-figma-audit-fig-01.png)
+*Figure 5.1 — Audit pipeline: API → six checks → findings → reports*
 
 The main script takes either a live API call or a local fixture via `--fixture`. The fixture path is not optional ceremony — it is how you run the audit in CI without hammering the rate limits on every pull request. Updating the fixture is a separate scheduled step; the audit itself runs against the committed fixture on every PR.
 
@@ -348,7 +356,8 @@ steps:
     run: npm run figma:tokens
 ```
 
-<!-- → [FIGURE: CI pipeline sequence — Audit step with exit code 0/1 gate before token extraction and code generation steps; annotated to show which failures block which downstream steps] -->
+![CI pipeline sequence showing the audit step with an exit code 0 or 1 gate; exit code 1 blocks token extraction and code generation; the ratchet baseline diff runs alongside to prevent regressions](images/05-the-figma-audit-fig-02.png)
+*Figure 5.2 — CI pipeline: audit gate before token extraction*
 
 When a warning deserves promotion to error — because accessibility compliance is now non-negotiable, because the variable migration is complete and hardcoded colors have no excuse left — update a severity override in the audit config rather than modifying the check function itself. This keeps the rule logic stable while the team's tolerance changes:
 
@@ -374,7 +383,18 @@ Prototype and interaction data does not appear in the REST API at all. Accessibi
 
 False positives are predictable. Work-in-progress components that are intentionally not published will trigger component hygiene warnings. Suppress them by prefixing their names with `_WIP/` — the check skips nodes whose names start with `_`. Primitive tokens without descriptions will trigger the token hygiene description check. Either add descriptions to primitives or exclude the primitive tier from the description check; document which you chose so future engineers understand the decision.
 
-<!-- → [TABLE: What the audit can and cannot catch — columns: concern, checkable by audit, why/why not — rows covering naming, orphaned aliases, contrast, intent/semantics, prototype behavior, mode correctness] -->
+| Concern | Checkable by audit | Why / why not |
+|---|---|---|
+| Variable naming violations | Yes | Name string is present in the API response; `validateTokenName()` applies deterministic rules against it |
+| Orphaned alias references | Yes | The alias `id` is in the response; the variable ID set can be built and diffed to find missing targets |
+| Static text/background contrast | Yes (single-frame pairs) | WCAG contrast ratio is a mathematical formula applied to two resolved color values |
+| Semantic correctness of a name | No | The audit sees the string `color/brand/primary` — it cannot know whether that token actually serves the primary brand role or was mislabeled at creation |
+| Designer intent vs. genuine violation | No | A WIP component and a published component with a missing description produce identical findings; only a human looking at the canvas can distinguish them |
+| Prototype behavior and interactions | No | Prototype data does not appear in the REST API response at all |
+| Hover/focus/animation accessibility | No | Interactive states are defined in prototype transitions and component logic, not in the static variable and node model |
+| Dark-mode color correctness | Partial | The audit can verify that a dark-mode value exists and is a valid alias; it cannot verify that the dark-mode color is the right dark-mode color |
+| Cross-file alias resolution | No | The REST API returns a single file's variable data; aliases from other library consumer files are not included in the response |
+| Variable mode correctness | Partial | The audit can verify that mode values exist and are structurally valid; whether the mode value is semantically correct requires design judgment |
 
 ---
 
@@ -415,3 +435,245 @@ The chapter claims that naming violations should be errors, not warnings, becaus
 **Exercise 4 — Draft or audit a professional deliverable**
 
 You have 200 warnings after the first audit run. Write a short briefing document (one page) for a design director who needs to understand: what the audit found, why warnings exist at warning severity rather than error, what the remediation plan is, and how long it will take. Ask an LLM to draft this document. Then audit the draft: does it accurately represent what warnings mean? Does it give the design director enough information to make a decision, or does it obscure the severity?
+
+---
+
+## Chapter 5 Exercises: The Figma Audit
+**Project:** figma-tools — Your Design System Extraction Toolkit
+**This chapter adds:** `figma-audit.js` — a severity-classified, six-category audit script with CI exit codes and baseline snapshot diffing via `scripts/audit-diff.js`.
+
+---
+
+### Exercise 1 — When to Use AI
+
+`figma-audit.js` produces structured JSON. AI is well-suited to tasks that work from that output rather than generating the audit itself.
+
+**Task 1: Explaining audit output to stakeholders.** Paste the `audit-report.json` findings array (or a sample of it) and ask an AI to produce a one-page briefing for a design director: total counts by severity, the three most consequential findings with plain-English explanations, and a proposed remediation priority order. The reasoning is contained in the data; AI handles the translation to stakeholder register.
+
+*Why AI works here:* Structured-data summarization. The findings have consistent shape. AI can group, rank, and restate them in natural language without inventing anything, provided the input data is accurate.
+
+**Task 2: Drafting a new check function.** Describe a category of problem your file has that none of the six built-in checks cover — for example, detecting components without a variant named "Default," or flagging variable collections that have only one mode when two are required. Ask an AI to draft the check function following the shape of `checkComponentHygiene`. Review it against the function contract: does it receive `{ file, variables }`, return an array of findings, and use consistent `ruleId` values?
+
+*Why AI works here:* Structural pattern completion. The check function contract is unambiguous. AI can implement a new check that follows it, given a clear description of the rule. You review the logic.
+
+**Task 3: Generating audit-diff test cases.** The `audit-diff.js` script compares current findings to a baseline. Ask an AI to generate three fabricated `audit-report.json` / `audit-baseline.json` pairs — one regression (current has more errors than baseline), one improvement, one lateral (same count, different ruleId). Use these as test fixtures to verify your diff script behavior without needing a real Figma file.
+
+*Why AI works here:* Test data generation. The JSON schema is fully specified. AI can produce structurally valid test data quickly.
+
+**The tell:** Run your check function draft against a real fixture. If it produces findings, verify two of them manually — open the Figma file and confirm the flagged node actually has the problem the function identified. If the function produces no findings on a file you know has the problem, the logic is wrong. AI-generated check functions frequently handle null cases incorrectly; test the empty-collection case explicitly.
+
+---
+
+### Exercise 2 — When NOT to Use AI
+
+The audit validates structure. Human review validates intent. Several categories of audit decision are not machine-delegatable.
+
+**Task 1: Classifying a finding as designer intent vs. genuine violation.** The audit's `checkBrandCompliance` function flags solid fills without `boundVariables` references. But work-in-progress components, placeholder frames, and intentional one-off exceptions all produce the same finding. Deciding which of the 47 flagged nodes is a real token-bypass and which is an intentional WIP requires looking at the node in context. AI cannot do this — it only sees the finding, not the intent.
+
+*Why AI fails here:* Context collapse. The finding and the intentional exception have identical structure. Only a human looking at the design can tell the difference.
+
+**Task 2: Deciding severity thresholds for your team's CI gate.** This chapter shows how to promote a warning to an error via `SEVERITY_OVERRIDES`. Deciding which warnings to promote requires knowing your team's tolerance for blocking PRs, the current state of the backlog, and the release schedule. AI can explain what the options are; it cannot make the call about what your team can absorb.
+
+*Why AI fails here:* Organizational judgment. The technical mechanism is simple. The right answer depends on team context that has no API.
+
+**Task 3: Reviewing the baseline before committing it.** On day one, a legacy file may have 200 warnings. Committing them all to `audit-baseline.json` means the ratchet starts there. Before committing the baseline, a human needs to review whether any of the 200 warnings should actually be errors, and whether any findings are false positives that should be suppressed rather than baselined. AI will help draft the baseline JSON; it should not decide which findings to include.
+
+*Why AI fails here:* Audit blind spots. AI cannot determine which findings reflect designer intent rather than genuine violations. It will base-line false positives without flagging them as such.
+
+**The tell:** If your baseline contains findings you cannot explain in one sentence — you do not know why the node triggered the rule or whether it is a real problem — do not commit it yet. A baseline you do not understand is a ratchet set at an arbitrary point.
+
+**Series connection:** This exercise sits at Tier 4 metacognitive — knowing the limits of the audit itself. The critical risk is not that the audit catches too little, but that teams treat its output as authoritative and miss the cases where a "passing" node has a real problem (false negative) or a "failing" node is intentional design (false positive). Both categories require human review; neither is machine-delegatable.
+
+---
+
+### Exercise 3 — LLM Exercise
+
+**What you're building:** A stakeholder briefing document derived from your `audit-report.json` output, ready to send to a design director or engineering lead.
+
+**Tool:** Claude (single conversation). The task is structured-data summarization and prose generation — no persistent context required. Claude's ability to reason about severity hierarchies and produce calibrated, non-alarmist summaries makes it a good fit over a generic summarizer.
+
+**The Prompt:**
+
+```
+I'm building figma-tools, a CLI design system extraction toolkit, following "The Figma API: From Canvas to Production."
+
+I've just run figma-audit.js against my Figma file and produced the following audit findings. I need a one-page briefing document for my design director and engineering lead.
+
+Here is the audit summary:
+[PASTE the "meta.counts" block from your audit-report.json here, e.g.:]
+{
+  "counts": { "error": 12, "warning": 47, "info": 8 }
+}
+
+Here are the top findings by severity (paste up to 10 findings from the "findings" array, covering at least one error, one warning, one info):
+[PASTE FINDINGS HERE]
+
+The audit has six categories: naming, token-hygiene, component-hygiene, brand-compliance, accessibility, structure.
+
+Errors block the pipeline — they must be fixed before token extraction can run.
+Warnings deviate from convention but do not stop the pipeline.
+Info are improvement opportunities.
+
+Write a one-page briefing document with:
+1. A two-sentence executive summary (what the audit found and what it means for the next release).
+2. A table: Category | Error count | Warning count | Most critical finding in this category.
+3. A prioritized remediation plan: which errors to fix first and why, which warnings can wait.
+4. One paragraph explaining what the audit cannot check (designer intent, accessibility beyond contrast, prototype behavior) so stakeholders understand the audit's limits.
+5. A recommended next step for this week.
+
+Do not invent finding counts or categories not present in the data I provided.
+```
+
+**What this produces:** A one-page briefing you can paste into Notion or a Slack message, with an accurate error/warning breakdown, a defensible priority order, and a clear statement of what the audit does not cover.
+
+**How to adapt this prompt:**
+- *Own project:* Replace the bracketed sections with your actual `audit-report.json` content. Run `jq '.meta.counts, (.findings | sort_by(.severity) | .[0:10])' reports/audit-report.json` to extract what you need.
+- *ChatGPT or Gemini:* The prompt works as written. Gemini tends to produce well-structured tables; ChatGPT produces slightly more verbose prose. Either is usable.
+- *Claude Project:* Add your `audit.config.js` to the project context so Claude knows your current severity overrides when explaining why certain findings are at warning rather than error.
+
+**Connection to previous chapters:** The findings this prompt reads come from `figma-audit.js` (this chapter), which in turn reads the fixture written by `figma-read.mjs` (Chapter 3) and validates names against the contract from Chapter 4. The briefing document closes the loop: audit data → stakeholder communication → design team action.
+
+**Preview of next chapter:** Chapter 6 builds `figma-fix-plugin/`, which takes the `audit-report.json` as input and presents approved fixes for human review. The briefing document from this exercise is preparation for that conversation — it establishes which errors the plugin will be asked to address and which require manual design work.
+
+---
+
+### Exercise 4 — CLI Exercise
+
+**What you're building:** `figma-audit.js` and `scripts/audit-diff.js` wired into your figma-tools project, running against your committed fixture and exiting 1 on regressions.
+
+**Tool:** Claude Code
+
+**Skill level:** Intermediate — you are wiring together multiple files that must share the `Finding` shape; Claude Code will scaffold them, but you need to verify the function contracts.
+
+**Setup:**
+- [ ] `fixtures/variables.json` exists (from `figma-read.mjs`, Chapter 3)
+- [ ] `lib/validate-name.js` exists (from Chapter 4 Exercise 4)
+- [ ] `naming.config.js` exists (from Chapter 4 Exercise 4)
+- [ ] `package.json` has a scripts section
+
+**The Task:**
+
+```
+Read the following files to understand the existing project structure:
+- package.json
+- lib/validate-name.js
+- naming.config.js
+- fixtures/variables.json (first 5 entries of meta.variables only)
+
+Do NOT read or modify chapter files, research files, or planning documents.
+Do NOT modify lib/validate-name.js or naming.config.js.
+
+Then scaffold the following files:
+
+1. lib/render.js — exports renderMarkdown(findings, data) and renderJSON(findings).
+   renderMarkdown: produces a markdown string grouped by severity (errors first), each finding as a bullet with nodeName, message, and suggestion.
+   renderJSON: produces a JSON string matching this shape exactly:
+   { "meta": { "auditDate": "<ISO string>", "counts": { "error": N, "warning": N, "info": N } }, "findings": [...] }
+
+2. checks/check-naming.js — imports validateTokenName from lib/validate-name.js, returns NAME001 findings for every variable that fails validation. Follow the Finding shape: { category, severity, nodeId, nodeName, message, suggestion, ruleId }.
+
+3. checks/check-token-hygiene.js — checks for orphaned aliases (TOK001, error) and missing descriptions on non-primitive variables (TOK002, warning). Primitives are identified by names containing '/palette/' or '/scale/'.
+
+4. checks/check-component-hygiene.js — checks for components without descriptions (COMP001, warning). Skip components whose names start with '_WIP/'.
+
+5. figma-audit.js — main entry point. Accepts --fixture=<path> and --output=<dir> flags. Runs all check functions from steps 2-4 (skip brand-compliance, accessibility, structure for now — stub them as empty arrays). Writes audit-report.md and audit-report.json to the output dir. Exits process.exit(1) if error count > 0.
+
+6. scripts/audit-diff.js — reads reports/audit-report.json and reports/audit-baseline.json. Fails if any ruleId count is higher in current than baseline.
+
+7. Add to package.json scripts:
+   "figma:audit": "node figma-audit.js --fixture=./fixtures/variables.json --output=./reports"
+   "figma:audit:baseline": "cp reports/audit-report.json reports/audit-baseline.json"
+   "figma:audit:diff": "node scripts/audit-diff.js"
+   "figma:audit:ci": "npm run figma:audit && npm run figma:audit:diff"
+
+Stop after these steps. Do not create any other files.
+
+Verification step: Run `npm run figma:audit` and show me the last 5 lines of output and the first 3 entries of reports/audit-report.json.
+```
+
+**Expected output:** `reports/audit-report.json` with a valid `meta.counts` block and at least some findings if your fixture has naming violations or missing descriptions. If counts are all zero, verify that `fixtures/variables.json` has a `meta.variables` key and that variables have `name` and `description` fields.
+
+**What to inspect:** Open `reports/audit-report.md` and verify that at least one finding shows the correct `suggestion` field. If suggestions are missing, check that `checks/check-naming.js` is populating the `suggestion` field in its findings.
+
+**If it goes wrong:** If `figma-audit.js` crashes with "Cannot find module," verify that the imports in the main file match the exact file paths created (case-sensitive on Linux). If the diff script crashes because `audit-baseline.json` does not exist, run `npm run figma:audit:baseline` first.
+
+**CLAUDE.md / AGENTS.md note:** Add to your project CLAUDE.md:
+
+```
+## figma-tools: Audit Pipeline
+figma-audit.js reads from fixtures/, writes to reports/.
+Never modify reports/audit-baseline.json directly — only update it via
+`npm run figma:audit:baseline` after a deliberate, reviewed reduction in findings.
+The baseline is a team contract; changing it requires explicit sign-off.
+```
+
+---
+
+### Exercise 5 — AI Validation Exercise
+
+**What you're validating:** The `audit-report.json` produced by `figma-audit.js` in Exercise 4, plus one of the check functions Claude Code generated.
+
+**Validation type:** Output correctness + logic review — verifying that the audit finds real problems, does not flag false positives, and that the check function logic matches the chapter's specification.
+
+**Risk level:** Medium-high. The most dangerous failure in audit tooling is confident-sounding output that misses real problems or flags intentional design as violations. Both failures undermine trust in the audit and cause teams to either over-fix or dismiss the tool.
+
+**Setup:** Use the `reports/audit-report.json` from Exercise 4 and the `checks/check-token-hygiene.js` file Claude Code generated.
+
+**The Validation Task:**
+
+```
+Checklist — apply each criterion to your audit output and generated check function:
+
+CORRECTNESS
+[ ] Open your Figma file and find the node referenced in one ERROR finding (use the nodeId to build the deep link: figma.com/file/<your-key>?node-id=<nodeId>). Confirm the error is real — the node actually has the problem the finding describes.
+[ ] Pick one WARNING finding. Confirm it is a genuine deviation, not an intentional exception. If it is intentional (e.g., a WIP component), note it as a false positive.
+[ ] Verify the audit-report.json "counts" block matches the actual number of findings in the "findings" array. Count them manually for errors.
+
+COMPLETENESS
+[ ] The output contains findings from at least the naming and token-hygiene categories. If both are empty on a real file, something is wrong with the check functions.
+[ ] The meta block includes an auditDate field with an ISO timestamp.
+
+SCOPE
+[ ] figma-audit.js wrote only to the reports/ directory. No other files were modified or created.
+[ ] The fixture file (fixtures/variables.json) is unchanged — check its modification timestamp.
+
+CHAPTER-SPECIFIC: SEVERITY ACCURACY
+[ ] Every orphaned alias (TOK001) is classified as "error," not "warning." An orphaned alias breaks the pipeline — it must be an error.
+[ ] Every missing description (TOK002) is classified as "warning," not "error." Missing descriptions degrade quality but do not break the pipeline.
+
+CHAPTER-SPECIFIC: PRIMITIVE EXCLUSION
+[ ] Open check-token-hygiene.js. Find the line that determines whether a variable is a primitive (by checking for '/palette/' or '/scale/' in the name). Add one test: does your fixture contain any primitive-tier variables? If so, confirm they are NOT flagged for missing descriptions.
+[ ] If your fixture has variables that are clearly primitive-tier but use a different subcategory name (e.g., '/base/' instead of '/palette/'), they will be incorrectly flagged for TOK002. Note this as a false positive that requires adjusting the primitive detection logic.
+
+FAILURE-MODE CHECK
+[ ] "Fluent but wrong" check: look at the check-token-hygiene.js logic for primitive detection. The current implementation uses a name-pattern heuristic ('/palette/' or '/scale/'). Is there a variable in your fixture that is semantically a primitive but whose name does not match this pattern? If so, it will be flagged as a TOK002 false positive — AI calling designer intent a violation.
+[ ] False negative check: does your fixture contain any semantic token with a hardcoded hex value (not a VARIABLE_ALIAS reference) that the token-hygiene check did NOT flag? The current check-token-hygiene.js scaffolded by Claude Code may not implement the hardcoded-value check if that rule was not included in the prompt. Confirm whether it is present.
+
+What to do with your findings:
+- Any true false positive (intentional design flagged as a violation) = add a suppression pattern to check-component-hygiene.js (like the _WIP/ prefix) or file an issue in your project notes.
+- Any false negative (real problem not caught) = add a new rule or extend the check function.
+- If TOK001 errors are absent but your fixture has aliased variables, confirm the alias structure in the fixture is `{ type: 'VARIABLE_ALIAS', id: '<id>' }` — a different shape will cause the orphan check to miss them.
+
+AI Use Disclosure (mandatory — copy this into your project log):
+"Exercise 4 used Claude Code to scaffold figma-audit.js and its check functions. Exercise 5 used a manual checklist to verify the output. I confirmed [N] findings against the actual Figma file and identified [N] false positives and [N] false negatives requiring correction."
+
+Series connection: The false-positive / false-negative failure mode is the defining Tier 4 metacognitive risk for audit tooling. An audit that cries wolf (false positives) trains designers to dismiss it; an audit that passes real problems (false negatives) creates false confidence. Both failures are worse than no audit. This risk reappears in Chapter 6 as the approval-gate fatigue problem — a designer approving 89 changes in bulk is more likely to accept a false-positive fix without noticing.
+```
+
+---
+
+## Prompts
+
+*Load NEU/CLAUDE.md and NEU/DESIGN.md before generating any figure from this section.*
+
+### Figure 5.1 — Audit pipeline: API through six checks to reports
+
+Left-to-right flow diagram with a fan-in and fan-out structure. Left: a single "Data Source" box (Figma API or --fixture). Center: six stacked check function boxes labeled check-naming.js, check-token-hygiene.js, check-component-hygiene.js, check-brand-compliance.js, check-accessibility.js, check-structure.js — each with its ruleId and severity in #C8102E for errors or #555555 for warnings. Dashed #CCCCCC/0.75 arrows fan from the data source to each check and from each check into a central "Findings Array" box bordered in #C8102E/1.5 with fields category · severity · nodeId · message · suggestion · ruleId. A severity legend box below findings shows error / warning / info in their respective colors. Arrows from findings fan right to two output boxes: MARKDOWN (audit-report.md, human readable) and JSON (audit-report.json, CI gate). All boxes fill #F5F5F5 except findings (#FFFFFF with red border). viewBox 700×420. Deliverable: single HTML, inline CSS, D3 v7 CDN, responsive, dark mode, ARIA role="img", tooltip on hover showing each check's full description.
+
+> Reference implementation: `d3/05-the-figma-audit-fig-01.html`
+
+### Figure 5.2 — CI pipeline: audit gate before token extraction
+
+Horizontal pipeline with a downward blocked-path branch. Four boxes left to right: Step 1 (Audit Figma file, red border #C8102E/1.5) → Gate (Exit code 0/1, red border) → Step 2 (Extract tokens, normal border, if: success()) → Step 3 (Code gen, normal border, CSS · Swift · Android · JS). A downward arrow in #C8102E from the Gate box leads to a "PIPELINE BLOCKED" box (white fill, red border) labeled "Fix naming / token errors first." Label "exit 1 — errors found" on the downward arrow. A second row below shows the ratchet baseline pattern: four boxes connected with arrows — audit-report.json (current) → audit-baseline.json (committed) → Regression? (red) → No regression. All step boxes fill #F5F5F5; blocked and gate boxes fill #FFFFFF with red border; normal boxes border #CCCCCC/0.75. viewBox 700×420. Deliverable: single HTML, inline CSS, D3 v7 CDN, responsive, dark mode, ARIA, tooltip on each step.
+
+> Reference implementation: `d3/05-the-figma-audit-fig-02.html`

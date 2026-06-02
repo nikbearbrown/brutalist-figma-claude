@@ -1,0 +1,84 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig02-title fig02-desc">
+  <title id="fig02-title">Three-tier token hierarchy: primitive to semantic to component</title>
+  <desc id="fig02-desc">The aliasing chain is the point. Changing one primitive updates every semantic and component token that references it.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="32" y="30" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="13" font-weight="700" fill="#000000">Three-tier token hierarchy: primitive → semantic → component</text>
+
+  <!-- Tier column headers -->
+  <text x="100" y="56" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">TIER 1</text>
+  <text x="100" y="68" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">PRIMITIVE</text>
+
+  <text x="340" y="56" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">TIER 2</text>
+  <text x="340" y="68" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">SEMANTIC</text>
+
+  <text x="580" y="56" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">TIER 3</text>
+  <text x="580" y="68" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">COMPONENT</text>
+
+  <!-- Tier dividers -->
+  <line x1="210" y1="48" x2="210" y2="340" stroke="#CCCCCC" stroke-width="0.75"/>
+  <line x1="450" y1="48" x2="450" y2="340" stroke="#CCCCCC" stroke-width="0.75"/>
+
+  <!-- Primitive box -->
+  <rect x="32" y="84" width="156" height="80" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="110" y="104" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">color/palette/blue-500</text>
+  <text x="110" y="120" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Raw value. Names position</text>
+  <text x="110" y="134" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">in color scale.</text>
+  <text x="110" y="152" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#C8102E" text-anchor="middle">#0066ff</text>
+
+  <!-- Primitive 2 -->
+  <rect x="32" y="184" width="156" height="64" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="110" y="204" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">spacing/scale/4</text>
+  <text x="110" y="220" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Raw spacing unit.</text>
+  <text x="110" y="238" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#C8102E" text-anchor="middle">16px</text>
+
+  <!-- Semantic box -->
+  <rect x="262" y="84" width="156" height="80" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="340" y="104" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">color/brand/primary</text>
+  <text x="340" y="120" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Role-descriptive alias.</text>
+  <text x="340" y="134" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Consumed by product code.</text>
+  <text x="340" y="152" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#A0522D" text-anchor="middle">{color.palette.blue-500}</text>
+
+  <!-- Semantic 2 -->
+  <rect x="262" y="184" width="156" height="64" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="340" y="204" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">spacing/interactive/md</text>
+  <text x="340" y="220" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Role-descriptive alias.</text>
+  <text x="340" y="238" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#A0522D" text-anchor="middle">{spacing.scale.4}</text>
+
+  <!-- Component box -->
+  <rect x="502" y="84" width="166" height="80" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="585" y="101" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">color/button/</text>
+  <text x="585" y="115" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">background/default</text>
+  <text x="585" y="131" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Component-scoped alias.</text>
+  <text x="585" y="145" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Enables per-component theme.</text>
+  <text x="585" y="159" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#A0522D" text-anchor="middle">{color.brand.primary}</text>
+
+  <!-- Arrows: primitive → semantic -->
+  <line x1="188" y1="124" x2="260" y2="124" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <line x1="188" y1="216" x2="260" y2="216" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Arrows: semantic → component -->
+  <line x1="418" y1="124" x2="500" y2="124" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Cascade annotation -->
+  <text x="32" y="290" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" letter-spacing="0.08em">WHEN ONE PRIMITIVE CHANGES</text>
+  <rect x="32" y="302" width="636" height="32" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="50" y="316" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#C8102E">color/palette/blue-500</text>
+  <text x="194" y="316" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">updated → resolves →</text>
+  <text x="320" y="316" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#C8102E">color/brand/primary</text>
+  <text x="450" y="316" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">→ and →</text>
+  <text x="498" y="316" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#C8102E">color/button/background/default</text>
+  <text x="50" y="330" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">all update automatically. Product code that consumes semantic tokens does not change.</text>
+
+  <!-- Caption -->
+  <text x="32" y="380" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">The aliasing chain is the point. Changing one primitive updates every semantic and component</text>
+  <text x="32" y="394" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">token that references it. Product code that consumes semantics does not change.</text>
+</svg>

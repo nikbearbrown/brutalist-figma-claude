@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation Ownership Decision Tree — Figure 10.2</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1E1E1E;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C4723A;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-size: 12px; color: var(--color-ink);
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX+12)+'px').style('top', (event.pageY-28)+'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    const treeData = {
+      id: 'root', label: 'Who authors component descriptions?', sub: 'Decide once. Mixed ownership is deferred conflict.',
+      children: [
+        {
+          id: 'figma-owns', label: 'Figma owns descriptions', sub: 'sync writes to platform\nplatform content overwritten',
+          edgeLabel: 'Figma', color: 'red',
+          children: [
+            { id: 'figma-ci', label: 'CI: error on missing set desc\nwarning on missing component\nsync overwrites on merge', sub: '', color: 'red' }
+          ]
+        },
+        {
+          id: 'platform-owns', label: 'Platform owns descriptions', sub: 'sync produces report only\nno writes to Figma or platform',
+          edgeLabel: 'Platform', color: 'ink',
+          children: [
+            { id: 'platform-ci', label: 'CI: reports gaps only\nno writes to Figma\nhuman edits platform manually', sub: '', color: 'ink' }
+          ]
+        }
+      ]
+    };
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const w = document.getElementById('chart').clientWidth || 800;
+      const h = Math.max(500, w * 0.65);
+      const cs = getComputedStyle(document.documentElement);
+      const ink = cs.getPropertyValue('--color-ink').trim();
+      const red = cs.getPropertyValue('--color-red').trim();
+      const fill = cs.getPropertyValue('--color-fill').trim();
+      const border = cs.getPropertyValue('--color-border').trim();
+      const sec = cs.getPropertyValue('--color-secondary').trim();
+      const brown = cs.getPropertyValue('--color-brown').trim();
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', w).attr('height', h)
+        .attr('role', 'img')
+        .attr('aria-labelledby', 'chart-title chart-desc');
+      svg.append('title').attr('id','chart-title').text('Documentation ownership decision tree — Figure 10.2');
+      svg.append('desc').attr('id','chart-desc').text('Decision tree for whether descriptions are authored in Figma or in the documentation platform, with CI behavior shown for each path.');
+
+      svg.append('defs').append('marker')
+        .attr('id','arr').attr('markerWidth',8).attr('markerHeight',6)
+        .attr('refX',7).attr('refY',3).attr('orient','auto')
+        .append('polygon').attr('points','0 0, 8 3, 0 6').attr('fill', ink);
+
+      const gChart = svg.append('g').attr('class','g-chart');
+
+      const bw = Math.min(200, w * 0.25);
+      const bh = 60;
+      const rowH = h / 4;
+
+      // Positions
+      const cx = w / 2;
+      const rootPos = { x: cx - bw/2, y: 24 };
+      const leftPos  = { x: cx - bw - 48, y: rowH };
+      const rightPos = { x: cx + 48, y: rowH };
+      const leftCIPos  = { x: cx - bw - 48, y: rowH * 2 };
+      const rightCIPos = { x: cx + 48, y: rowH * 2 };
+      const conflictPos = { x: cx - bw/2, y: rowH * 3 };
+
+      function drawBox(pos, label, sub, borderColor, dashed) {
+        const g = gChart.append('g')
+          .attr('tabindex', 0)
+          .attr('aria-label', label + (sub ? ': ' + sub : ''))
+          .on('mouseover', (event) => showTooltip(event, `<strong>${label}</strong>${sub ? '<br>' + sub.replace(/\n/g,'<br>') : ''}`))
+          .on('mouseout', hideTooltip)
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ')
+              showTooltip(event, `<strong>${label}</strong>${sub ? '<br>' + sub.replace(/\n/g,'<br>') : ''}`);
+          });
+
+        g.append('rect')
+          .attr('x', pos.x).attr('y', pos.y)
+          .attr('width', bw).attr('height', bh)
+          .attr('fill', fill)
+          .attr('stroke', borderColor || border)
+          .attr('stroke-width', 1)
+          .attr('stroke-dasharray', dashed ? '4 3' : null);
+
+        const lines = label.split('\n');
+        lines.forEach((line, i) => {
+          g.append('text')
+            .attr('x', pos.x + bw/2).attr('y', pos.y + 20 + i * 14)
+            .attr('text-anchor','middle')
+            .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 10).attr('fill', borderColor || ink)
+            .text(line);
+        });
+        return { cx: pos.x + bw/2, cy: pos.y + bh/2, bottom: pos.y + bh, top: pos.y };
+      }
+
+      function arrow(x1,y1,x2,y2,lbl,dashed) {
+        gChart.append('line')
+          .attr('x1',x1).attr('y1',y1).attr('x2',x2).attr('y2',y2)
+          .attr('stroke',ink).attr('stroke-width',1.5)
+          .attr('stroke-dasharray', dashed ? '4 3' : null)
+          .attr('marker-end','url(#arr)')
+          .attr('aria-hidden','true');
+        if (lbl) {
+          gChart.append('text')
+            .attr('x',(x1+x2)/2+5).attr('y',(y1+y2)/2-5)
+            .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size',9).attr('fill',sec).attr('text-anchor','middle')
+            .text(lbl);
+        }
+      }
+
+      // Root
+      const root = drawBox(rootPos, 'Who authors component descriptions?', 'Decide once. Mixed ownership is deferred conflict.', ink);
+
+      // Left branch
+      const lx = leftPos.x + bw/2, rx = rightPos.x + bw/2;
+      arrow(root.cx, root.bottom, lx, leftPos.y, 'Figma');
+      arrow(root.cx, root.bottom, rx, rightPos.y, 'Platform');
+
+      const left  = drawBox(leftPos,  'Figma → Platform', 'sync writes to platform\nplatform content overwritten', red);
+      const right = drawBox(rightPos, 'Platform → Figma', 'sync produces report only\nno writes to Figma', border);
+
+      // CI boxes
+      arrow(lx, leftPos.y + bh, lx, leftCIPos.y, '');
+      arrow(rx, rightPos.y + bh, rx, rightCIPos.y, '');
+
+      drawBox(leftCIPos,  'CI: error on missing set desc\nwarning on missing component\nsync overwrites on merge', '', red);
+      drawBox(rightCIPos, 'CI: reports gaps only\nno writes\nhuman edits platform manually', '', border);
+
+      // Conflict box
+      arrow(lx, leftCIPos.y + bh, conflictPos.x + bw/2, conflictPos.y, '', true);
+      arrow(rx, rightCIPos.y + bh, conflictPos.x + bw/2, conflictPos.y, '', true);
+
+      drawBox(conflictPos, 'Both sources have content', 'one source wins; one is destroyed\ndecide ownership before running sync', ink);
+
+      // Caption
+      svg.append('text')
+        .attr('x', 32).attr('y', h - 10)
+        .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', sec)
+        .text('Mixed ownership is not a policy. It is deferred conflict.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

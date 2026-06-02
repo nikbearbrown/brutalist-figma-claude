@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 3.4 — figma-read.mjs Data Flow</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1A1A1A;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C0724D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; min-height: 500px; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink); max-width: 280px; line-height: 1.5;
+    }
+    .flow-node { cursor: pointer; }
+    .flow-node:focus { outline: 2px solid var(--color-red); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const flowNodes = [
+      // Inputs (left column)
+      { id: 'api',       label: 'Figma REST API',    sub: 'GET /v1/files/:key',          col: 0, row: 0, highlight: true,  info: 'The live Figma API. Used on first run, or in production pipeline runs. Subject to rate limits. Writes a fixture after fetch.' },
+      { id: 'fixture',   label: 'Local fixture',     sub: '.figma-fixtures/*.json',      col: 0, row: 1, highlight: false, info: 'A locally cached copy of the API response. Set FIXTURE_PATH in your environment to read from fixture rather than hitting the live API. Prevents rate-limit exhaustion during iterative development.' },
+      // Central node
+      { id: 'central',   label: 'figma-read.mjs',   sub: 'fetch · walk · extract · write', col: 1, row: 0.5, highlight: false, isCenter: true, info: 'The stable interface. Fetches (or reads fixture), walks the document tree, extracts components and variables, writes fixture and three output files. The internals may evolve — the output shape does not.' },
+      // Outputs (right column)
+      { id: 'comp',      label: 'component-inventory.json', sub: 'id · name · hasDescription', col: 2, row: 0,  highlight: false, info: 'Flat array of all component definitions. Fields: id, name, description, key, componentSetId, hasDescription. Consumed by Chapter 5 audit, Chapter 10 docs sync, Chapter 12 spec generation.' },
+      { id: 'vars',      label: 'variable-inventory.json',  sub: 'collections · variables · modes', col: 2, row: 1, highlight: true,  info: 'All variables with collection membership, resolvedType, description, and computed valuesByMode (mode names, not IDs). Only written when variables are available. Consumed by Chapter 8 token extraction.' },
+      { id: 'missing',   label: 'missing-descriptions.md',  sub: 'markdown table · human review',  col: 2, row: 2, highlight: false, info: 'A markdown table of every component missing a description field. Human-readable — share in Slack, file as a GitHub issue. Not consumed by automated tools.' },
+      // Fixture write (below central, back to fixture input)
+      { id: 'fixtureOut', label: 'Writes fixture',  sub: 'fileKey-YYYY-MM-DD.json',     col: 0, row: 2.5, highlight: false, info: 'After fetching from the live API, figma-read.mjs writes the full response to .figma-fixtures/ with today\'s date in the filename. Use FIXTURE_PATH on subsequent runs.' },
+      // Consumers (far right)
+      { id: 'ch5',    label: 'Ch 5 audit',     sub: '',  col: 3, row: -0.2, highlight: false, isConsumer: true, info: 'Chapter 5 audit tooling reads component-inventory.json to check naming, descriptions, and structural conventions.' },
+      { id: 'ch10',   label: 'Ch 10 docs',     sub: '',  col: 3, row: 0.2,  highlight: false, isConsumer: true, info: 'Chapter 10 documentation sync reads component-inventory.json to generate or update component documentation.' },
+      { id: 'ch12',   label: 'Ch 12 spec',     sub: '',  col: 3, row: 0.6,  highlight: false, isConsumer: true, info: 'Chapter 12 specification generation reads component-inventory.json to produce structured component specs.' },
+      { id: 'ch8',    label: 'Ch 8 tokens',    sub: '',  col: 3, row: 1.2,  highlight: false, isConsumer: true, info: 'Chapter 8 token extraction reads variable-inventory.json to produce platform token files.' },
+      { id: 'team',   label: 'Design team',    sub: '',  col: 3, row: 2.2,  highlight: false, isConsumer: true, info: 'The missing-descriptions.md file is shared with the design team as a work item list — components that need descriptions for pipeline automation to work correctly.' },
+    ];
+
+    const edges = [
+      { from: 'api',     to: 'central',   label: 'live fetch',  dashed: false, red: true  },
+      { from: 'fixture', to: 'central',   label: 'FIXTURE_PATH', dashed: true, red: false },
+      { from: 'central', to: 'comp',      label: '',            dashed: false, red: false },
+      { from: 'central', to: 'vars',      label: '',            dashed: false, red: true  },
+      { from: 'central', to: 'missing',   label: '',            dashed: false, red: false },
+      { from: 'central', to: 'fixtureOut', label: 'writes',     dashed: true,  red: false },
+      { from: 'comp',    to: 'ch5',       label: '',            dashed: true,  red: false },
+      { from: 'comp',    to: 'ch10',      label: '',            dashed: true,  red: false },
+      { from: 'comp',    to: 'ch12',      label: '',            dashed: true,  red: false },
+      { from: 'vars',    to: 'ch8',       label: '',            dashed: true,  red: false },
+      { from: 'missing', to: 'team',      label: '',            dashed: true,  red: false },
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px');
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const W = document.getElementById('chart').clientWidth || 800;
+      const H = Math.max(500, W * 0.64);
+      const margin = { top: 40, right: 24, bottom: 48, left: 24 };
+      const innerW = W - margin.left - margin.right;
+      const innerH = H - margin.top - margin.bottom;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', W).attr('height', H)
+        .attr('role', 'img')
+        .attr('aria-labelledby', 'ch3-fig4-title ch3-fig4-desc');
+      svg.append('title').attr('id', 'ch3-fig4-title').text('figma-read.mjs Data Flow');
+      svg.append('desc').attr('id', 'ch3-fig4-desc').text('Interactive flow diagram showing figma-read.mjs as a central node taking input from the Figma REST API or a local fixture, and producing three output files: component-inventory.json (consumed by Chapters 5, 10, 12), variable-inventory.json (consumed by Chapter 8), and missing-descriptions.md (for the design team). Hover nodes for details.');
+
+      svg.append('rect').attr('width', W).attr('height', H).attr('fill', 'var(--color-white)');
+
+      const defs = svg.append('defs');
+      ['arr-k', 'arr-r'].forEach((id, isRed) => {
+        defs.append('marker').attr('id', id)
+          .attr('markerWidth', 8).attr('markerHeight', 6)
+          .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+          .append('polygon').attr('points', '0 0, 8 3, 0 6')
+          .attr('fill', isRed ? 'var(--color-red)' : 'var(--color-ink)');
+      });
+
+      // Column x positions (0..3)
+      const maxCol = 3;
+      const colX = [0, 1, 2, 3].map(c => margin.left + c * innerW / maxCol);
+      // Row y positions
+      const rowCount = 3.5;
+      const rowY = row => margin.top + row * innerH / rowCount;
+
+      // Compute positions
+      const posOf = {};
+      const nodeW = (id) => {
+        const n = flowNodes.find(n => n.id === id);
+        if (!n) return 140;
+        if (n.isCenter) return Math.min(innerW * 0.22, 160);
+        if (n.isConsumer) return Math.min(innerW * 0.12, 96);
+        return Math.min(innerW * 0.2, 152);
+      };
+      const nodeH = (id) => {
+        const n = flowNodes.find(n => n.id === id);
+        if (!n) return 48;
+        if (n.isCenter) return 72;
+        if (n.isConsumer) return 32;
+        return 48;
+      };
+
+      flowNodes.forEach(n => {
+        const x = colX[n.col] + (n.col === 0 || n.col === maxCol ? 0 : (innerW / maxCol - nodeW(n.id)) / 2);
+        const y = rowY(n.row) - nodeH(n.id) / 2;
+        posOf[n.id] = { x, y, w: nodeW(n.id), h: nodeH(n.id) };
+      });
+
+      // Draw edges
+      edges.forEach(e => {
+        const p = posOf[e.from];
+        const c = posOf[e.to];
+        if (!p || !c) return;
+        const pfrom = flowNodes.find(n => n.id === e.from);
+        const pto = flowNodes.find(n => n.id === e.to);
+        let x1, y1, x2, y2;
+        // Determine connection sides
+        if (pfrom && pto && pfrom.col < pto.col) {
+          x1 = p.x + p.w; y1 = p.y + p.h / 2;
+          x2 = c.x; y2 = c.y + c.h / 2;
+        } else if (pfrom && pto && pfrom.col === pto.col) {
+          // same col — go down
+          x1 = p.x + p.w / 2; y1 = p.y + p.h;
+          x2 = c.x + c.w / 2; y2 = c.y;
+        } else {
+          x1 = p.x + p.w / 2; y1 = p.y + p.h;
+          x2 = c.x + c.w / 2; y2 = c.y;
+        }
+        const mid = (x1 + x2) / 2;
+        svg.append('path')
+          .attr('d', `M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`)
+          .attr('fill', 'none')
+          .attr('stroke', e.red ? 'var(--color-red)' : 'var(--color-ink)')
+          .attr('stroke-width', 1.5)
+          .attr('stroke-dasharray', e.dashed ? '4 3' : null)
+          .attr('marker-end', e.red ? 'url(#arr-r)' : 'url(#arr-k)');
+        if (e.label) {
+          svg.append('text')
+            .attr('x', (x1 + x2) / 2).attr('y', Math.min(y1, y2) - 5)
+            .attr('text-anchor', 'middle')
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 9).attr('fill', e.red ? 'var(--color-red)' : 'var(--color-secondary)')
+            .text(e.label);
+        }
+      });
+
+      // Draw nodes
+      flowNodes.forEach(n => {
+        const pos = posOf[n.id];
+        if (!pos) return;
+        const bc = n.highlight ? 'var(--color-red)' : 'var(--color-border)';
+        const bw = n.highlight ? 1.5 : 0.75;
+        const bg = n.isCenter ? 'var(--color-ink)' : 'var(--color-fill)';
+        const textCol = n.isCenter ? 'var(--color-white)' : (n.highlight ? 'var(--color-red)' : 'var(--color-ink)');
+
+        const g = svg.append('g')
+          .attr('class', 'flow-node')
+          .attr('tabindex', 0)
+          .attr('aria-label', `${n.label}: ${n.info}`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>${n.label}</strong><br>${n.info}`))
+          .on('mousemove', moveTooltip)
+          .on('mouseout', hideTooltip)
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>${n.label}</strong><br>${n.info}`);
+          })
+          .on('focus', (ev) => {
+            g.select('rect').attr('fill', 'var(--color-white)');
+          })
+          .on('blur', (ev) => {
+            g.select('rect').attr('fill', n.isCenter ? 'var(--color-ink)' : 'var(--color-fill)');
+          });
+
+        g.append('rect')
+          .attr('x', pos.x).attr('y', pos.y)
+          .attr('width', pos.w).attr('height', pos.h)
+          .attr('fill', bg).attr('stroke', bc).attr('stroke-width', bw);
+
+        g.append('text')
+          .attr('x', pos.x + pos.w / 2).attr('y', pos.y + pos.h * (n.sub ? 0.36 : 0.5))
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(11, pos.w * 0.092))
+          .attr('font-weight', '700').attr('fill', textCol)
+          .style('pointer-events', 'none')
+          .text(n.label);
+
+        if (n.sub) {
+          g.append('text')
+            .attr('x', pos.x + pos.w / 2).attr('y', pos.y + pos.h * 0.72)
+            .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', Math.min(8, pos.w * 0.07))
+            .attr('fill', n.isCenter ? 'var(--color-border)' : 'var(--color-secondary)')
+            .style('pointer-events', 'none')
+            .text(n.sub.length > Math.floor(pos.w / 7) ? n.sub.substring(0, Math.floor(pos.w / 7)) + '…' : n.sub);
+        }
+      });
+
+      // Stable contract callout
+      const callY = H - margin.bottom - 2;
+      svg.append('text')
+        .attr('x', W / 2).attr('y', callY)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Hover any node for details. Output shapes are the stable contract — internals of figma-read.mjs may change.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

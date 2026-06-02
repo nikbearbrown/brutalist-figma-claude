@@ -10,7 +10,8 @@ This is the gap between having access to data and understanding its shape. The A
 
 This chapter is the map.
 
-<!-- → [FIGURE: Annotated diagram of the top-level Figma file response structure — document, components, styles, variables — showing which keys exist at which level and what they contain, with arrows showing how node IDs cross-reference between sections] -->
+![Diagram showing the four top-level keys of the Figma file API response: document (node tree), components (flat ID-to-meta index), styles (color, text, and effect styles), and variables (Enterprise only, separate from the document tree), with an arrow showing how boundVariables in the document tree cross-reference the variables block](images/03-reading-a-figma-file-programmatically-fig-01.png)
+*Figure 3.1 — Four top-level keys. Variables live outside the document tree.*
 
 ---
 
@@ -29,7 +30,18 @@ DOCUMENT (root, id "0:0")
 
 Every node has four properties that are always present: `id`, which is unique within the file and stable for the life of the node; `name`, which is the layer name as shown in the Layers panel; `type`, which tells you what kind of node this is; and `children`, which is an array of child nodes if there are any, and absent entirely on leaf nodes.
 
-<!-- → [TABLE: Node types and what they represent — columns: type name, what it is, when you encounter it, key properties to check — covering DOCUMENT, CANVAS, FRAME, COMPONENT, COMPONENT_SET, INSTANCE, GROUP, TEXT, RECTANGLE, VECTOR] -->
+| Type | What it is | When you encounter it | Key properties to check |
+|---|---|---|---|
+| `DOCUMENT` | Root of the file; always id `"0:0"` | Always the first node | `children` (one CANVAS per page) |
+| `CANVAS` | A page in the file | Always a direct child of DOCUMENT | `name` (page name), `children` (top-level objects) |
+| `FRAME` | A layout container — screen, section, artboard | Most common structural node | `absoluteBoundingBox`, `layoutMode`, `fills`, `children` |
+| `COMPONENT` | A reusable component definition | Source of truth for a component | `name`, `description`, `fills`, `boundVariables`, `children` |
+| `COMPONENT_SET` | A variant group containing COMPONENT children | When variants exist | `name`, `children` (each a COMPONENT variant) |
+| `INSTANCE` | A placed use of a component | On the canvas — placed elements | `componentId` (points back to COMPONENT definition) |
+| `GROUP` | A legacy grouping container | Older files; avoid for new structures | `children` |
+| `TEXT` | A text layer | Labels, headings, body copy | `characters`, `style`, `styleOverrideTable`, `boundVariables` |
+| `RECTANGLE` | A rectangle shape | UI panels, dividers, backgrounds | `fills`, `strokes`, `cornerRadius`, `boundVariables` |
+| `VECTOR` | A vector path (icons, illustrations) | Icons, custom shapes | `fills`, `strokes` |
 
 The types you will encounter most often are FRAME (layout containers — screens, sections, artboards), COMPONENT (a reusable component definition, with a `componentId`), COMPONENT_SET (a variant group containing COMPONENT children), INSTANCE (a placed usage of a component, with a `componentId` pointing back to the source definition), and TEXT (a text layer, with its `characters`, `style`, and `styleOverrideTable`).
 
@@ -82,7 +94,8 @@ Variables live in collections. A collection has one or more modes — Light and 
 
 Aliases are where it gets interesting. A variable value that looks like `{ "type": "VARIABLE_ALIAS", "id": "VariableID:11:30" }` is a pointer to another variable. That target variable may itself be an alias. You follow the chain until you hit a terminal raw value. This indirection is intentional — it is how design systems implement semantic tokens that point at primitive tokens — and your extraction code needs to handle it explicitly or you will silently produce wrong output.
 
-<!-- → [FIGURE: Diagram showing alias chain resolution — semantic token "color/brand/primary" pointing to primitive "color/primitive/blue-500", which holds the raw hex value — with arrows showing how valuesByMode is consulted at each level] -->
+![Diagram showing the alias chain from a COMPONENT node's boundVariables reference through semantic token "color/brand/primary" (VariableID:12:45), which has a VARIABLE_ALIAS value pointing to primitive "color/primitive/blue-500" (VariableID:11:30), which holds the terminal raw color value {r:0.082, g:0.337, b:0.855} equivalent to #1558D6](images/03-reading-a-figma-file-programmatically-fig-02.png)
+*Figure 3.2 — Alias chain: semantic → primitive → terminal value. Resolve per mode.*
 
 One more thing to know about variables before we move on: the `variables` field in the file response may not appear at all, or may appear empty, depending on your plan tier. [verify — current behavior by plan tier] This is not an error in your code. It is a gate Figma has placed between plan tiers and programmatic variable access. If your variable inventory comes back empty on a file where you know variables exist, check the plan before debugging the extraction logic.
 
@@ -112,7 +125,16 @@ Component usage counts are absent. The REST API tells you that a component exist
 
 Plugin-private data is absent. Data stored through the Plugin API's `setPluginData` method is not accessible via REST. If a plugin is being used to store token metadata alongside components, you cannot reach it from outside Figma without the plugin itself.
 
-<!-- → [TABLE: What is and is not in the GET /v1/files/:key response — rows: document tree, components index, styles index, variables, prototype interactions, font files, usage counts, plugin data — with a column for where to get it if not here] -->
+| Data | In `GET /v1/files/:key`? | Where to get it if not here |
+|---|---|---|
+| Document node tree | Yes — `document` key | This endpoint |
+| Components flat index | Yes — `components` key | This endpoint |
+| Styles flat index | Yes — `styles` key | This endpoint |
+| Variables and collections | Only on Enterprise plan — `variables` key | Plugin API (in-app); Tokens Studio export for non-Enterprise |
+| Prototype interactions | No | Separate prototype endpoint (verify current availability) |
+| Font files | No | Source independently from font vendor or CDN |
+| Component usage counts | No | Figma UI (Assets panel); not available via REST |
+| Plugin-private data (`setPluginData`) | No | Only accessible from within the plugin that stored it |
 
 ---
 
@@ -481,7 +503,8 @@ function findHardcodedColors(document) {
 
 That second function is the embryo of the audit logic Chapter 5 formalizes. Understanding the traversal here — why it works, what it is actually checking — means you can write any variant you need.
 
-<!-- → [FIGURE: Annotated diagram of walk() traversal order on a small sample tree — CANVAS → FRAME → COMPONENT_SET → COMPONENT — showing numbered visit sequence and depth values, illustrating pre-order traversal] -->
+![Annotated tree diagram showing walk() visit order numbered 1 through 7: CANVAS at depth 0 (visit 1), FRAME at depth 1 (visit 2), COMPONENT_SET at depth 2 (visit 3), then Button/Default COMPONENT at depth 3 (visit 4) and its TEXT child at depth 4 (visit 5), then Button/Hover COMPONENT at depth 3 (visit 6) and its TEXT child at depth 4 (visit 7)](images/03-reading-a-figma-file-programmatically-fig-03.png)
+*Figure 3.3 — walk() pre-order traversal: parent before children, siblings left to right.*
 
 ---
 
@@ -513,7 +536,11 @@ Not every question about a Figma file requires the full 47,000-line response. Th
 
 `GET /v1/files/:key/nodes?ids=ID1,ID2,...` — the targeted fetch — returns specific nodes and their subtrees. Use this when you have a list of node IDs from a previous structural pass and need the full property graph of just those nodes. An audit script that first does a depth-limited structural pass to collect a list of component IDs, then fetches only those component subtrees, is much more efficient than fetching the entire file when only a fraction of it is relevant.
 
-<!-- → [TABLE: Three read strategies — columns: endpoint, when to use it, speed, tradeoffs — covering full fetch, depth-limited, and targeted node fetch] -->
+| Endpoint | When to use it | Speed | Tradeoffs |
+|---|---|---|---|
+| `GET /v1/files/:key` | Full audits, complete traversals, any analysis where you do not know in advance which nodes you need | Slow on large files (47k+ lines for a design system) | Complete but expensive; write a fixture after the first fetch |
+| `GET /v1/files/:key?depth=N` | Structural reads: page names, top-level frame types, checking node presence without traversing subtrees | Fast — response is orders of magnitude smaller | Does not include full property graph; use for discovery, not extraction |
+| `GET /v1/files/:key/nodes?ids=ID1,ID2,...` | Targeted extraction: you have a list of component IDs from a prior structural pass and need their full property graphs | Fast for small node sets; scales with the number of IDs | Requires a prior pass to collect IDs; building that pass requires the full fetch or a structural pass first |
 
 The general workflow: do a full fetch once, write the fixture, develop against the fixture. In production, decide based on what you need — structural reads get the depth-limited endpoint, targeted reads get the nodes endpoint, full audits get the full fetch with rate-limit awareness.
 
@@ -531,7 +558,8 @@ The general workflow: do a full fetch once, write the fixture, develop against t
 
 The discipline of producing these three files as a stable output shape, regardless of how the extraction logic evolves, is what allows downstream tools to depend on `figma-read.mjs` without coupling to its internals.
 
-<!-- → [INFOGRAPHIC: Flow diagram showing figma-read.mjs as a central node with inputs (Figma REST API, local fixture) and outputs (component-inventory.json → Chapter 5 audit + Chapter 10 docs sync + Chapter 12 spec gen; variable-inventory.json → Chapter 8 token extraction; missing-descriptions.md → human review) — illustrating how this tool is the stable interface for the rest of the book] -->
+![Flow diagram with figma-read.mjs as a central black node taking two inputs — Figma REST API (live fetch, red border) and local fixture (.figma-fixtures/*.json, dashed arrow) — and producing three outputs: component-inventory.json consumed by Chapter 5 audit, Chapter 10 docs sync, and Chapter 12 spec generation; variable-inventory.json consumed by Chapter 8 token extraction; and missing-descriptions.md for the design team](images/03-reading-a-figma-file-programmatically-fig-04.png)
+*Figure 3.4 — figma-read.mjs as the stable interface for downstream tools.*
 
 ---
 
@@ -561,16 +589,6 @@ const activePages = data.document.children.filter(
 
 ---
 
-## The AI Wayback Machine: DOM Traversal and the Figma Graph
-
-If you have written JavaScript for the web, you have traversed a document graph before. The DOM is a tree of nodes — elements, text nodes, comments — each with properties and children. `document.querySelectorAll('.button')` is a depth-first traversal with a selector function as its visitor.
-
-The Figma document graph is structurally identical. The node types are different (FRAME and COMPONENT rather than div and span), and the property schemas are different (`fills` and `boundVariables` rather than `className` and `style`), but the traversal pattern is the same. The `walk` function you read above is what `querySelectorAll` does internally, made explicit so you can write the selector yourself.
-
-The same pattern appears everywhere trees appear in software: TypeScript's compiler has a `visitNode` function that accepts a visitor; Babel's transform pipeline visits AST nodes with plugin-supplied visitors; ESLint rules are functions that receive AST nodes. If you have written an ESLint rule, you have already written a Figma graph traversal. If you have not, the Figma graph is a forgiving place to encounter the pattern for the first time, because every node corresponds to something you can see on screen.
-
----
-
 ## What Comes Next
 
 You can now read any Figma file programmatically. You have a fixture for offline development. You have a component inventory, a variable inventory, and a missing-description report — three files that are the stable input for every downstream tool in this book.
@@ -594,3 +612,263 @@ The chapter claims that you should almost always prefer the variable reference o
 
 **Exercise 4 — Draft a professional deliverable.**
 Using `missing-descriptions.md` output from a real run of `figma-read.mjs` (or a plausible fabricated sample if you do not have access to a Figma file), ask an LLM to draft a brief message to your design team explaining the findings and requesting that descriptions be added. The message should explain why component descriptions matter for pipeline automation without being condescending. Revise the draft based on your knowledge of how your team communicates.
+
+---
+
+## Chapter 3 Exercises: Reading a Figma File Programmatically
+**Project:** figma-tools — Your Design System Extraction Toolkit
+**This chapter adds:** `figma-read.mjs` — fetches the full file, writes a local fixture, and produces three stable output files: `component-inventory.json`, `variable-inventory.json`, and `missing-descriptions.md`.
+
+---
+
+### Exercise 1 — When to Use AI
+
+Three tasks in this chapter's work are good fits for AI assistance.
+
+**Explaining an unfamiliar part of the response graph.** You paste a fragment of the raw Figma file response — a `boundVariables` entry, a `COMPONENT_SET` node, an alias chain — and ask the model to explain what each field means and how the extraction code should handle it. The response shape is documented; the model has seen it; the explanation is retrieval and synthesis, not judgment.
+*Why AI works here:* pattern — the Figma document graph has a fixed schema. Explaining what fields mean in context of that schema is a pattern-completion task grounded in documentation that exists in the model's training data.
+
+**Generating `jq` or JavaScript snippets to query a fixture.** You have a 47,000-line fixture file and you want to find all `COMPONENT_SET` nodes, or all fills where `boundVariables` is absent. AI can produce the `jq` filter or the `walk` visitor function for that query. You test the output against the real fixture.
+*Why AI works here:* boilerplate — writing tree traversal visitors and JSON query expressions for a known schema is a mechanical task. You provide the target; the model provides the code. You verify it runs correctly against the fixture.
+
+**Drafting the `missing-descriptions.md` message for the design team.** Once you have the actual count of components missing descriptions, AI can draft the message — explaining why descriptions matter for pipeline automation, setting the right tone, proposing a process for filling them in. You revise based on your knowledge of your team.
+*Why AI works here:* drafting — writing a professional message that translates a technical finding into a request for action is a drafting task. The finding (the count and the component names) is yours; the communication is the model's contribution.
+
+**The tell:** every output in this exercise category is verifiable against the actual fixture file or the actual tool output. If the model produces a `jq` query or a `walk` visitor, run it. If it explains a field, look it up in the raw fixture. Ground truth is immediately available.
+
+---
+
+### Exercise 2 — When NOT to Use AI
+
+Three judgment calls in this chapter must be yours.
+
+**Deciding which pages to exclude from the inventory.** `figma-read.mjs` includes all pages, including archive pages. The chapter shows a code pattern for excluding pages by name. The names of archive pages in your specific file are a local fact — `_Archive`, `🗑️ Deprecated`, `OLD - Do Not Use` — that the model does not know. Worse, if you ask the model to suggest which pages to exclude, it will produce a list of reasonable-sounding page names that may or may not match what your file actually contains. The only way to know is to run the script and read the page report.
+*Why AI fails here:* missing ground truth — the model has no access to your file's actual page structure.
+
+**Interpreting what a high missing-description count means for your team.** `figma-read.mjs` might report that 124 of 147 components lack descriptions. That number is a fact. What it means — whether it represents a process failure, a recent component explosion, a deliberate choice to skip documentation for internal-only components — requires knowing your team's history. A model will offer a plausible interpretation. It will not know whether those 124 components are archived variants that will never be documented, or active production components that someone was supposed to document three months ago.
+*Why AI fails here:* missing ground truth — interpreting a count requires context about the history and intent behind the data that the model does not have.
+
+**Deciding whether to resolve alias chains to raw values or preserve the alias references in your inventory.** The chapter explains the tradeoff: resolved values are immediately usable but drift from the design system; alias references require downstream resolution but stay correct when the design system changes. This decision depends on what downstream tools will consume the inventory and how they are built. No model can make this call without knowing your downstream architecture — and even if you describe it, the model will offer a recommendation based on general principles rather than specific knowledge of your build pipeline.
+*Why AI fails here:* calibration — the model will recommend one option or the other based on common patterns. Your actual pipeline may have constraints that make the "common" answer wrong.
+
+**The tell:** the model's interpretation of your file's data will sound reasonable and specific. Reasonableness is not the same as correctness when the ground truth is a specific file you own and the model has never seen.
+
+**Series connection:** Chapter 3 is Tier 4 — judgment calls grounded in specific file content and downstream architecture. The key failure mode is AI assuming graph fields or response structures that are not actually present in your file's response — producing schema-valid but wrong analysis.
+
+---
+
+### Exercise 3 — LLM Exercise
+
+**What you're building:** An enhanced alias resolution function — a version of `resolveValue` that handles multi-hop alias chains fully, reports the full resolution path, and flags circular references rather than silently failing.
+
+**Tool:** Claude (claude.ai or API). This is a code generation task grounded in a specific, well-defined schema — a good fit for a focused conversation where you paste the relevant code and describe the desired behavior.
+
+**The Prompt:**
+
+```
+I am building a Figma design token extractor in Node.js. I have a function that resolves variable alias chains:
+
+function resolveValue(value, variables) {
+  if (value && value.type === 'VARIABLE_ALIAS') {
+    const target = variables[value.id];
+    if (!target) return { type: 'UNRESOLVED_ALIAS', id: value.id };
+    const firstModeId = Object.keys(target.valuesByMode)[0];
+    return resolveValue(target.valuesByMode[firstModeId], variables);
+  }
+  if (value && typeof value === 'object' && 'r' in value) {
+    return { type: 'COLOR', hex: hexFromColor(value), raw: value };
+  }
+  return { type: 'SCALAR', raw: value };
+}
+
+This function has three problems I want to fix:
+1. It only resolves using the first mode ID, not a specified mode. I want to pass a target mode ID as a parameter.
+2. It does not detect circular references — if variable A aliases B and B aliases A, it will loop forever.
+3. It does not record the resolution path — I want the output to include the chain of variable names traversed to reach the final value, so I can debug alias chains in the design system.
+
+Please rewrite resolveValue to:
+- Accept a third parameter: modeId (the target mode to resolve for)
+- Detect circular references using a visited set; if a circular reference is found, return { type: 'CIRCULAR_ALIAS', chain: [...visitedIds] }
+- Include a resolutionPath array in the output: an array of { id, name } objects for each variable in the chain, in order
+- Keep the same return structure for COLOR and SCALAR terminal values, but add resolutionPath to them
+
+The variables object has this shape:
+{
+  "VariableID:12:45": {
+    "id": "VariableID:12:45",
+    "name": "color/brand/primary",
+    "valuesByMode": {
+      "12:0": { "r": 0.082, "g": 0.337, "b": 0.855, "a": 1 },
+      "12:1": { "type": "VARIABLE_ALIAS", "id": "VariableID:11:30" }
+    }
+  }
+}
+
+Please also write three unit test cases using plain JavaScript (no test framework) that verify:
+1. A direct value resolves correctly with an empty resolutionPath
+2. A single-hop alias resolves to the terminal value with a one-entry resolutionPath
+3. A circular reference returns { type: 'CIRCULAR_ALIAS', chain: [...] }
+```
+
+**What this produces:** A production-ready `resolveValue` function with circular-reference detection and resolution path tracking, plus three self-contained test cases you can run with `node` directly. The function replaces the version in `figma-read.mjs` and produces richer output in `variable-inventory.json`.
+
+**How to adapt this prompt:**
+- *For your own project:* if your variable schema differs from what the chapter shows (some design systems use a flat value rather than `valuesByMode`), paste a real fragment from your fixture file and ask the model to adapt the function to that shape.
+- *For ChatGPT or Gemini:* the prompt works as written. Compare whether the circular-reference detection approach differs across models — some may use a counter, some a Set, some a string concatenation. All can work; compare which is clearest to you.
+- *For a Claude Project:* set a system prompt that includes the full `figma-read.mjs` source and the fixture schema so the model always has the actual implementation context when you iterate on the function.
+
+**Connection to previous chapters:** The alias chain structure this function resolves was introduced in Chapter 2 (the Variables API section) and surfaced by `figma-read.mjs` in this chapter. The fixture written by `figma-read.mjs` is the input you will use to test this function before replacing the original implementation.
+
+**Preview of next chapter:** Chapter 4 builds on the naming structure of variable IDs and collection names to establish naming as an API contract. The resolution path this function now records — the full chain of variable names — is exactly the data Chapter 4's audit logic will inspect for naming convention violations.
+
+---
+
+### Exercise 4 — CLI Exercise
+
+**What you're building:** `figma-read.mjs` — added to the figma-tools repository, wired to the existing `.env` setup, and confirmed producing the three output files against a real Figma file or a local sample fixture.
+
+**Tool:** Claude Code
+
+**Skill level:** Intermediate — you are adding the second named CLI artifact to the repository and testing it against a real API response. The fixture-writing behavior is new; the `.env` and `CLAUDE.md` conventions carry over from Chapter 2.
+
+**Setup:**
+- [ ] figma-tools repo exists with `scripts/figma-ping.js`, `.env` with real values, and `CLAUDE.md` with the no-hardcoded-secrets rule
+- [ ] `npm run ping` passes (auth and file access checks show PASS)
+- [ ] Node 18 or later installed
+
+**The Task:**
+
+```
+In the figma-tools project, do the following:
+
+1. Create `scripts/figma-read.mjs` using the figma-read.mjs implementation from Chapter 3 of the textbook. The script should:
+   - Read FIGMA_TOKEN and FIGMA_FILE_KEY from process.env (never hardcoded)
+   - Fetch the full file from GET /v1/files/:key
+   - Write a local fixture to .figma-fixtures/[fileKey]-[date].json immediately after fetch
+   - Walk the document graph and extract a component inventory
+   - Extract the variable inventory (handling the case where variables are absent gracefully)
+   - Write three output files to figma-output/:
+     - component-inventory.json
+     - variable-inventory.json (only if variables are available)
+     - missing-descriptions.md (only if any components lack descriptions)
+   - Print a summary to stdout: page count, component count, description coverage, variable availability
+
+2. Add a "read" script to package.json:
+   "read": "node scripts/figma-read.mjs"
+
+3. Update README.md CLI tools table with:
+   | npm run read | Fetch file, write fixture, produce component + variable inventory | Chapter 3 |
+
+4. Add to .gitignore (if not already present):
+   figma-output/
+
+Do NOT modify figma-ping.js. Do NOT modify .env. Do NOT hardcode any token or file key. Do NOT delete or overwrite existing fixtures if any exist — write new ones with today's date in the filename.
+
+Stop after completing these steps. I will run npm run read myself and review the output.
+```
+
+**Expected output:** `scripts/figma-read.mjs`, updated `package.json` and `README.md`, and a `.gitignore` entry for `figma-output/`. When you run `npm run read`, you should see a fixture written to `.figma-fixtures/`, a console summary, and output files in `figma-output/`.
+
+**What to inspect:**
+- Confirm `.figma-fixtures/` is in `.gitignore` (fixture files may contain unpublished component names)
+- Open `figma-output/component-inventory.json` and check that `generatedAt`, `fileKey`, `total`, and `components` are all present
+- If `missing-descriptions.md` was generated, open it and look at the first five entries — do the component names look like real components from your design system, or do they look like archived / internal variants?
+- Check that the fixture filename includes today's date
+
+**If it goes wrong:**
+- *"Cannot read property 'children' of undefined":* the `document` field is absent from the response. Run `npm run ping` first — if file access is failing, the full fetch will fail too.
+- *"Variable inventory: not available":* expected on non-Enterprise plans. The script should print the Tokens Studio alternative message; if it crashes instead, check that the `extractVariables` function handles a missing `variables` field without throwing.
+- *Rate limit error (exit code 2):* wait the number of seconds specified in the output, then retry. If it keeps rate-limiting, you may have another process using the same token concurrently.
+
+**CLAUDE.md / AGENTS.md note:** Add this standing rule to `CLAUDE.md` after the task completes: "Scripts in this repo must read from a local fixture when `FIXTURE_PATH` is set in the environment, and from the live API only when `FIXTURE_PATH` is absent. This prevents unnecessary API calls during iterative development." This fixture-first rule applies to every subsequent chapter that reads from the Figma API.
+
+---
+
+### Exercise 5 — AI Validation Exercise
+
+**What you're validating:** The `component-inventory.json` and `variable-inventory.json` output files from Exercise 4.
+
+**Validation type:** Schema correctness and graph accuracy — checking whether the output files contain what they claim to contain, and whether the extraction logic correctly read the document graph rather than assuming fields that may not be present.
+
+**Risk level:** High. `component-inventory.json` is the stable input for Chapter 5 (audit), Chapter 10 (docs sync), and Chapter 12 (spec generation). If it is wrong — missing components, wrong IDs, incorrect description flags — every downstream tool will be wrong too. Fix it now.
+
+**Setup:** Run `npm run read` to generate the output files. You will paste fragments of the output into the validation prompt. You will also need your fixture file path.
+
+**The Validation Task:**
+
+```
+I ran figma-read.mjs against a Figma file and produced these output files. Please validate them against the criteria below.
+
+component-inventory.json summary:
+[PASTE THE TOP-LEVEL JSON: generatedAt, fileKey, total, withDescription, missingDescription]
+
+First three components in the inventory:
+[PASTE THREE ENTRIES FROM the components array]
+
+variable-inventory.json status: [AVAILABLE / NOT AVAILABLE - state which]
+
+If available, first two variables:
+[PASTE TWO ENTRIES FROM the variables array]
+
+Please check each item and respond PASS, FAIL, or FLAG:
+
+CORRECTNESS
+[ ] The fileKey in the output matches the FIGMA_FILE_KEY value I would expect. If it shows "your_file_key_here" or a placeholder, flag it — the script ran against the wrong environment.
+[ ] Component IDs in the inventory follow the Figma node ID format (e.g., "1:23", "45:678") — a number, a colon, a number. If IDs look like hashes or GUIDs, flag it.
+[ ] hasDescription is true only for components where the description field is non-empty and non-whitespace. Verify this against the pasted entries.
+
+COMPLETENESS
+[ ] The total count is plausible for a real design system file. A count of 0 or 1 on a real file is suspicious — flag it with "may indicate archive-only pages or a failed walk."
+[ ] generatedAt is present and is a valid ISO 8601 timestamp.
+[ ] If the variable inventory is marked NOT AVAILABLE, the output should note the reason (non-Enterprise plan or empty collection). If it is simply absent with no message, flag it.
+
+SCOPE
+[ ] The component entries do not contain node tree data (fills, strokes, children) — the top-level components map contains metadata only. If full node data appears in the inventory entries, the script is using the wrong data source.
+
+CHAPTER-SPECIFIC CRITERIA
+[ ] The componentSetId field is present on each entry (may be null). If the field is absent entirely from the entries, flag it — the schema is incomplete.
+[ ] For variables: if valuesByMode entries exist, the mode names are human-readable strings (e.g., "Light", "Dark"), not raw mode IDs (e.g., "12:0"). The script should resolve mode IDs to names. If raw IDs appear, flag it.
+
+FAILURE MODE CHECK
+[ ] "Fluent but wrong": Does the output look complete and well-formed but contain a component count that cannot be right for a real design system (e.g., exactly 10 components when the ping showed a complex file)? This may indicate the walk stopped early or filtered too aggressively.
+[ ] "Outdated API field assumption": Does the component inventory include a field that the Figma components map does not actually provide — for example, a variantProperties field that only appears on COMPONENT nodes in the document tree, not in the top-level components map? If the pasted entries include fields not listed in the chapter's schema description, flag them for verification against the actual fixture.
+[ ] "Schema-valid but wrong graph field": Does the variable inventory show mode names that look correct but are actually defaulting to the first mode for all variables rather than correctly mapping mode IDs to names? Check: if the file has Light and Dark modes, do both appear in each variable's valuesByMode output, or only one?
+```
+
+**What to do with your findings:** Any FAIL or FLAG on the correctness or chapter-specific criteria means the inventory is not reliable enough to pass to downstream tools. The most important flag is a wrong or incomplete component count — if the inventory is missing components that exist in the file, Chapter 5's audit will miss them too. Compare your inventory count against the number visible in Figma's component panel before treating the inventory as production-ready.
+
+**AI Use Disclosure prompt:** Add these two sentences to any PR, team message, or document where you share the inventory output: "The component and variable inventory was generated by figma-read.mjs with AI-assisted implementation and validated using a structured checklist. The output has been spot-checked against the source Figma file for component count and ID accuracy."
+
+**Series connection:** The specific failure mode this exercise guards against — AI assuming graph fields not actually present in the response, producing schema-valid but wrong output — is the Tier 4 validation failure for Chapter 3. The fixture written by `figma-read.mjs` is the ground truth: if the model's description of the response schema does not match what is actually in the fixture, the fixture wins.
+
+---
+
+## Prompts
+
+The figures in this chapter have interactive D3 implementations. Load `NEU/CLAUDE.md` and `NEU/DESIGN.md` into your Claude context before generating any figure.
+
+**Prerequisites:** Load `NEU/CLAUDE.md` and `NEU/DESIGN.md` into Claude context.
+
+### Figure 3.1 — Figma file response structure
+
+Produce a single self-contained HTML file with a hierarchical layout. One root box at top center labeled "GET /v1/files/:key Response" (black fill, white text). Four column boxes below connected by Bezier branch arrows: "document" (border color), "components" (border), "styles" (border), "variables" (red border, red text). Below each top box, a detail panel shows the key's schema in monospace. A curved dashed red arrow from the document detail panel to the variables detail panel is labeled "boundVariables IDs resolve here." All four key boxes are hoverable and keyboard-accessible with tooltips describing contents and plan requirements. ResizeObserver redraws. Dark mode. Reduced-motion. SVG aria.
+
+> Reference implementation: `d3/03-reading-a-figma-file-programmatically-fig-01.html`
+
+### Figure 3.2 — Alias chain resolution
+
+Produce a single self-contained HTML file with a four-step horizontal chain diagram. Steps left to right: COMPONENT node (border color) → VariableID:12:45 / color/brand/primary (red border) → VariableID:11:30 / color/primitive/blue-500 (border) → a colored swatch rectangle filled #1558D6. Arrows between steps are red dashed with arrowheads labeled "alias ref," "alias →," and "terminal." Below each step, a detail box in monospace shows the relevant JSON fields (fills, valuesByMode, VARIABLE_ALIAS, r/g/b/a). A red call-out bar at the bottom reads "Use the variable reference — not the resolved value." All step boxes are hoverable with tooltips. ResizeObserver redraws. Dark mode. Reduced-motion. SVG aria.
+
+> Reference implementation: `d3/03-reading-a-figma-file-programmatically-fig-02.html`
+
+### Figure 3.3 — walk() pre-order traversal
+
+Produce a single self-contained HTML file with a tree diagram using depth columns (depth 0 through 4). Nodes: CANVAS (depth 0, visit 1), FRAME (depth 1, visit 2), COMPONENT_SET (depth 2, visit 3), COMPONENT/Default (depth 3, visit 4), TEXT leaf under Default (depth 4, visit 5), COMPONENT/Hover (depth 3, visit 6), TEXT leaf under Hover (depth 4, visit 7). Each node is a rectangle with visit-order badge (red circle for containers, brown for leaf nodes). Bezier edges connect parent to children. All nodes are hoverable and keyboard-reachable with tooltip explaining why that visit order occurs. A legend distinguishes container vs. leaf node types. ResizeObserver redraws. Dark mode. Reduced-motion. SVG aria.
+
+> Reference implementation: `d3/03-reading-a-figma-file-programmatically-fig-03.html`
+
+### Figure 3.4 — figma-read.mjs data flow
+
+Produce a single self-contained HTML file with a three-column flow diagram. Left column (inputs): Figma REST API (red border) and Local fixture (border). Central column: figma-read.mjs (black fill, white text). Right column (outputs): component-inventory.json (border), variable-inventory.json (red border), missing-descriptions.md (border). A separate node below the central node shows "Writes fixture." Arrows: live fetch = red solid, FIXTURE_PATH = dashed, outputs = solid black, downstream consumers = dashed gray. Small consumer labels at far right (Ch 5, Ch 10, Ch 12, Ch 8, Design team). All nodes are hoverable with tooltips. ResizeObserver redraws. Dark mode. Reduced-motion. SVG aria.
+
+> Reference implementation: `d3/03-reading-a-figma-file-programmatically-fig-04.html`

@@ -1,0 +1,88 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig-title-ch2-01 fig-desc-ch2-01">
+  <title id="fig-title-ch2-01">Rate limit 429 response handling flow</title>
+  <desc id="fig-desc-ch2-01">Flow diagram showing the rate limit handling pattern: API request made, 429 Too Many Requests received, Retry-After header read, sleep for that duration, retry once, then either success or surface the error for the operator.</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas background -->
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="350" y="36" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle" letter-spacing="0.08em">RATE LIMIT HANDLING FLOW — figmaFetch()</text>
+
+  <!-- Step 1: API Request -->
+  <rect x="32" y="60" width="120" height="48" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="92" y="82" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">API Request</text>
+  <text x="92" y="98" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">fetch(url, headers)</text>
+
+  <!-- Arrow 1→2 -->
+  <line x1="152" y1="84" x2="180" y2="84" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Step 2: Response -->
+  <rect x="180" y="60" width="136" height="48" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="248" y="78" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">Response received</text>
+  <text x="248" y="93" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">check res.status</text>
+
+  <!-- Arrow: 200 OK branch (go right → success) -->
+  <line x1="316" y1="84" x2="356" y2="84" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="336" y="78" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">200 OK</text>
+
+  <!-- Step 5: Success -->
+  <rect x="356" y="60" width="104" height="48" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="408" y="82" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">Return JSON</text>
+  <text x="408" y="97" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">res.json()</text>
+
+  <!-- Arrow: 429 branch (go down) -->
+  <line x1="248" y1="108" x2="248" y2="148" stroke="#C8102E" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="266" y="132" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#C8102E">429</text>
+
+  <!-- Step 3: Read Retry-After -->
+  <rect x="148" y="148" width="200" height="48" fill="#FFFFFF" stroke="#C8102E" stroke-width="1"/>
+  <text x="248" y="167" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#C8102E" text-anchor="middle">Read Retry-After</text>
+  <text x="248" y="183" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">headers.get('Retry-After') || '10'</text>
+
+  <!-- Arrow 3→4 -->
+  <line x1="248" y1="196" x2="248" y2="236" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Step 4: Sleep -->
+  <rect x="148" y="236" width="200" height="48" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="248" y="255" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">Sleep</text>
+  <text x="248" y="271" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">await sleep(retryAfter * 1000)</text>
+
+  <!-- Arrow 4→retry -->
+  <line x1="248" y1="284" x2="248" y2="320" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Step 5: Retry once -->
+  <rect x="148" y="320" width="200" height="48" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="248" y="340" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">Retry once</text>
+  <text x="248" y="356" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">figmaFetch(url, token)</text>
+
+  <!-- Arrow retry → success (go right) -->
+  <line x1="348" y1="344" x2="440" y2="248" stroke="#000000" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="418" y="308" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">success</text>
+
+  <!-- Arrow retry → error (still 429) -->
+  <line x1="348" y1="356" x2="520" y2="356" stroke="#C8102E" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="434" y="348" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#C8102E" text-anchor="middle">still 429</text>
+
+  <!-- Error surface box -->
+  <rect x="520" y="320" width="148" height="60" fill="#FFFFFF" stroke="#C8102E" stroke-width="1"/>
+  <text x="594" y="340" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#C8102E" text-anchor="middle">Surface error</text>
+  <text x="594" y="356" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">throw Error(status)</text>
+  <text x="594" y="370" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">let operator decide</text>
+
+  <!-- Non-429 error branch -->
+  <line x1="316" y1="96" x2="530" y2="200" stroke="#000000" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="440" y="160" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">4xx / 5xx</text>
+  <rect x="530" y="188" width="138" height="40" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="599" y="204" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">throw Error</text>
+  <text x="599" y="218" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">`${status} ${text}`</text>
+
+  <!-- Key rule -->
+  <rect x="32" y="380" width="636" height="28" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="350" y="398" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Retry is bounded: retry once after Retry-After, then surface. Never loop unboundedly on rate-limited endpoints.</text>
+</svg>

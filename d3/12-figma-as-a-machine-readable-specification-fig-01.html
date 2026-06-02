@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Human Doc vs Machine Spec — Figure 12.1</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1E1E1E;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C4723A;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-size: 12px; color: var(--color-ink);
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left',(event.pageX+12)+'px').style('top',(event.pageY-28)+'px')
+        .transition().duration(150).style('opacity',1);
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity',0); }
+
+    const rows = [
+      { field: 'Component name',         human: { status: 'present', note: 'plain name' },              machine: { status: 'present', note: 'name + key + nodeId' } },
+      { field: 'Usage description',      human: { status: 'partial', note: 'authored by human' },       machine: { status: 'partial', note: 'description field (may be empty)' } },
+      { field: 'Variant dimensions',     human: { status: 'partial', note: 'compressed (canonical)' },  machine: { status: 'present', note: 'variantProperties exact map' } },
+      { field: 'Token alias chain',      human: { status: 'absent',  note: 'gen uses raw hex' },        machine: { status: 'present', note: 'tokenAlias field per fill' } },
+      { field: 'Node ID',                human: { status: 'absent',  note: 'gen cannot identify' },     machine: { status: 'present', note: 'nodeId + key (stable)' } },
+      { field: 'Layout constraints',     human: { status: 'absent',  note: 'gen guesses sizing' },      machine: { status: 'present', note: 'constraints + sizingMode' } },
+      { field: 'Spacing values',         human: { status: 'absent',  note: 'gen invents padding' },     machine: { status: 'present', note: 'paddingTop/Right/Bottom/Left' } },
+      { field: 'Code Connect / import',  human: { status: 'absent',  note: 'gen invents import path' }, machine: { status: 'conditional', note: 'codeConnect.importPath (if configured)' } }
+    ];
+
+    const statusColor = (status, cs) => {
+      const red = cs.getPropertyValue('--color-red').trim();
+      const brown = cs.getPropertyValue('--color-brown').trim();
+      const ink = cs.getPropertyValue('--color-ink').trim();
+      const sec = cs.getPropertyValue('--color-secondary').trim();
+      if (status === 'absent') return red;
+      if (status === 'conditional') return brown;
+      if (status === 'partial') return sec;
+      return ink;
+    };
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const w = document.getElementById('chart').clientWidth || 800;
+      const rowH = 34;
+      const headerH = 48;
+      const totalH = headerH + rows.length * rowH + 80;
+      const margin = { left: 32, right: 32 };
+      const colW = (w - margin.left - margin.right - 4) / 3;
+
+      const cs = getComputedStyle(document.documentElement);
+      const ink = cs.getPropertyValue('--color-ink').trim();
+      const red = cs.getPropertyValue('--color-red').trim();
+      const fill = cs.getPropertyValue('--color-fill').trim();
+      const border = cs.getPropertyValue('--color-border').trim();
+      const sec = cs.getPropertyValue('--color-secondary').trim();
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', w).attr('height', totalH)
+        .attr('role','img').attr('aria-labelledby','chart-title chart-desc');
+      svg.append('title').attr('id','chart-title').text('Human-readable doc vs. machine-readable spec — Figure 12.1');
+      svg.append('desc').attr('id','chart-desc').text('Side-by-side comparison of what information is present or absent in a human doc versus a machine spec for the same Button component, with consequences for code generation shown.');
+
+      const gChart = svg.append('g').attr('class','g-chart').attr('transform',`translate(${margin.left},0)`);
+      const cw = w - margin.left - margin.right;
+
+      // Column headers
+      const headers = ['INFORMATION FIELD', 'HUMAN-READABLE DOC', 'MACHINE-READABLE SPEC'];
+      const headerColors = [ink, ink, red];
+      headers.forEach((h, i) => {
+        gChart.append('rect').attr('x', i*colW).attr('y',0).attr('width',colW-2).attr('height',headerH)
+          .attr('fill', fill).attr('stroke', i===2 ? red : border).attr('stroke-width', 1);
+        gChart.append('text').attr('x', i*colW + colW/2).attr('y', headerH/2+6)
+          .attr('text-anchor','middle')
+          .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('font-weight',700).attr('fill', headerColors[i])
+          .text(h);
+      });
+
+      // Rows
+      rows.forEach((row, ri) => {
+        const y = headerH + ri * rowH;
+        const bg = ri % 2 === 0 ? '#FFFFFF' : fill;
+
+        // Field name column
+        gChart.append('rect').attr('x',0).attr('y',y).attr('width',colW-2).attr('height',rowH)
+          .attr('fill',bg).attr('stroke',border).attr('stroke-width',.75);
+        gChart.append('text').attr('x',8).attr('y',y+rowH/2+4)
+          .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size',10).attr('fill',ink).text(row.field);
+
+        // Human doc column
+        const hStatus = row.human.status;
+        const hColor = statusColor(hStatus, cs);
+        const hg = gChart.append('g').attr('tabindex',0)
+          .attr('aria-label',`${row.field} in human doc: ${hStatus} — ${row.human.note}`)
+          .on('mouseover',(event)=>showTooltip(event,`<strong>${row.field}</strong><br>Human doc: <span style="color:${hColor}">${hStatus}</span><br>${row.human.note}`))
+          .on('mouseout',hideTooltip)
+          .on('keydown',function(event){if(event.key==='Enter'||event.key===' ')showTooltip(event,`<strong>${row.field}</strong><br>Human doc: ${hStatus}`);});
+        hg.append('rect').attr('x',colW).attr('y',y).attr('width',colW-2).attr('height',rowH)
+          .attr('fill',bg).attr('stroke',border).attr('stroke-width',.75);
+        hg.append('text').attr('x',colW+8).attr('y',y+rowH/2+4)
+          .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size',9).attr('fill',hColor)
+          .text(hStatus === 'absent' ? `absent — ${row.human.note}` : hStatus === 'partial' ? `partial — ${row.human.note}` : row.human.note);
+
+        // Machine spec column
+        const mStatus = row.machine.status;
+        const mColor = statusColor(mStatus, cs);
+        const mg = gChart.append('g').attr('tabindex',0)
+          .attr('aria-label',`${row.field} in machine spec: ${mStatus} — ${row.machine.note}`)
+          .on('mouseover',(event)=>showTooltip(event,`<strong>${row.field}</strong><br>Machine spec: <span style="color:${mColor}">${mStatus}</span><br>${row.machine.note}`))
+          .on('mouseout',hideTooltip)
+          .on('keydown',function(event){if(event.key==='Enter'||event.key===' ')showTooltip(event,`<strong>${row.field}</strong><br>Machine spec: ${mStatus}`);});
+        mg.append('rect').attr('x',colW*2).attr('y',y).attr('width',colW-2).attr('height',rowH)
+          .attr('fill',bg).attr('stroke', mStatus==='present'?border:border).attr('stroke-width',.75);
+        mg.append('text').attr('x',colW*2+8).attr('y',y+rowH/2+4)
+          .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size',9).attr('fill',mColor)
+          .text(mStatus === 'conditional' ? `conditional — ${row.machine.note}` : row.machine.note);
+      });
+
+      // Legend
+      const legendY = headerH + rows.length * rowH + 16;
+      [
+        { color: ink,  label: 'present' },
+        { color: sec,  label: 'partial' },
+        { color: '#A0522D', label: 'conditional' },
+        { color: red,  label: 'absent — code gen failure mode' }
+      ].forEach((l, i) => {
+        gChart.append('rect').attr('x', i * 180).attr('y', legendY).attr('width', 10).attr('height', 10).attr('fill', l.color);
+        gChart.append('text').attr('x', i * 180 + 16).attr('y', legendY + 9)
+          .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size',9).attr('fill',sec).text(l.label);
+      });
+
+      // Caption
+      svg.append('text').attr('x',margin.left).attr('y',totalH-10)
+        .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size',10).attr('fill',sec)
+        .text('The machine spec is not a better version of the human doc. Missing fields force the code generator to guess.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(()=>draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

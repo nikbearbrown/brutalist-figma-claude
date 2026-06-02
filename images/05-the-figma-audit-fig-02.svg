@@ -1,0 +1,97 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig52-title fig52-desc">
+  <title id="fig52-title">CI pipeline sequence: audit gate before token extraction</title>
+  <desc id="fig52-desc">The audit step runs first with an exit code 0 or 1 gate. Only if audit passes does token extraction and code generation run.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="32" y="28" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="13" font-weight="700" fill="#000000">CI pipeline: audit gate before token extraction</text>
+
+  <!-- CI header -->
+  <rect x="32" y="40" width="636" height="24" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="350" y="56" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">GITHUB ACTIONS — figma-pipeline.yml</text>
+
+  <!-- Step 1: Audit -->
+  <rect x="32" y="80" width="180" height="72" fill="#F5F5F5" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="122" y="99" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" text-anchor="middle" letter-spacing="0.08em">STEP 1</text>
+  <text x="122" y="114" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">Audit Figma file</text>
+  <text x="122" y="130" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">npm run figma:audit:ci</text>
+  <text x="122" y="145" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">reads: fixture or live API</text>
+
+  <!-- Exit code gate -->
+  <rect x="252" y="80" width="100" height="72" fill="#FFFFFF" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="302" y="108" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" text-anchor="middle" letter-spacing="0.08em">EXIT CODE</text>
+  <text x="302" y="122" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="18" font-weight="700" fill="#C8102E" text-anchor="middle">0 / 1</text>
+  <text x="302" y="140" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">gate</text>
+
+  <!-- Arrow step 1 → gate -->
+  <line x1="212" y1="116" x2="250" y2="116" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Exit 0 path -->
+  <line x1="352" y1="116" x2="388" y2="116" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="358" y="110" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">exit 0</text>
+
+  <!-- Exit 1 path (downward — blocks) -->
+  <line x1="302" y1="152" x2="302" y2="196" stroke="#C8102E" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <rect x="242" y="197" width="120" height="44" fill="#FFFFFF" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="302" y="214" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" text-anchor="middle">BLOCKED</text>
+  <text x="302" y="228" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">pipeline does not run</text>
+  <text x="302" y="238" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">fix errors first</text>
+  <text x="234" y="256" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#C8102E">exit 1 — errors found</text>
+
+  <!-- Step 2: Extract tokens (only if success()) -->
+  <rect x="390" y="80" width="140" height="72" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="460" y="99" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">STEP 2</text>
+  <text x="460" y="114" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">Extract tokens</text>
+  <text x="460" y="130" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">npm run figma:tokens</text>
+  <text x="460" y="144" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">if: success()</text>
+
+  <!-- Arrow step 2 → step 3 -->
+  <line x1="530" y1="116" x2="558" y2="116" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Step 3: Code generation -->
+  <rect x="560" y="80" width="108" height="72" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="614" y="99" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">STEP 3</text>
+  <text x="614" y="114" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">Code gen</text>
+  <text x="614" y="130" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">CSS · Swift</text>
+  <text x="614" y="144" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">Android · JS</text>
+
+  <!-- Condition label between steps 2 and 3 -->
+  <text x="556" y="108" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">if:</text>
+  <text x="556" y="120" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">success()</text>
+
+  <!-- Ratchet / baseline section -->
+  <text x="32" y="300" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" letter-spacing="0.08em">RATCHET PATTERN: BASELINE SNAPSHOT</text>
+  <rect x="32" y="308" width="636" height="56" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+
+  <rect x="48" y="318" width="120" height="36" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="108" y="333" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">audit-report.json</text>
+  <text x="108" y="347" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">current run</text>
+
+  <line x1="170" y1="336" x2="220" y2="336" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="176" y="329" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">diff</text>
+
+  <rect x="222" y="318" width="120" height="36" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="282" y="333" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">audit-baseline.json</text>
+  <text x="282" y="347" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">committed snapshot</text>
+
+  <line x1="344" y1="336" x2="392" y2="336" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <rect x="394" y="318" width="120" height="36" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="454" y="333" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" text-anchor="middle">REGRESSION?</text>
+  <text x="454" y="347" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">count > baseline → fail</text>
+
+  <rect x="530" y="318" width="124" height="36" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="0.75"/>
+  <line x1="516" y1="336" x2="528" y2="336" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="592" y="333" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">No regression</text>
+  <text x="592" y="347" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">audit passed</text>
+
+  <!-- Caption -->
+  <text x="32" y="390" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">The audit step runs first. Exit code 1 blocks token extraction and code generation.</text>
+  <text x="32" y="403" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">The ratchet baseline ensures the error count can only improve across PRs.</text>
+</svg>

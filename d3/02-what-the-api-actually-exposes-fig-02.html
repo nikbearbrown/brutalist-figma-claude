@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 2.2 — figma-ping.js Session Health Check Annotated Output</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1A1A1A;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C0724D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; min-height: 500px; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink); max-width: 260px; line-height: 1.5;
+    }
+    .check-row { cursor: pointer; }
+    .check-row:focus { outline: 2px solid var(--color-red); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const checks = [
+      {
+        status: 'PASS', label: 'Environment',
+        lines: ['FIGMA_TOKEN is set (figd_a...)', 'FIGMA_FILE_KEY is set (abc123XYZ)'],
+        callout: 'Environment check', calloutSub: 'FIGMA_TOKEN · FIGMA_FILE_KEY',
+        calloutBorder: 'var(--color-border)', calloutText: 'var(--color-ink)',
+        info: 'Checks that FIGMA_TOKEN and FIGMA_FILE_KEY are present in the environment. Missing either causes immediate exit — there is nothing to check without them.'
+      },
+      {
+        status: 'PASS', label: 'Auth',
+        lines: ['GET /v1/me → 200'],
+        callout: 'Auth check', calloutSub: 'Token valid for this account?',
+        calloutBorder: 'var(--color-red)', calloutText: 'var(--color-red)',
+        info: 'GET /v1/me verifies the token is valid and returns the account name. A 401 means the token is invalid or expired. A 403 means the token is valid but the account lacks access to something.'
+      },
+      {
+        status: 'PASS', label: 'File access',
+        lines: ['GET /v1/files/:key?depth=1 → 200'],
+        callout: 'File access check', calloutSub: 'Shallow fetch — access only',
+        calloutBorder: 'var(--color-border)', calloutText: 'var(--color-ink)',
+        info: 'A depth=1 fetch confirms file access without pulling the full response. A 403 means your account was not added to the workspace. A 404 means the file key is wrong or the file was deleted.'
+      },
+      {
+        status: 'WARN', label: 'Variables API',
+        lines: ['GET /v1/files/:key/variables/local → 403', 'Plan is not Enterprise.', 'Use Tokens Studio (Ch 8).'],
+        callout: 'Plan gate (non-fatal)', calloutSub: 'Enterprise required for REST variables',
+        calloutBorder: 'var(--color-brown)', calloutText: 'var(--color-brown)',
+        info: 'The Variables REST API endpoint requires an Enterprise Figma plan. A 403 here is expected on Professional/Starter. The session is still healthy — use the Tokens Studio plugin path instead (Chapter 8).'
+      },
+      {
+        status: 'INFO', label: 'Rate limit',
+        lines: ['Rate limit headers not present in response.'],
+        callout: 'Rate limit headroom', calloutSub: 'From X-RateLimit-* headers (verify)',
+        calloutBorder: 'var(--color-border)', calloutText: 'var(--color-ink)',
+        info: 'figma-ping.js reads X-RateLimit-Remaining and X-RateLimit-Limit from response headers. If absent, Figma may not expose these on your plan. Verify header names against current Figma documentation before relying on them.'
+      },
+    ];
+
+    const statusColors = {
+      PASS: 'var(--color-ink)', WARN: 'var(--color-brown)',
+      FAIL: 'var(--color-red)', INFO: 'var(--color-secondary)',
+    };
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px');
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const W = document.getElementById('chart').clientWidth || 800;
+      const H = Math.max(500, W * 0.65);
+      const margin = { top: 40, right: 32, bottom: 40, left: 32 };
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', W).attr('height', H)
+        .attr('role', 'img')
+        .attr('aria-labelledby', 'ch2-fig2-title ch2-fig2-desc');
+      svg.append('title').attr('id', 'ch2-fig2-title').text('figma-ping.js Annotated Health Check Output');
+      svg.append('desc').attr('id', 'ch2-fig2-desc').text('Interactive diagram of figma-ping.js terminal output with five annotated checks: Environment, Auth (red border — primary gate), File access, Variables API (plan gate warning), Rate limit (informational). Hover each check for details.');
+
+      svg.append('rect').attr('width', W).attr('height', H).attr('fill', 'var(--color-white)');
+
+      const termW = Math.min(W * 0.55, 420);
+      const termX = margin.left;
+      const termY = margin.top;
+      const termH = H - margin.top - margin.bottom;
+
+      // Terminal chrome
+      svg.append('rect').attr('x', termX).attr('y', termY).attr('width', termW).attr('height', 24).attr('fill', 'var(--color-ink)');
+      svg.append('text').attr('x', termX + termW / 2).attr('y', termY + 16)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-white)').text('figma-ping.js — session health check');
+
+      // Terminal body
+      svg.append('rect').attr('x', termX).attr('y', termY + 24).attr('width', termW).attr('height', termH - 24)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+
+      const monoFont = "'JetBrains Mono','Fira Code','Courier New',monospace";
+      const totalLines = checks.reduce((a, c) => a + c.lines.length + 2, 0) + 3;
+      const lineH = Math.min(16, (termH - 24 - 32) / totalLines);
+      const fs = Math.min(9, termW * 0.022);
+
+      let cy = termY + 24 + lineH;
+      svg.append('text').attr('x', termX + 10).attr('y', cy)
+        .attr('font-family', monoFont).attr('font-size', fs).attr('fill', 'var(--color-ink)')
+        .text('=== figma-ping: session health check ===');
+      cy += lineH * 1.5;
+
+      const calloutX = termX + termW + 20;
+      const calloutW = W - calloutX - margin.right;
+
+      checks.forEach((check) => {
+        const rowStart = cy;
+        svg.append('text').attr('x', termX + 10).attr('y', cy)
+          .attr('font-family', monoFont).attr('font-size', fs).attr('fill', 'var(--color-secondary)')
+          .text(`Checking: ${check.label}`);
+        cy += lineH;
+        check.lines.forEach(line => {
+          const col = statusColors[check.status] || 'var(--color-ink)';
+          svg.append('text').attr('x', termX + 10).attr('y', cy)
+            .attr('font-family', monoFont).attr('font-size', fs).attr('fill', col)
+            .text(`  ${check.status.padEnd(5)} ${line.length > 48 ? line.substring(0, 48) + '…' : line}`);
+          cy += lineH;
+        });
+        const rowEnd = cy;
+        const rowMidY = (rowStart + rowEnd) / 2;
+
+        // Hit zone
+        svg.append('rect').attr('class', 'check-row')
+          .attr('x', termX).attr('y', rowStart - 2).attr('width', termW).attr('height', rowEnd - rowStart + 2)
+          .attr('fill', 'transparent').attr('tabindex', 0)
+          .attr('aria-label', `${check.label}: ${check.info}`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>${check.status} — ${check.label}</strong><br>${check.info}`))
+          .on('mousemove', moveTooltip).on('mouseout', hideTooltip)
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>${check.status} — ${check.label}</strong><br>${check.info}`);
+          });
+
+        // Callout
+        if (calloutW > 80) {
+          const cH = Math.max(32, rowEnd - rowStart);
+          const cY = rowMidY - cH / 2;
+          svg.append('line')
+            .attr('x1', termX + termW).attr('y1', rowMidY).attr('x2', calloutX - 2).attr('y2', rowMidY)
+            .attr('stroke', check.calloutBorder).attr('stroke-width', 0.75).attr('stroke-dasharray', '4 3');
+          svg.append('rect').attr('x', calloutX).attr('y', cY).attr('width', calloutW).attr('height', cH)
+            .attr('fill', 'var(--color-fill)').attr('stroke', check.calloutBorder).attr('stroke-width', 1);
+          svg.append('text').attr('x', calloutX + 8).attr('y', cY + cH * 0.36)
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', Math.min(11, calloutW * 0.09)).attr('font-weight', '700').attr('fill', check.calloutText)
+            .text(check.callout);
+          svg.append('text').attr('x', calloutX + 8).attr('y', cY + cH * 0.72)
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', Math.min(9, calloutW * 0.075)).attr('fill', 'var(--color-secondary)')
+            .text(check.calloutSub);
+        }
+        cy += lineH * 0.5;
+      });
+
+      svg.append('text').attr('x', termX + 10).attr('y', cy)
+        .attr('font-family', monoFont).attr('font-size', fs).attr('fill', 'var(--color-ink)')
+        .text('=== figma-ping complete ===');
+      cy += lineH;
+      svg.append('text').attr('x', termX + 10).attr('y', cy)
+        .attr('font-family', monoFont).attr('font-size', fs).attr('fill', 'var(--color-ink)')
+        .text('Session is healthy. Proceed with confidence.');
+
+      svg.append('text').attr('x', W / 2).attr('y', H - 10)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Hover each check for details. Variables WARN is expected on non-Enterprise plans.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

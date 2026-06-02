@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 7.2 — FIGMA.md Governance Hub</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1C1C1C;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #B8622D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute;
+      pointer-events: none;
+      opacity: 0;
+      background: var(--color-white);
+      border: 1px solid var(--color-border);
+      padding: 8px 12px;
+      font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px;
+      color: var(--color-ink);
+      max-width: 260px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const consumers = [
+      {
+        id: 'ci',
+        label: 'CI Pipeline',
+        detail: 'Reads declared permissions before each workflow step. Halts if preflight exits non-zero.',
+        angle: 210
+      },
+      {
+        id: 'preflight',
+        label: 'Preflight Script',
+        detail: 'Enforces the five-category contract. Exits non-zero on blocking findings — downstream steps do not run.',
+        angle: 90
+      },
+      {
+        id: 'agent',
+        label: 'AI Coding Agent',
+        detail: 'Reads FIGMA.md to determine what it may infer, write, or refuse. Cannot grant its own permissions.',
+        angle: 330
+      }
+    ];
+
+    const tooltip = d3.select('body')
+      .append('div').attr('class', 'tooltip');
+
+    function showTooltip(event, html) {
+      tooltip.html(html)
+        .style('left', (event.pageX + 14) + 'px')
+        .style('top',  (event.pageY - 32) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 14) + 'px').style('top', (event.pageY - 32) + 'px');
+    }
+    function hideTooltip() {
+      tooltip.transition().duration(100).style('opacity', 0);
+    }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+
+      const w = document.getElementById('chart').clientWidth || 800;
+      const totalHeight = 460;
+      const cx = w / 2;
+      const cy = totalHeight / 2 - 20;
+      const radius = Math.min(w * 0.28, 180);
+      const nodeW  = 160;
+      const nodeH  = 64;
+
+      const svg = d3.select('#chart')
+        .append('svg')
+          .attr('width',  w)
+          .attr('height', totalHeight)
+          .attr('role',   'img')
+          .attr('aria-labelledby', 'fig02-title fig02-desc');
+
+      svg.append('title').attr('id', 'fig02-title').text('FIGMA.md as central governance document for CI, preflight, and AI coding agents');
+      svg.append('desc').attr('id', 'fig02-desc').text('Hub diagram with FIGMA.md at the center and arrows pointing to CI Pipeline, Preflight Script, and AI Coding Agent as its three consumers.');
+
+      svg.append('text')
+        .attr('x', 32).attr('y', 36)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700)
+        .attr('fill', 'var(--color-ink)')
+        .text('FIGMA.md — one document, three consumers');
+
+      // Background fill rect
+      svg.append('rect')
+        .attr('x', 32).attr('y', 52)
+        .attr('width', w - 64).attr('height', totalHeight - 100)
+        .attr('fill', 'var(--color-fill)')
+        .attr('stroke', 'var(--color-border)')
+        .attr('stroke-width', 0.75);
+
+      const defs = svg.append('defs');
+      defs.append('marker')
+        .attr('id', 'arrow')
+        .attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3)
+        .attr('orient', 'auto')
+        .append('polygon')
+          .attr('points', '0 0, 8 3, 0 6')
+          .attr('fill', 'var(--color-ink)');
+
+      // Center node
+      const centerW = 144, centerH = 68;
+      const gCenter = svg.append('g')
+        .attr('transform', `translate(${cx - centerW/2},${cy - centerH/2})`);
+
+      gCenter.append('rect')
+        .attr('width', centerW).attr('height', centerH)
+        .attr('fill', 'var(--color-ink)')
+        .attr('stroke', 'none');
+
+      gCenter.append('text')
+        .attr('x', centerW/2).attr('y', 28)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700)
+        .attr('fill', 'var(--color-white)')
+        .text('FIGMA.md');
+
+      gCenter.append('text')
+        .attr('x', centerW/2).attr('y', 44)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10)
+        .attr('fill', 'var(--color-border)')
+        .text('Automation governance');
+
+      gCenter.append('text')
+        .attr('x', centerW/2).attr('y', 58)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10)
+        .attr('fill', 'var(--color-border)')
+        .text('declared intent document');
+
+      // Consumer nodes
+      consumers.forEach((c, i) => {
+        const rad = (c.angle - 90) * Math.PI / 180;
+        const nx  = cx + Math.cos(rad) * radius;
+        const ny  = cy + Math.sin(rad) * radius;
+
+        // Arrow from center edge to node edge
+        const edgeRad = c.angle * Math.PI / 180;
+        const sx = cx + Math.cos(edgeRad) * (centerW / 2 + 4);
+        const sy = cy + Math.sin(edgeRad) * (centerH / 2 + 4);
+        const ex = nx - Math.cos(edgeRad) * (nodeW / 2 + 4);
+        const ey = ny - Math.sin(edgeRad) * (nodeH / 2 + 4);
+
+        svg.append('line')
+          .attr('x1', sx).attr('y1', sy)
+          .attr('x2', ex).attr('y2', ey)
+          .attr('stroke', 'var(--color-ink)')
+          .attr('stroke-width', 1.5)
+          .attr('marker-end', 'url(#arrow)')
+          .attr('aria-hidden', 'true');
+
+        const isPreflight = c.id === 'preflight';
+        const gNode = svg.append('g')
+          .attr('transform', `translate(${nx - nodeW/2},${ny - nodeH/2})`)
+          .attr('class', 'consumer-node')
+          .attr('tabindex', 0)
+          .attr('aria-label', `${c.label}: ${c.detail}`)
+          .style('cursor', 'pointer');
+
+        gNode.append('rect')
+          .attr('width', nodeW).attr('height', nodeH)
+          .attr('fill', 'var(--color-white)')
+          .attr('stroke', isPreflight ? 'var(--color-red)' : 'var(--color-border)')
+          .attr('stroke-width', isPreflight ? 1.5 : 1);
+
+        gNode.append('text')
+          .attr('x', nodeW/2).attr('y', 22)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 11).attr('font-weight', 700)
+          .attr('fill', isPreflight ? 'var(--color-red)' : 'var(--color-ink)')
+          .text(c.label);
+
+        gNode.append('text')
+          .attr('x', nodeW/2).attr('y', 38)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10)
+          .attr('fill', 'var(--color-secondary)')
+          .text('hover for detail');
+
+        gNode
+          .on('mouseover', function(event) {
+            d3.select(this).select('rect').attr('opacity', 0.85);
+            showTooltip(event, `<strong>${c.label}</strong><br>${c.detail}`);
+          })
+          .on('mousemove', moveTooltip)
+          .on('mouseout', function() {
+            d3.select(this).select('rect').attr('opacity', 1);
+            hideTooltip();
+          })
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+              showTooltip(event, `<strong>${c.label}</strong><br>${c.detail}`);
+            }
+          });
+      });
+
+      // Caption
+      svg.append('text')
+        .attr('x', 32).attr('y', totalHeight - 12)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10)
+        .attr('fill', 'var(--color-secondary)')
+        .text('One document, three consumers. The pipeline\'s behavior is determined by what is declared here, not by what individual contributors assume.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Connect Data Flow — Figure 10.1</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1E1E1E;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C4723A;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 12px; color: var(--color-ink);
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+
+    function showTooltip(event, html) {
+      tooltip.html(html)
+        .style('left', (event.pageX + 12) + 'px')
+        .style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function hideTooltip() {
+      tooltip.transition().duration(100).style('opacity', 0);
+    }
+
+    const nodes = [
+      { id: 'figma',   label: 'Figma Component Node', sub: 'name · key · nodeId\nvariantProperties', color: 'ink' },
+      { id: 'config',  label: 'Code Connect Config',   sub: '.figma.connect.ts\nnodeId → component',  color: 'red' },
+      { id: 'publish', label: 'figma connect publish', sub: 'CLI command\npushes mappings',           color: 'ink' },
+      { id: 'devmode', label: 'Figma Dev Mode Panel',  sub: 'import { Button } from …\ncode snippet visible', color: 'red' },
+      { id: 'syncdoc', label: 'sync-docs.mjs Report',  sub: 'detects absence of Code Connect\nflags as documentation debt', color: 'ink', dashed: true }
+    ];
+
+    const links = [
+      { source: 'figma',   target: 'config',  label: 'maps to' },
+      { source: 'config',  target: 'publish', label: 'publish' },
+      { source: 'publish', target: 'devmode', label: 'renders in' },
+      { source: 'figma',   target: 'syncdoc', label: 'detected by', dashed: true },
+      { source: 'config',  target: 'syncdoc', label: 'absence flagged', dashed: true }
+    ];
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const w = document.getElementById('chart').clientWidth || 800;
+      const h = Math.max(480, w * 0.6);
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', w).attr('height', h)
+        .attr('role', 'img')
+        .attr('aria-labelledby', 'chart-title chart-desc');
+
+      svg.append('title').attr('id', 'chart-title').text('Code Connect data flow — Figure 10.1');
+      svg.append('desc').attr('id', 'chart-desc').text('Flow diagram showing how a Figma component node moves through Code Connect config, the publish CLI, and into Dev Mode, with sync-docs.mjs detecting absence.');
+
+      const cs = getComputedStyle(document.documentElement);
+      const ink    = cs.getPropertyValue('--color-ink').trim();
+      const red    = cs.getPropertyValue('--color-red').trim();
+      const fill   = cs.getPropertyValue('--color-fill').trim();
+      const border = cs.getPropertyValue('--color-border').trim();
+      const sec    = cs.getPropertyValue('--color-secondary').trim();
+
+      svg.append('defs').append('marker')
+        .attr('id', 'arr').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', ink);
+
+      const gChart = svg.append('g').attr('class', 'g-chart');
+
+      // Layout: horizontal row top, two boxes bottom
+      const bw = Math.min(180, w * 0.22);
+      const bh = 72;
+      const hGap = (w - 3 * bw - 64) / 2;
+      const topY = 60;
+      const botY = topY + bh + 100;
+
+      const positions = {
+        figma:   { x: 32,               y: topY },
+        config:  { x: 32 + bw + hGap,   y: topY },
+        publish: { x: 32 + 2*(bw+hGap), y: topY },
+        devmode: { x: 32 + bw + hGap,   y: botY },
+        syncdoc: { x: 32,               y: botY }
+      };
+
+      // Draw links
+      links.forEach(l => {
+        const s = positions[l.source];
+        const t = positions[l.target];
+        const sx = s.x + bw / 2;
+        const sy = s.y + bh / 2;
+        const tx = t.x + bw / 2;
+        const ty = t.y + bh / 2;
+
+        // Adjust endpoints to box edges
+        const dx = tx - sx, dy = ty - sy;
+        const ang = Math.atan2(dy, dx);
+        const ex = Math.cos(ang) * (bw/2 + 4);
+        const ey = Math.sin(ang) * (bh/2 + 4);
+
+        gChart.append('line')
+          .attr('x1', sx + ex).attr('y1', sy + ey)
+          .attr('x2', tx - ex).attr('y2', ty - ey)
+          .attr('stroke', ink)
+          .attr('stroke-width', 1.5)
+          .attr('stroke-dasharray', l.dashed ? '4 3' : null)
+          .attr('marker-end', 'url(#arr)')
+          .attr('aria-hidden', 'true');
+
+        // Link label
+        gChart.append('text')
+          .attr('x', (sx + ex + tx - ex) / 2)
+          .attr('y', (sy + ey + ty - ey) / 2 - 6)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9)
+          .attr('fill', sec)
+          .text(l.label);
+      });
+
+      // Draw nodes
+      nodes.forEach(n => {
+        const pos = positions[n.id];
+        const borderColor = n.color === 'red' ? red : (n.dashed ? border : ink);
+        const strokeDash = n.dashed ? '4 3' : null;
+
+        const g = gChart.append('g')
+          .attr('tabindex', 0)
+          .attr('aria-label', `${n.label}: ${n.sub.replace(/\n/g, ', ')}`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>${n.label}</strong><br>${n.sub.replace(/\n/g, '<br>')}`) )
+          .on('mouseout', hideTooltip)
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>${n.label}</strong><br>${n.sub.replace(/\n/g, '<br>')}`);
+          });
+
+        g.append('rect')
+          .attr('x', pos.x).attr('y', pos.y)
+          .attr('width', bw).attr('height', bh)
+          .attr('fill', fill)
+          .attr('stroke', borderColor)
+          .attr('stroke-width', 1)
+          .attr('stroke-dasharray', strokeDash);
+
+        const lines = n.sub.split('\n');
+        g.append('text')
+          .attr('x', pos.x + bw/2).attr('y', pos.y + 22)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 11).attr('font-weight', 700)
+          .attr('fill', n.color === 'red' ? red : ink)
+          .text(n.label);
+
+        lines.forEach((line, i) => {
+          g.append('text')
+            .attr('x', pos.x + bw/2).attr('y', pos.y + 38 + i * 14)
+            .attr('text-anchor', 'middle')
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 9).attr('fill', sec)
+            .text(line);
+        });
+      });
+
+      // Caption
+      svg.append('text')
+        .attr('x', 32).attr('y', h - 20)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', sec)
+        .text('Code Connect requires explicit per-component setup. The sync tool detects its absence; it cannot configure it.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

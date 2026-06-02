@@ -1,0 +1,75 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig-title-02 fig-desc-02">
+  <title id="fig-title-02">Timeline showing Figma state diverging from production after manual export</title>
+  <desc id="fig-desc-02">A horizontal timeline diagram showing the Figma file state and production state diverging after a manual export snapshot event, with the gap widening over time as the design continues to change.</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas background -->
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Timeline axis -->
+  <line x1="56" y1="210" x2="644" y2="210" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="56" y="234" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">t₀</text>
+  <text x="628" y="234" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">now</text>
+
+  <!-- Time arrow -->
+  <line x1="56" y1="210" x2="640" y2="210" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Snapshot event marker -->
+  <line x1="220" y1="186" x2="220" y2="232" stroke="#000000" stroke-width="1.5"/>
+  <text x="220" y="250" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Manual export</text>
+  <text x="220" y="263" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">(snapshot created)</text>
+
+  <!-- Figma state line (top path) -->
+  <!-- Starts at t0, goes level, then curves up (design keeps changing) -->
+  <path d="M 56 150 L 220 150 C 300 150 340 120 400 100 C 460 80 520 72 620 60"
+        fill="none" stroke="#C8102E" stroke-width="2"/>
+  <text x="48" y="154" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E" text-anchor="end">Figma</text>
+  <text x="630" y="64" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E">Figma state</text>
+
+  <!-- Production state line (lower path) -->
+  <!-- Stays flat after snapshot -->
+  <path d="M 56 150 L 220 150 L 620 150"
+        fill="none" stroke="#000000" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="630" y="154" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">Production</text>
+
+  <!-- Drift gap annotation at the right -->
+  <!-- Vertical brace showing gap -->
+  <line x1="608" y1="62" x2="608" y2="148" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="4 3"/>
+  <line x1="604" y1="62" x2="612" y2="62" stroke="#CCCCCC" stroke-width="0.75"/>
+  <line x1="604" y1="148" x2="612" y2="148" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="595" y="108" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E" text-anchor="end">drift</text>
+
+  <!-- Divergence zone shading -->
+  <path d="M 220 150 C 300 150 340 120 400 100 C 460 80 520 72 620 60 L 620 150 Z"
+        fill="#C8102E" fill-opacity="0.07"/>
+
+  <!-- "Snapshot" label at export point -->
+  <rect x="168" y="72" width="104" height="40" fill="#FFFFFF" stroke="#000000" stroke-width="1"/>
+  <text x="220" y="91" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">SNAPSHOT</text>
+  <text x="220" y="104" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">severed at creation</text>
+
+  <!-- Connector from snapshot box to timeline -->
+  <line x1="220" y1="112" x2="220" y2="145" stroke="#000000" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+
+  <!-- Second manual export marker (farther right) -->
+  <line x1="390" y1="186" x2="390" y2="232" stroke="#CCCCCC" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="390" y="250" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">Another export</text>
+  <text x="390" y="263" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">(another snapshot)</text>
+
+  <!-- Y-axis label -->
+  <text x="56" y="44" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="400" fill="#555555" letter-spacing="0.08em">STATE VALUE</text>
+
+  <!-- Bottom caption -->
+  <text x="350" y="370" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Every manual crossing produces a snapshot. Snapshots drift.</text>
+
+  <!-- Legend -->
+  <line x1="188" y1="316" x2="220" y2="316" stroke="#C8102E" stroke-width="2"/>
+  <text x="226" y="320" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Figma state (continuous)</text>
+  <line x1="188" y1="336" x2="220" y2="336" stroke="#000000" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="226" y="340" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Production state (frozen at snapshot)</text>
+</svg>

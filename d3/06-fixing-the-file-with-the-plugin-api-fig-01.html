@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REST API vs Plugin API: architectural split with approval gate</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1E1E1E;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C07840;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-size: 12px; color: var(--color-ink);
+      font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const restOps = [
+      { op: 'GET /v1/files/:key', note: 'read full document tree', write: false },
+      { op: 'GET /v1/files/:key/variables/local', note: 'read all variables', write: false },
+      { op: 'GET /v1/files/:key/components', note: 'read all components', write: false },
+      { op: 'POST /v1/files/:key/comments', note: 'write comments only', write: false },
+    ];
+
+    const pluginOps = [
+      { op: 'variable.name = newValue', note: 'rename variable', write: true },
+      { op: 'variable.description = text', note: 'write description', write: true },
+      { op: 'component.description = text', note: 'write component description', write: true },
+      { op: 'node.fills / .visible / .name', note: 'read and write node properties', write: true },
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) { tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px'); }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const container = document.getElementById('chart');
+      const totalWidth  = container.clientWidth || 800;
+      const totalHeight = Math.max(520, totalWidth * 0.65);
+      const margin = { top: 48, right: 40, bottom: 56, left: 40 };
+      const W = totalWidth - margin.left - margin.right;
+      const H = totalHeight - margin.top  - margin.bottom;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', totalWidth).attr('height', totalHeight)
+        .attr('role', 'img').attr('aria-labelledby', 'pl01-title pl01-desc');
+      svg.append('title').attr('id', 'pl01-title').text('REST API vs Plugin API architectural split');
+      svg.append('desc').attr('id', 'pl01-desc').text('REST API is read-only outside Figma. Plugin API has write access inside the Figma editor. Human approval gate sits between audit findings and any write operation.');
+
+      svg.append('defs').append('marker')
+        .attr('id', 'arrowPL').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+
+      svg.append('defs').append('marker')
+        .attr('id', 'arrowPLRed').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-red)');
+
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      g.append('text').attr('x', 0).attr('y', -20)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('REST API (read-only) vs Plugin API (read/write)');
+
+      const halfW = (W - 40) / 2;
+      const colH = H * 0.55;
+
+      // REST panel
+      const restG = g.append('g').attr('tabindex', 0).attr('aria-label', 'REST API panel: read-only operations');
+      restG.append('rect').attr('x', 0).attr('y', 0).attr('width', halfW).attr('height', colH)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+      restG.append('text').attr('x', halfW / 2).attr('y', 18)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-secondary)').attr('letter-spacing', '0.08em')
+        .text('REST API — OUTSIDE FIGMA');
+      restG.append('text').attr('x', halfW / 2).attr('y', 32)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text('Canvas content: READ-ONLY');
+
+      restOps.forEach((op, i) => {
+        const oy = 44 + i * 36;
+        const og = restG.append('g')
+          .on('mouseover', (event) => showTooltip(event, `<strong>${op.op}</strong><br/>${op.note}`))
+          .on('mousemove', moveTooltip).on('mouseout', hideTooltip);
+        og.append('rect').attr('x', 12).attr('y', oy).attr('width', halfW - 24).attr('height', 28)
+          .attr('fill', 'var(--color-white)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+        og.append('text').attr('x', 20).attr('y', oy + 14)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text(op.op);
+        og.append('text').attr('x', 20).attr('y', oy + 24)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 8).attr('fill', 'var(--color-secondary)').text(op.note);
+      });
+
+      // Plugin panel
+      const plugX = halfW + 40;
+      const plugG = g.append('g').attr('tabindex', 0).attr('aria-label', 'Plugin API panel: read-write operations with human approval gate');
+      plugG.append('rect').attr('x', plugX).attr('y', 0).attr('width', halfW).attr('height', colH)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5);
+      plugG.append('text').attr('x', plugX + halfW / 2).attr('y', 18)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-red)').attr('letter-spacing', '0.08em')
+        .text('PLUGIN API — INSIDE FIGMA EDITOR');
+      plugG.append('text').attr('x', plugX + halfW / 2).attr('y', 32)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text('Read + Write canvas content');
+
+      pluginOps.forEach((op, i) => {
+        const oy = 44 + i * 36;
+        const og = plugG.append('g')
+          .on('mouseover', (event) => showTooltip(event, `<strong>${op.op}</strong><br/>${op.note}`))
+          .on('mousemove', moveTooltip).on('mouseout', hideTooltip);
+        og.append('rect').attr('x', plugX + 12).attr('y', oy).attr('width', halfW - 24).attr('height', 28)
+          .attr('fill', 'var(--color-white)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+        og.append('text').attr('x', plugX + 20).attr('y', oy + 14)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', 'var(--color-red)').text(op.op);
+        og.append('text').attr('x', plugX + 20).attr('y', oy + 24)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 8).attr('fill', 'var(--color-secondary)').text(op.note);
+      });
+
+      // Gate box in plugin panel
+      const gateY = colH - 44;
+      plugG.append('rect').attr('x', plugX + 12).attr('y', gateY).attr('width', halfW - 24).attr('height', 36)
+        .attr('fill', 'var(--color-white)').attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5);
+      plugG.append('text').attr('x', plugX + halfW / 2).attr('y', gateY + 14)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-red)').attr('letter-spacing', '0.08em')
+        .text('HUMAN APPROVAL GATE');
+      plugG.append('text').attr('x', plugX + halfW / 2).attr('y', gateY + 28)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text('No write without explicit human confirmation');
+
+      // Boundary line
+      g.append('line').attr('x1', halfW + 20).attr('y1', 0).attr('x2', halfW + 20).attr('y2', colH)
+        .attr('stroke', 'var(--color-border)').attr('stroke-width', 1).attr('stroke-dasharray', '5 4');
+
+      // Workflow row
+      const wfY = colH + 32;
+      g.append('text').attr('x', 0).attr('y', wfY - 8)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-secondary)').attr('letter-spacing', '0.08em')
+        .text('WORKFLOW: REST reads → Human approves → Plugin writes');
+
+      const wfItems = [
+        { label: 'REST API', sub: 'reads → audit report', red: false },
+        { label: 'HUMAN REVIEW', sub: 'approves each fix', red: true },
+        { label: 'Plugin API', sub: 'applies approved fixes', red: true },
+      ];
+      const wfW = (W - (wfItems.length - 1) * 16) / wfItems.length;
+      wfItems.forEach((wi, i) => {
+        const wx = i * (wfW + 16);
+        const wg = g.append('g').attr('tabindex', 0).attr('aria-label', `${wi.label}: ${wi.sub}`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>${wi.label}</strong><br/>${wi.sub}`))
+          .on('mousemove', moveTooltip).on('mouseout', hideTooltip)
+          .on('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>${wi.label}</strong><br/>${wi.sub}`);
+          });
+        wg.append('rect').attr('x', wx).attr('y', wfY).attr('width', wfW).attr('height', 44)
+          .attr('fill', wi.red ? 'var(--color-white)' : 'var(--color-fill)')
+          .attr('stroke', wi.red ? 'var(--color-red)' : 'var(--color-border)')
+          .attr('stroke-width', wi.red ? 1.5 : 0.75);
+        wg.append('text').attr('x', wx + 8).attr('y', wfY + 16)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 11).attr('font-weight', 700)
+          .attr('fill', wi.red ? 'var(--color-red)' : 'var(--color-ink)').text(wi.label);
+        wg.append('text').attr('x', wx + 8).attr('y', wfY + 32)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('fill', 'var(--color-secondary)').text(wi.sub);
+        if (i < wfItems.length - 1) {
+          g.append('line')
+            .attr('x1', wx + wfW + 2).attr('y1', wfY + 22).attr('x2', wx + wfW + 14).attr('y2', wfY + 22)
+            .attr('stroke', wi.red ? 'var(--color-red)' : 'var(--color-ink)').attr('stroke-width', 1.5)
+            .attr('marker-end', wi.red ? 'url(#arrowPLRed)' : 'url(#arrowPL)');
+        }
+      });
+
+      // Caption
+      g.append('text').attr('x', 0).attr('y', H + 36)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('The REST API is read-only for canvas content. All writes go through the Plugin API with a human approval gate. No write without confirmation.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

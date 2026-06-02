@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 9.1 — Informal vs. Pipeline-Driven Asset Management</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1C1C1C;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #B8622D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink); max-width: 280px; line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const informalSteps = [
+      { label: 'Figma frame',     sub: '"Close Icon"',            detail: 'No stable node ID is tracked. The frame\'s name in Figma is the only identifier.',                  style: 'normal' },
+      { label: 'Manual export',   sub: 'designer exports file',   detail: 'Designer exports SVG by hand and drops it in the design-system folder. No automation, no log.',     style: 'bad' },
+      { label: 'design-sys/',     sub: 'close-icon.svg ✓',        detail: 'File exists in the design system folder. But a legacy component has a hardcoded path elsewhere.',   style: 'normal' },
+      { label: 'LegacyButton.tsx',sub: '../../old/close.svg',     detail: 'Developer hardcoded a relative path to a copy of the icon. No connection to the asset pipeline.',   style: 'bad' },
+      { label: '404 in prod',     sub: 'file moved, path broken', detail: 'Designer re-exported and overwrote the design system file. Legacy component path now resolves to nothing. Broken display at 11:47 PM.', style: 'fail' }
+    ];
+
+    const pipelineSteps = [
+      { label: 'Figma frame',          sub: '"icon-close" (nodeId 1:234)', detail: 'Node ID is the stable routing key. Renames do not change it. Copy-paste creates a new ID.',      style: 'normal' },
+      { label: 'asset-manifest.json',  sub: 'nodeId → outputPath',         detail: 'Manifest maps node ID "1:234" to src/assets/icons/icon-close.svg. Version-controlled, human-owned.', style: 'anchor' },
+      { label: 'export-assets.mjs',    sub: 'batch · verify · SVGO',       detail: 'Reads manifest, requests render URLs, downloads immediately, runs integrity checks, optimizes SVG.',  style: 'main' },
+      { label: 'src/assets/icons/',    sub: 'icon-close.svg — verified',    detail: 'Deterministic path. Every consumer uses the same location. Pipeline verified the file before writing it.', style: 'normal' },
+      { label: 'PR review',            sub: 'before any merge',             detail: 'Human reviews the diff. Checks for null renders, unexpected changes, new assets not in manifest.',       style: 'human' }
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 14) + 'px').style('top', (event.pageY - 32) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 14) + 'px').style('top', (event.pageY - 32) + 'px');
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const w = document.getElementById('chart').clientWidth || 800;
+      const totalHeight = 500;
+      const margin = { top: 64, right: 32, bottom: 56, left: 32 };
+      const halfW = (w - margin.left - margin.right) / 2 - 8;
+      const colGap = 16;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', w).attr('height', totalHeight)
+        .attr('role', 'img').attr('aria-labelledby', 'ch09-fig01-title ch09-fig01-desc');
+
+      svg.append('title').attr('id', 'ch09-fig01-title').text('Informal asset management vs. pipeline-driven management');
+      svg.append('desc').attr('id', 'ch09-fig01-desc').text('Split diagram. Left side shows informal management where paths diverge and a 404 results. Right side shows pipeline-driven management with a manifest, deterministic paths, and PR review.');
+
+      svg.append('text').attr('x', margin.left).attr('y', 32)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('Asset management: informal vs. pipeline-driven');
+      svg.append('text').attr('x', margin.left).attr('y', 50)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 11).attr('fill', 'var(--color-secondary)')
+        .text('Hover each step for detail. Red = failure or bad practice. Black filled = human checkpoint.');
+
+      svg.append('defs').append('marker').attr('id', 'arrow9a')
+        .attr('markerWidth', 8).attr('markerHeight', 6).attr('refX', 7).attr('refY', 3)
+        .attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+
+      const boxH = 52;
+      const boxW = halfW - 16;
+
+      function renderColumn(steps, startX, headerLabel, headerColor) {
+        // Header
+        svg.append('text')
+          .attr('x', startX + halfW / 2)
+          .attr('y', margin.top + 20)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 11).attr('font-weight', 700)
+          .attr('fill', headerColor)
+          .attr('letter-spacing', '0.06em')
+          .text(headerLabel);
+
+        steps.forEach((step, i) => {
+          const x = startX + 8;
+          const y = margin.top + 36 + i * (boxH + 16);
+
+          if (i > 0) {
+            const prevY = margin.top + 36 + (i - 1) * (boxH + 16) + boxH;
+            svg.append('line')
+              .attr('x1', x + boxW / 2).attr('y1', prevY + 4)
+              .attr('x2', x + boxW / 2).attr('y2', y - 4)
+              .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+              .attr('marker-end', 'url(#arrow9a)').attr('aria-hidden', 'true');
+          }
+
+          const isFail   = step.style === 'fail';
+          const isBad    = step.style === 'bad';
+          const isMain   = step.style === 'main';
+          const isAnchor = step.style === 'anchor';
+          const isHuman  = step.style === 'human';
+
+          const strokeColor = isFail || isBad ? 'var(--color-red)'
+            : isMain ? 'var(--color-red)'
+            : isAnchor ? 'var(--color-ink)'
+            : isHuman ? 'var(--color-brown)'
+            : 'var(--color-border)';
+
+          const fillColor = isFail ? 'var(--color-red)'
+            : isHuman ? 'var(--color-ink)' : 'var(--color-white)';
+
+          const textColor = (isFail || isHuman) ? 'var(--color-white)'
+            : (isBad || isMain) ? 'var(--color-red)'
+            : 'var(--color-ink)';
+
+          const gBox = svg.append('g').attr('transform', `translate(${x},${y})`)
+            .attr('tabindex', 0)
+            .attr('aria-label', `${step.label}: ${step.detail}`)
+            .style('cursor', 'pointer');
+
+          gBox.append('rect').attr('width', boxW).attr('height', boxH)
+            .attr('fill', fillColor)
+            .attr('stroke', strokeColor)
+            .attr('stroke-width', (isFail || isBad || isMain || isAnchor) ? 1.5 : 1);
+
+          gBox.append('text').attr('x', boxW / 2).attr('y', 20)
+            .attr('text-anchor', 'middle')
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 11).attr('font-weight', 700)
+            .attr('fill', textColor).text(step.label);
+
+          gBox.append('text').attr('x', boxW / 2).attr('y', 36)
+            .attr('text-anchor', 'middle')
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 10)
+            .attr('fill', (isFail || isHuman) ? 'var(--color-border)' : 'var(--color-secondary)')
+            .text(step.sub);
+
+          gBox.on('mouseover', function(event) {
+            d3.select(this).select('rect').transition().duration(120).attr('opacity', 0.82);
+            showTooltip(event, `<strong>${step.label}</strong><br>${step.detail}`);
+          }).on('mousemove', moveTooltip)
+            .on('mouseout', function() {
+              d3.select(this).select('rect').transition().duration(120).attr('opacity', 1);
+              hideTooltip();
+            })
+            .on('keydown', function(event) {
+              if (event.key === 'Enter' || event.key === ' ') {
+                showTooltip(event, `<strong>${step.label}</strong><br>${step.detail}`);
+              }
+            });
+        });
+      }
+
+      const leftX  = margin.left;
+      const rightX = margin.left + halfW + colGap;
+
+      // Divider
+      svg.append('line')
+        .attr('x1', leftX + halfW + colGap / 2)
+        .attr('y1', margin.top)
+        .attr('x2', leftX + halfW + colGap / 2)
+        .attr('y2', totalHeight - margin.bottom)
+        .attr('stroke', 'var(--color-border)')
+        .attr('stroke-width', 0.75)
+        .attr('stroke-dasharray', '4 3')
+        .attr('aria-hidden', 'true');
+
+      renderColumn(informalSteps,  leftX,  'INFORMAL — BEFORE PIPELINE', '#C8102E');
+      renderColumn(pipelineSteps, rightX,  'PIPELINE-DRIVEN — THIS CHAPTER', '#000000');
+
+      svg.append('text').attr('x', margin.left).attr('y', totalHeight - 14)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('The 11:47 PM message was not an SVG problem. It was a missing-manifest, divergent-path, no-single-source-of-truth problem.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

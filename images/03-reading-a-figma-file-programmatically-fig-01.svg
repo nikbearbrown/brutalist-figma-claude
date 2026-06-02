@@ -1,0 +1,88 @@
+<svg viewBox="0 0 700 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig-title-ch3-01 fig-desc-ch3-01">
+  <title id="fig-title-ch3-01">Annotated diagram of the top-level Figma file response structure</title>
+  <desc id="fig-desc-ch3-01">Diagram showing the four top-level keys in a Figma file REST response — document, components, styles, and variables — with arrows showing how node IDs cross-reference between sections, and annotations describing what each section contains.</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas background -->
+  <rect width="700" height="480" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="350" y="40" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle" letter-spacing="0.08em">GET /v1/files/:key — TOP-LEVEL RESPONSE STRUCTURE</text>
+
+  <!-- Root response box -->
+  <rect x="270" y="56" width="160" height="36" fill="#000000"/>
+  <text x="350" y="79" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">API Response Object</text>
+
+  <!-- Four branch arrows -->
+  <!-- document -->
+  <line x1="310" y1="92" x2="100" y2="148" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- components -->
+  <line x1="330" y1="92" x2="230" y2="148" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- styles -->
+  <line x1="370" y1="92" x2="450" y2="148" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- variables -->
+  <line x1="390" y1="92" x2="580" y2="148" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- document box -->
+  <rect x="32" y="148" width="136" height="40" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="100" y="166" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">document</text>
+  <text x="100" y="181" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">Node tree (recursive)</text>
+
+  <!-- components box -->
+  <rect x="178" y="148" width="112" height="40" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="234" y="166" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">components</text>
+  <text x="234" y="181" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">Flat ID→meta index</text>
+
+  <!-- styles box -->
+  <rect x="390" y="148" width="112" height="40" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="446" y="166" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">styles</text>
+  <text x="446" y="181" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">Color / text / effects</text>
+
+  <!-- variables box (highlighted) -->
+  <rect x="516" y="148" width="152" height="40" fill="#F5F5F5" stroke="#C8102E" stroke-width="1"/>
+  <text x="592" y="166" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#C8102E" text-anchor="middle">variables</text>
+  <text x="592" y="181" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">Enterprise plan only</text>
+
+  <!-- Document sub-tree expansion -->
+  <rect x="32" y="224" width="296" height="136" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="48" y="244" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000">document tree</text>
+  <text x="48" y="260" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">DOCUMENT (0:0)</text>
+  <text x="64" y="276" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">└ CANVAS (page)</text>
+  <text x="80" y="292" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">└ FRAME · COMPONENT · COMPONENT_SET</text>
+  <text x="96" y="308" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">└ INSTANCE · TEXT · RECTANGLE · VECTOR</text>
+  <text x="48" y="328" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">Each node: id · name · type · children · fills · boundVariables</text>
+  <text x="48" y="344" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#C8102E">boundVariables → references variable IDs</text>
+  <line x1="100" y1="188" x2="100" y2="224" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="4 3"/>
+
+  <!-- Variables sub-tree expansion -->
+  <rect x="384" y="224" width="284" height="136" fill="#F5F5F5" stroke="#C8102E" stroke-width="1"/>
+  <text x="400" y="244" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E">variables block</text>
+  <text x="400" y="260" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">variables.variables: { [id]: Variable }</text>
+  <text x="416" y="276" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">name · resolvedType · valuesByMode</text>
+  <text x="416" y="292" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">description · hiddenFromPublishing</text>
+  <text x="400" y="312" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">variables.variableCollections: { [id]: Collection }</text>
+  <text x="416" y="328" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">name · modes[] · defaultModeId</text>
+  <text x="400" y="344" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#C8102E">Not in document tree — separate top-level key</text>
+  <line x1="592" y1="188" x2="592" y2="224" stroke="#C8102E" stroke-width="0.75" stroke-dasharray="4 3"/>
+
+  <!-- Cross-reference arrow: boundVariables → variables block -->
+  <path d="M 195 340 C 195 376 526 376 526 360"
+        fill="none" stroke="#C8102E" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <text x="350" y="388" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#C8102E" text-anchor="middle">boundVariables IDs resolve here</text>
+
+  <!-- components note -->
+  <text x="234" y="212" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">name · description · key</text>
+  <text x="234" y="224" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">componentSetId</text>
+
+  <!-- styles note -->
+  <text x="446" y="212" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">name · description · key</text>
+  <text x="446" y="224" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">styleType</text>
+
+  <!-- Bottom caption -->
+  <text x="350" y="456" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Four top-level keys. Variables are not in the document tree — they live at the root alongside it.</text>
+</svg>

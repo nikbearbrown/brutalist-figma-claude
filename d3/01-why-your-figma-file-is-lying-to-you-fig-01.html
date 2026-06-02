@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 1.1 — Figma Document Graph vs. Rendered Canvas</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1A1A1A;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C0724D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; min-height: 480px; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink); max-width: 220px; line-height: 1.4;
+    }
+    .node-rect { cursor: pointer; }
+    .node-rect:focus { outline: 2px solid var(--color-red); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const graphNodes = [
+      { id: 'doc',    label: 'DOCUMENT',       sub: '0:0',          type: 'root',      x: 0.18, y: 0.12, info: 'Root of the document tree. Contains one CANVAS per page.' },
+      { id: 'canvas', label: 'CANVAS',          sub: '1:0',          type: 'tree',      x: 0.18, y: 0.30, info: 'One CANVAS per Figma page. Contains all objects on that page.' },
+      { id: 'comp',   label: 'COMPONENT',       sub: '1:23',         type: 'tree',      x: 0.18, y: 0.50, info: 'A reusable component definition. Has fills, strokes, children, and boundVariables.' },
+      { id: 'fills',  label: 'fills: SOLID',    sub: 'resolved color', type: 'prop',   x: 0.10, y: 0.68, info: 'The computed fill color. An RGB triple. This is a snapshot — not the token.' },
+      { id: 'bv',     label: 'boundVariables',  sub: 'alias → ID',   type: 'alias',     x: 0.27, y: 0.68, info: 'Points to a VariableID. This is the stable reference — use this, not the resolved color.' },
+      { id: 'var',    label: 'VariableID:12:45',sub: 'color/brand/primary', type: 'variable', x: 0.27, y: 0.86, info: 'The design token. Has valuesByMode. When the designer updates the token, this changes — production does not.' },
+    ];
+
+    const graphEdges = [
+      { from: 'doc',    to: 'canvas', dashed: false },
+      { from: 'canvas', to: 'comp',   dashed: false },
+      { from: 'comp',   to: 'fills',  dashed: false },
+      { from: 'comp',   to: 'bv',     dashed: false },
+      { from: 'bv',     to: 'var',    dashed: true },
+    ];
+
+    // Right panel: rendered canvas simulation
+    const renderNodes = [
+      { id: 'r-frame',  label: 'Frame', x: 0.68, y: 0.22, w: 0.22, h: 0.40, fill: 'white', border: true },
+      { id: 'r-button', label: 'Primary Button', x: 0.70, y: 0.35, w: 0.18, h: 0.12, fill: 'button', border: false },
+      { id: 'r-note',   label: 'Pixels. Not linked to production.', x: 0.68, y: 0.68, info: true },
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+
+    function showTooltip(event, html) {
+      tooltip.html(html)
+        .style('left', (event.pageX + 12) + 'px')
+        .style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px');
+    }
+    function hideTooltip() {
+      tooltip.transition().duration(100).style('opacity', 0);
+    }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const W = document.getElementById('chart').clientWidth || 800;
+      const H = Math.max(480, W * 0.6);
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', W).attr('height', H)
+        .attr('role', 'img')
+        .attr('aria-labelledby', 'ch1-fig1-title ch1-fig1-desc');
+
+      svg.append('title').attr('id', 'ch1-fig1-title').text('Figma Document Graph vs. Rendered Canvas');
+      svg.append('desc').attr('id', 'ch1-fig1-desc').text('Interactive diagram showing the Figma document graph on the left (DOCUMENT → CANVAS → COMPONENT → boundVariables → VariableID) and the rendered canvas on the right. Hover nodes for details.');
+
+      // Background
+      svg.append('rect').attr('width', W).attr('height', H).attr('fill', 'var(--color-white)');
+
+      // Panel labels
+      svg.append('text').attr('x', W * 0.18).attr('y', 24)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .attr('letter-spacing', '0.08em')
+        .text('DOCUMENT GRAPH');
+
+      svg.append('text').attr('x', W * 0.72).attr('y', 24)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .attr('letter-spacing', '0.08em')
+        .text('RENDERED CANVAS');
+
+      // Divider
+      svg.append('line')
+        .attr('x1', W * 0.45).attr('y1', 32)
+        .attr('x2', W * 0.45).attr('y2', H - 32)
+        .attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75)
+        .attr('stroke-dasharray', '4 3');
+
+      // Defs: arrowhead
+      const defs = svg.append('defs');
+      defs.append('marker').attr('id', 'arrow-main')
+        .attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+      defs.append('marker').attr('id', 'arrow-red')
+        .attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-red)');
+
+      const NW = Math.min(W * 0.22, 160);
+      const NH = 40;
+
+      // Draw edges
+      graphEdges.forEach(e => {
+        const from = graphNodes.find(n => n.id === e.from);
+        const to   = graphNodes.find(n => n.id === e.to);
+        const x1 = from.x * W;
+        const y1 = from.y * H + NH / 2;
+        const x2 = to.x * W;
+        const y2 = to.y * H - NH / 2;
+        const isAlias = e.dashed;
+        svg.append('line')
+          .attr('x1', x1).attr('y1', y1)
+          .attr('x2', x2).attr('y2', y2)
+          .attr('stroke', isAlias ? 'var(--color-red)' : 'var(--color-ink)')
+          .attr('stroke-width', 1.5)
+          .attr('stroke-dasharray', isAlias ? '4 3' : null)
+          .attr('marker-end', isAlias ? 'url(#arrow-red)' : 'url(#arrow-main)');
+      });
+
+      // Draw nodes
+      const gNodes = svg.append('g').attr('class', 'g-nodes');
+      graphNodes.forEach(n => {
+        const cx = n.x * W;
+        const cy = n.y * H;
+        const isVar = n.type === 'variable';
+        const isAlias = n.type === 'alias';
+        const borderColor = (isVar || isAlias) ? 'var(--color-red)' : 'var(--color-border)';
+        const borderW = (isVar || isAlias) ? 1.5 : 0.75;
+
+        const g = gNodes.append('g').attr('transform', `translate(${cx - NW/2}, ${cy - NH/2})`);
+        g.append('rect')
+          .attr('class', 'node-rect')
+          .attr('width', NW).attr('height', NH)
+          .attr('fill', 'var(--color-fill)')
+          .attr('stroke', borderColor).attr('stroke-width', borderW)
+          .attr('tabindex', 0)
+          .attr('aria-label', `${n.label}: ${n.info}`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>${n.label}</strong><br>${n.info}`))
+          .on('mousemove', moveTooltip)
+          .on('mouseout', hideTooltip)
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+              showTooltip(event, `<strong>${n.label}</strong><br>${n.info}`);
+            }
+          })
+          .on('focus', (event) => {
+            d3.select(event.target).attr('fill', 'var(--color-white)');
+          })
+          .on('blur', (event) => {
+            d3.select(event.target).attr('fill', 'var(--color-fill)');
+          });
+
+        g.append('text')
+          .attr('x', NW / 2).attr('y', NH * 0.42)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(11, NW * 0.068))
+          .attr('font-weight', '700')
+          .attr('fill', isVar || isAlias ? 'var(--color-red)' : 'var(--color-ink)')
+          .text(n.label);
+
+        g.append('text')
+          .attr('x', NW / 2).attr('y', NH * 0.78)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(9, NW * 0.056))
+          .attr('fill', 'var(--color-secondary)')
+          .text(n.sub);
+      });
+
+      // Right panel: simulated canvas
+      const panelX = W * 0.50;
+      const panelW = W * 0.44;
+      const panelH = H * 0.70;
+      const panelY = H * 0.08;
+
+      svg.append('rect')
+        .attr('x', panelX).attr('y', panelY)
+        .attr('width', panelW).attr('height', panelH)
+        .attr('fill', '#E0E0E0').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+
+      // Inner frame
+      svg.append('rect')
+        .attr('x', panelX + panelW * 0.08).attr('y', panelY + panelH * 0.08)
+        .attr('width', panelW * 0.84).attr('height', panelH * 0.55)
+        .attr('fill', 'var(--color-white)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+
+      // Button on canvas
+      const btnX = panelX + panelW * 0.18;
+      const btnY = panelY + panelH * 0.28;
+      const btnW = panelW * 0.64;
+      const btnH = panelH * 0.18;
+      svg.append('rect')
+        .attr('x', btnX).attr('y', btnY)
+        .attr('width', btnW).attr('height', btnH)
+        .attr('fill', '#1558D6');
+      svg.append('text')
+        .attr('x', btnX + btnW / 2).attr('y', btnY + btnH / 2)
+        .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 12).attr('fill', '#FFFFFF')
+        .text('Primary button');
+
+      // "Not linked" note
+      svg.append('rect')
+        .attr('x', panelX).attr('y', panelY + panelH + 8)
+        .attr('width', panelW).attr('height', 28)
+        .attr('fill', 'var(--color-white)').attr('stroke', 'var(--color-red)').attr('stroke-width', 1);
+      svg.append('text')
+        .attr('x', panelX + panelW / 2).attr('y', panelY + panelH + 26)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-red)')
+        .text('Variable change does not propagate to production');
+
+      // Caption
+      svg.append('text')
+        .attr('x', W / 2).attr('y', H - 12)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Hover nodes to explore. The file is a graph; the canvas is a rendering of the graph.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

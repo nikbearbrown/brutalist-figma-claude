@@ -1,0 +1,65 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig12-03-title fig12-03-desc">
+  <title id="fig12-03-title">How build-spec.mjs output flows into downstream consumers</title>
+  <desc id="fig12-03-desc">Infographic showing how manifest.json flows to CI decisions, components.json to code generator batch runs, per-component files to MCP agent context loading, and component-sets.json to variant prop type generation, with annotations showing which fields each consumer uses.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Central source -->
+  <rect x="264" y="32" width="172" height="56" fill="#F5F5F5" stroke="#C8102E" stroke-width="1"/>
+  <text x="350" y="54" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="12" font-weight="700" fill="#C8102E" text-anchor="middle">build-spec.mjs</text>
+  <text x="350" y="70" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">spec-output/</text>
+  <text x="350" y="83" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">4 output artifacts</text>
+
+  <!-- manifest.json → upper left -->
+  <line x1="297" y1="88" x2="172" y2="148" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <rect x="32" y="149" width="168" height="52" fill="#F5F5F5" stroke="#000000" stroke-width="1"/>
+  <text x="116" y="168" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">manifest.json</text>
+  <text x="116" y="183" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">totalComponents · lastModified</text>
+  <text x="116" y="196" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">hasVariableData · hasCodeConnect</text>
+
+  <line x1="116" y1="201" x2="116" y2="240" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <rect x="32" y="241" width="168" height="44" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="116" y="258" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">CI DECISIONS</text>
+  <text x="116" y="272" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">version gate · changelog</text>
+  <text x="116" y="284" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">run trigger logic</text>
+
+  <!-- components.json → upper right -->
+  <line x1="403" y1="88" x2="528" y2="148" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <rect x="500" y="149" width="168" height="52" fill="#F5F5F5" stroke="#000000" stroke-width="1"/>
+  <text x="584" y="168" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">components.json</text>
+  <text x="584" y="183" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">all components · full spec</text>
+  <text x="584" y="196" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">fills · layout · codeConnect</text>
+
+  <line x1="584" y1="201" x2="584" y2="240" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <rect x="500" y="241" width="168" height="44" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="584" y="258" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">CODE GEN BATCH RUNS</text>
+  <text x="584" y="272" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">all-component generation</text>
+  <text x="584" y="284" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">token alias → var() emission</text>
+
+  <!-- components/*.json → lower left -->
+  <line x1="297" y1="88" x2="164" y2="320" stroke="#000000" stroke-width="1" stroke-dasharray="4 3" fill="none" marker-end="url(#arrow)"/>
+  <rect x="32" y="321" width="168" height="52" fill="#F5F5F5" stroke="#A0522D" stroke-width="1"/>
+  <text x="116" y="340" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#A0522D" text-anchor="middle">components/*.json</text>
+  <text x="116" y="355" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">one file per component</text>
+  <text x="116" y="369" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">MCP agent context loading</text>
+  <text x="116" y="381" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">targeted, not full file read</text>
+
+  <!-- component-sets.json → lower right -->
+  <line x1="403" y1="88" x2="536" y2="320" stroke="#000000" stroke-width="1" stroke-dasharray="4 3" fill="none" marker-end="url(#arrow)"/>
+  <rect x="500" y="321" width="168" height="52" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="584" y="340" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">component-sets.json</text>
+  <text x="584" y="355" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">variant dimensions + values</text>
+  <text x="584" y="369" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">TypeScript prop union types</text>
+  <text x="584" y="381" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Code Connect prop mapping</text>
+
+  <!-- Legend: solid = direct, dashed = per-component context -->
+  <line x1="232" y1="396" x2="256" y2="396" stroke="#000000" stroke-width="1.5" fill="none"/>
+  <text x="262" y="400" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">direct output file</text>
+  <line x1="364" y1="396" x2="388" y2="396" stroke="#000000" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
+  <text x="394" y="400" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">per-component context</text>
+</svg>

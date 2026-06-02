@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 8.1 — Five-Stage Token Pipeline</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1C1C1C;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #B8622D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink); max-width: 280px; line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const stages = [
+      {
+        id: 'declare',
+        label: 'Declare',
+        detail: 'The design system declares its token taxonomy in Figma — collections, modes, naming conventions. Chapter 7\'s machine-readiness contract governs this stage.',
+        script: 'Ch 7 preflight',
+        highlight: false
+      },
+      {
+        id: 'extract',
+        label: 'Extract',
+        detail: 'Pipeline reads variables from Figma and writes DTCG-compatible JSON. Enterprise path: Variables REST API. Non-Enterprise path: Tokens Studio. Failure here caused the Monday incident.',
+        script: 'extract-tokens.mjs',
+        highlight: true,
+        failureNote: 'Monday failure: no trigger'
+      },
+      {
+        id: 'validate',
+        label: 'Validate',
+        detail: 'Validator checks broken aliases, malformed color values, and non-slug token paths. If it exits non-zero, Style Dictionary does not run.',
+        script: 'validate-tokens.mjs',
+        highlight: true
+      },
+      {
+        id: 'transform',
+        label: 'Transform',
+        detail: 'Style Dictionary reads normalized JSON and emits platform-specific output: CSS custom properties, Swift UIColor initializers, Android XML hex resources.',
+        script: 'style-dictionary',
+        highlight: false
+      },
+      {
+        id: 'distribute',
+        label: 'Distribute',
+        detail: 'Pipeline opens a PR with generated output. Human review is required before merge. A pipeline that commits directly to main removes the only human checkpoint.',
+        script: 'GitHub Actions PR',
+        highlight: false
+      }
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 14) + 'px').style('top', (event.pageY - 32) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 14) + 'px').style('top', (event.pageY - 32) + 'px');
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const w = document.getElementById('chart').clientWidth || 800;
+      const totalHeight = 400;
+      const margin = { top: 72, right: 32, bottom: 56, left: 32 };
+      const chartWidth = w - margin.left - margin.right;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', w).attr('height', totalHeight)
+        .attr('role', 'img').attr('aria-labelledby', 'ch08-fig01-title ch08-fig01-desc');
+
+      svg.append('title').attr('id', 'ch08-fig01-title').text('Five-stage design token pipeline: Declare → Extract → Validate → Transform → Distribute');
+      svg.append('desc').attr('id', 'ch08-fig01-desc').text('Flow diagram of the five token pipeline stages. Extract and Validate are highlighted as the stages implemented in Chapter 8. A dashed annotation marks the Declare-to-Extract gap as the root cause of the Monday incident.');
+
+      svg.append('text').attr('x', margin.left).attr('y', 32)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('Five-stage design token pipeline');
+
+      svg.append('text').attr('x', margin.left).attr('y', 50)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 11).attr('fill', 'var(--color-secondary)')
+        .text('Hover each stage for detail. Red border = implemented in this chapter.');
+
+      svg.append('defs').append('marker').attr('id', 'arrow')
+        .attr('markerWidth', 8).attr('markerHeight', 6).attr('refX', 7).attr('refY', 3)
+        .attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+
+      const gChart = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      gChart.append('rect').attr('width', chartWidth).attr('height', 200)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+
+      const n = stages.length;
+      const boxW = Math.min((chartWidth - 64) / n - 12, 120);
+      const boxH = 64;
+      const spacing = (chartWidth - boxW * n) / (n + 1);
+      const cy = 100;
+
+      stages.forEach((stage, i) => {
+        const x = spacing + i * (boxW + spacing);
+        const y = cy - boxH / 2;
+
+        // Connector arrow
+        if (i > 0) {
+          const prevX = spacing + (i - 1) * (boxW + spacing) + boxW;
+          gChart.append('line')
+            .attr('x1', prevX + 4).attr('y1', cy)
+            .attr('x2', x - 4).attr('y2', cy)
+            .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+            .attr('marker-end', 'url(#arrow)').attr('aria-hidden', 'true');
+        }
+
+        const gBox = gChart.append('g').attr('transform', `translate(${x},${y})`)
+          .attr('tabindex', 0)
+          .attr('aria-label', `Stage ${i + 1}: ${stage.label}. ${stage.detail}`)
+          .style('cursor', 'pointer');
+
+        gBox.append('rect').attr('width', boxW).attr('height', boxH)
+          .attr('fill', 'var(--color-white)')
+          .attr('stroke', stage.highlight ? 'var(--color-red)' : 'var(--color-border)')
+          .attr('stroke-width', stage.highlight ? 1.5 : 1);
+
+        gBox.append('text').attr('x', boxW / 2).attr('y', 18)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('font-weight', 700)
+          .attr('fill', stage.highlight ? 'var(--color-red)' : 'var(--color-secondary)')
+          .attr('letter-spacing', '0.06em')
+          .text(`STAGE ${i + 1}`);
+
+        gBox.append('text').attr('x', boxW / 2).attr('y', 36)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 12).attr('font-weight', 700)
+          .attr('fill', stage.highlight ? 'var(--color-red)' : 'var(--color-ink)')
+          .text(stage.label);
+
+        gBox.append('text').attr('x', boxW / 2).attr('y', 52)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', 'var(--color-secondary)')
+          .text(stage.script);
+
+        gBox.on('mouseover', function(event) {
+          d3.select(this).select('rect').transition().duration(120).attr('opacity', 0.85);
+          showTooltip(event, `<strong>Stage ${i + 1} — ${stage.label}</strong><br>${stage.detail}`);
+        }).on('mousemove', moveTooltip)
+          .on('mouseout', function() {
+            d3.select(this).select('rect').transition().duration(120).attr('opacity', 1);
+            hideTooltip();
+          })
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+              showTooltip(event, `<strong>Stage ${i + 1} — ${stage.label}</strong><br>${stage.detail}`);
+            }
+          });
+
+        // Failure annotation for Extract
+        if (stage.failureNote) {
+          const annotY = y - 28;
+          gChart.append('line')
+            .attr('x1', x + boxW * 0.25).attr('y1', y)
+            .attr('x2', x + boxW * 0.25).attr('y2', annotY + 12)
+            .attr('stroke', 'var(--color-red)').attr('stroke-width', 1)
+            .attr('stroke-dasharray', '4 3').attr('aria-hidden', 'true');
+          gChart.append('text')
+            .attr('x', x + boxW / 2).attr('y', annotY)
+            .attr('text-anchor', 'middle')
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 10).attr('fill', 'var(--color-red)')
+            .text(stage.failureNote);
+        }
+
+        // Script label below box
+        if (i === 0) {
+          gChart.append('text').attr('x', x + boxW / 2).attr('y', y + boxH + 20)
+            .attr('text-anchor', 'middle')
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+            .text('Ch 7 governs');
+        }
+      });
+
+      // Caption
+      svg.append('text').attr('x', margin.left).attr('y', totalHeight - 14)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('A reliable pipeline makes every stage independently testable. The Monday failure was Stage 2: no trigger closed the Declare-to-Extract gap.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit pipeline: API through six checks to reports</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1E1E1E;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C07840;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-size: 12px; color: var(--color-ink);
+      font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const checks = [
+      { id: 'naming',      label: 'check-naming.js',            ruleId: 'NAME001', severity: 'error',   desc: 'Variable names violate convention' },
+      { id: 'token',       label: 'check-token-hygiene.js',     ruleId: 'TOK001 / TOK002', severity: 'error/warning', desc: 'Orphaned aliases / missing descriptions' },
+      { id: 'component',   label: 'check-component-hygiene.js', ruleId: 'COMP001', severity: 'warning', desc: 'Components without descriptions' },
+      { id: 'brand',       label: 'check-brand-compliance.js',  ruleId: 'BRD001',  severity: 'warning', desc: 'Fills without token references' },
+      { id: 'access',      label: 'check-accessibility.js',     ruleId: 'ACC001',  severity: 'error',   desc: 'Text/background contrast below WCAG AA' },
+      { id: 'structure',   label: 'check-structure.js',         ruleId: 'STR001',  severity: 'error',   desc: 'Missing required pages or collections' },
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) { tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px'); }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const container = document.getElementById('chart');
+      const totalWidth  = container.clientWidth || 800;
+      const totalHeight = Math.max(480, totalWidth * 0.62);
+      const margin = { top: 48, right: 40, bottom: 56, left: 40 };
+      const W = totalWidth - margin.left - margin.right;
+      const H = totalHeight - margin.top  - margin.bottom;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', totalWidth).attr('height', totalHeight)
+        .attr('role', 'img').attr('aria-labelledby', 'aud01-title aud01-desc');
+      svg.append('title').attr('id', 'aud01-title').text('Figma audit pipeline diagram');
+      svg.append('desc').attr('id', 'aud01-desc').text('Data flows from Figma API or fixture through six check functions into a findings array, then rendered as markdown and JSON.');
+
+      svg.append('defs').append('marker')
+        .attr('id', 'arrowA').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      g.append('text').attr('x', 0).attr('y', -20)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('Audit pipeline: API → six checks → findings → reports');
+
+      // Data source box
+      const srcW = Math.min(120, W * 0.16), srcH = 60;
+      const srcG = g.append('g').attr('tabindex', 0).attr('aria-label', 'Data source: Figma API or local fixture');
+      srcG.append('rect').attr('x', 0).attr('y', H / 2 - srcH / 2)
+        .attr('width', srcW).attr('height', srcH)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+      srcG.append('text').attr('x', srcW / 2).attr('y', H / 2 - srcH / 2 + 16)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('font-weight', 700).attr('fill', 'var(--color-secondary)').attr('letter-spacing', '0.08em')
+        .text('DATA SOURCE');
+      srcG.append('text').attr('x', srcW / 2).attr('y', H / 2 - srcH / 2 + 32)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-ink)').text('Figma API');
+      srcG.append('text').attr('x', srcW / 2).attr('y', H / 2 - srcH / 2 + 46)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text('or --fixture');
+
+      // Check column
+      const checkX = srcW + 40;
+      const checkW = Math.min(170, W * 0.24);
+      const checkH = (H - 8) / checks.length - 6;
+
+      checks.forEach((ch, i) => {
+        const cy = i * (checkH + 6);
+        const cx = checkX;
+
+        // Arrow from source to this check
+        const midY = H / 2;
+        const targetY = cy + checkH / 2;
+        g.append('path')
+          .attr('d', `M${srcW},${midY} Q${srcW + 18},${midY} ${srcW + 18},${targetY} L${cx - 2},${targetY}`)
+          .attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75)
+          .attr('fill', 'none').attr('stroke-dasharray', '4 3')
+          .attr('marker-end', 'url(#arrowA)').attr('aria-hidden', 'true');
+
+        const cg = g.append('g')
+          .attr('tabindex', 0)
+          .attr('aria-label', `${ch.label}: ${ch.desc} (${ch.severity})`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>${ch.label}</strong><br/>${ch.ruleId} · ${ch.severity}<br/>${ch.desc}`))
+          .on('mousemove', moveTooltip).on('mouseout', hideTooltip)
+          .on('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>${ch.label}</strong><br/>${ch.ruleId} · ${ch.severity}<br/>${ch.desc}`);
+          });
+
+        cg.append('rect').attr('x', cx).attr('y', cy).attr('width', checkW).attr('height', checkH)
+          .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+
+        cg.append('text').attr('x', cx + 8).attr('y', cy + 14)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+          .text(ch.label);
+
+        const sevColor = ch.severity.startsWith('error') ? 'var(--color-red)' : 'var(--color-secondary)';
+        cg.append('text').attr('x', cx + 8).attr('y', cy + 28)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', sevColor)
+          .text(ch.ruleId + ' — ' + ch.severity);
+
+        // Arrow from check to findings
+        const findX = checkX + checkW + 28;
+        g.append('line')
+          .attr('x1', cx + checkW).attr('y1', cy + checkH / 2)
+          .attr('x2', findX - 2).attr('y2', H / 2)
+          .attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75)
+          .attr('fill', 'none').attr('stroke-dasharray', '4 3')
+          .attr('marker-end', 'url(#arrowA)').attr('aria-hidden', 'true');
+      });
+
+      // Findings box
+      const findX = checkX + checkW + 28;
+      const findW = Math.min(130, W * 0.18), findH = 80;
+      const findG = g.append('g').attr('tabindex', 0).attr('aria-label', 'Findings array with category, severity, nodeId, message, suggestion, ruleId');
+      findG.append('rect').attr('x', findX).attr('y', H / 2 - findH / 2)
+        .attr('width', findW).attr('height', findH)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5);
+      findG.append('text').attr('x', findX + findW / 2).attr('y', H / 2 - findH / 2 + 14)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('font-weight', 700).attr('fill', 'var(--color-red)').attr('letter-spacing', '0.08em')
+        .text('FINDINGS ARRAY');
+      ['category · severity', 'nodeId · message', 'suggestion · ruleId'].forEach((line, li) => {
+        findG.append('text').attr('x', findX + findW / 2).attr('y', H / 2 - findH / 2 + 30 + li * 14)
+          .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', 'var(--color-ink)').text(line);
+      });
+
+      // Arrows: findings → two outputs
+      const outX = findX + findW + 32;
+      const mdY = H / 2 - 30, jsY = H / 2 + 10;
+      const outW = Math.min(120, W * 0.18), outH = 36;
+
+      g.append('line').attr('x1', findX + findW).attr('y1', H / 2)
+        .attr('x2', outX - 2).attr('y2', H / 2)
+        .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5).attr('marker-end', 'url(#arrowA)');
+
+      [{ label: 'MARKDOWN', sub: 'audit-report.md', y: mdY, note: 'human readable' },
+       { label: 'JSON',      sub: 'audit-report.json', y: jsY, note: 'CI gate' }].forEach((out) => {
+        const og = g.append('g').attr('tabindex', 0).attr('aria-label', `${out.label}: ${out.sub}`);
+        og.append('rect').attr('x', outX).attr('y', out.y).attr('width', outW).attr('height', outH)
+          .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+        og.append('text').attr('x', outX + 8).attr('y', out.y + 14)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('font-weight', 700).attr('fill', 'var(--color-secondary)').attr('letter-spacing', '0.08em')
+          .text(out.label);
+        og.append('text').attr('x', outX + 8).attr('y', out.y + 28)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text(out.sub);
+        g.append('text').attr('x', outX + outW + 6).attr('y', out.y + 22)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text(out.note);
+      });
+
+      // Caption
+      g.append('text').attr('x', 0).attr('y', H + 36)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Data flows from Figma API or fixture through six check functions into a findings array, then rendered as parallel outputs.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

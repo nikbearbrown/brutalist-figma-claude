@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 2.1 — Rate Limit 429 Response Flow</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1A1A1A;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C0724D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; min-height: 460px; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink); max-width: 260px; line-height: 1.5;
+    }
+    .step { cursor: pointer; }
+    .step:focus { outline: 2px solid var(--color-red); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    // Flow steps — two paths: happy path (top) and 429 path (bottom)
+    const happySteps = [
+      { id: 'request',  label: 'API Request',       sub: 'fetch(url, headers)',          info: 'figmaFetch() sends a GET request with the X-Figma-Token header. This is every REST call in the book.' },
+      { id: 'response', label: 'Response',           sub: 'check res.status',             info: 'The response status determines the next step. 200 → parse JSON. 429 → rate-limited (handle). 4xx/5xx → throw error.' },
+      { id: 'success',  label: 'Return JSON',        sub: 'res.json()',                   info: 'On 200, parse and return the JSON body. This is the normal case.' },
+    ];
+
+    const retrySteps = [
+      { id: 'read429',  label: 'Read Retry-After',  sub: "headers.get('Retry-After') || '10'", info: 'The 429 response includes a Retry-After header specifying how many seconds to wait. Default to 10s if the header is absent.' },
+      { id: 'sleep',    label: 'Sleep',              sub: 'await sleep(retryAfter * 1000)',     info: 'Block the async function for the specified duration. Do not retry immediately — the server told you explicitly how long to wait.' },
+      { id: 'retry',    label: 'Retry once',         sub: 'figmaFetch(url, token)',             info: 'Call figmaFetch recursively once. If it succeeds, return the result. If it gets another 429, the recursive call will fall through to the error path — one retry only.' },
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px');
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const W = document.getElementById('chart').clientWidth || 800;
+      const H = Math.max(480, W * 0.6);
+      const margin = { top: 48, right: 32, bottom: 56, left: 32 };
+      const innerW = W - margin.left - margin.right;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', W).attr('height', H)
+        .attr('role', 'img')
+        .attr('aria-labelledby', 'ch2-fig1-title ch2-fig1-desc');
+      svg.append('title').attr('id', 'ch2-fig1-title').text('Rate Limit 429 Response Flow');
+      svg.append('desc').attr('id', 'ch2-fig1-desc').text('Interactive flow diagram showing the figmaFetch() rate limit handling: API request → response check → on 200 return JSON; on 429 read Retry-After header → sleep → retry once → success or surface error. Hover each step for details.');
+
+      svg.append('rect').attr('width', W).attr('height', H).attr('fill', 'var(--color-white)');
+
+      const defs = svg.append('defs');
+      defs.append('marker').attr('id', 'arr-b')
+        .attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+      defs.append('marker').attr('id', 'arr-r')
+        .attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-red)');
+
+      const boxH = Math.min(52, H * 0.10);
+      const topRow = margin.top;
+      const bottomRow = margin.top + boxH + 80;
+      const gap = 16;
+
+      // Happy path: 3 steps
+      const hCount = happySteps.length;
+      const hBoxW = (innerW * 0.64 - gap * (hCount - 1)) / hCount;
+
+      happySteps.forEach((step, i) => {
+        const x = margin.left + i * (hBoxW + gap);
+        const y = topRow;
+        const isHighlight = step.id === 'response';
+
+        const g = svg.append('g').attr('class', 'step')
+          .attr('tabindex', 0)
+          .attr('aria-label', `${step.label}: ${step.info}`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>${step.label}</strong><br>${step.info}`))
+          .on('mousemove', moveTooltip)
+          .on('mouseout', hideTooltip)
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>${step.label}</strong><br>${step.info}`);
+          })
+          .on('focus', (ev) => g.select('rect').attr('fill', 'var(--color-white)'))
+          .on('blur', (ev) => g.select('rect').attr('fill', 'var(--color-fill)'));
+
+        g.append('rect').attr('x', x).attr('y', y).attr('width', hBoxW).attr('height', boxH)
+          .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+
+        g.append('text').attr('x', x + hBoxW / 2).attr('y', y + boxH * 0.38)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(12, hBoxW * 0.095)).attr('font-weight', '700').attr('fill', 'var(--color-ink)')
+          .style('pointer-events', 'none').text(step.label);
+
+        g.append('text').attr('x', x + hBoxW / 2).attr('y', y + boxH * 0.72)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(9, hBoxW * 0.075)).attr('fill', 'var(--color-secondary)')
+          .style('pointer-events', 'none').text(step.sub.length > 28 ? step.sub.substring(0, 28) + '…' : step.sub);
+
+        if (i < hCount - 1) {
+          svg.append('line')
+            .attr('x1', x + hBoxW).attr('y1', y + boxH / 2)
+            .attr('x2', x + hBoxW + gap - 2).attr('y2', y + boxH / 2)
+            .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+            .attr('marker-end', 'url(#arr-b)');
+        }
+
+        // 200 label on first arrow
+        if (i === 0) {
+          svg.append('text')
+            .attr('x', x + hBoxW + gap / 2).attr('y', y + boxH / 2 - 6)
+            .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text('→');
+        }
+        if (i === 1) {
+          svg.append('text')
+            .attr('x', x + hBoxW + gap / 2 + 2).attr('y', y + boxH / 2 - 6)
+            .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text('200 OK');
+        }
+      });
+
+      // 429 branch: arrow down from response box
+      const responseX = margin.left + (hBoxW + gap);
+      const responseBottom = topRow + boxH;
+      svg.append('line')
+        .attr('x1', responseX + hBoxW / 2).attr('y1', responseBottom)
+        .attr('x2', responseX + hBoxW / 2).attr('y2', bottomRow - 2)
+        .attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5)
+        .attr('marker-end', 'url(#arr-r)');
+      svg.append('text')
+        .attr('x', responseX + hBoxW / 2 + 6).attr('y', (responseBottom + bottomRow) / 2)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-red)')
+        .text('429');
+
+      // Retry path: 3 steps
+      const rCount = retrySteps.length;
+      const rBoxW = (innerW * 0.64 - gap * (rCount - 1)) / rCount;
+
+      retrySteps.forEach((step, i) => {
+        const x = margin.left + i * (rBoxW + gap);
+        const y = bottomRow;
+
+        const g = svg.append('g').attr('class', 'step')
+          .attr('tabindex', 0)
+          .attr('aria-label', `${step.label}: ${step.info}`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>${step.label}</strong><br>${step.info}`))
+          .on('mousemove', moveTooltip)
+          .on('mouseout', hideTooltip)
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>${step.label}</strong><br>${step.info}`);
+          })
+          .on('focus', (ev) => g.select('rect').attr('fill', 'var(--color-white)'))
+          .on('blur', (ev) => g.select('rect').attr('fill', 'var(--color-fill)'));
+
+        const isFirst = i === 0;
+        g.append('rect').attr('x', x).attr('y', y).attr('width', rBoxW).attr('height', boxH)
+          .attr('fill', isFirst ? 'var(--color-white)' : 'var(--color-fill)')
+          .attr('stroke', isFirst ? 'var(--color-red)' : 'var(--color-border)')
+          .attr('stroke-width', isFirst ? 1.5 : 0.75);
+
+        g.append('text').attr('x', x + rBoxW / 2).attr('y', y + boxH * 0.38)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(12, rBoxW * 0.095)).attr('font-weight', '700')
+          .attr('fill', isFirst ? 'var(--color-red)' : 'var(--color-ink)')
+          .style('pointer-events', 'none').text(step.label);
+
+        g.append('text').attr('x', x + rBoxW / 2).attr('y', y + boxH * 0.72)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(9, rBoxW * 0.075)).attr('fill', 'var(--color-secondary)')
+          .style('pointer-events', 'none').text(step.sub.length > 30 ? step.sub.substring(0, 30) + '…' : step.sub);
+
+        if (i < rCount - 1) {
+          svg.append('line')
+            .attr('x1', x + rBoxW).attr('y1', y + boxH / 2)
+            .attr('x2', x + rBoxW + gap - 2).attr('y2', y + boxH / 2)
+            .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+            .attr('marker-end', 'url(#arr-b)');
+        }
+      });
+
+      // From retry → success (arrow up/right to success box)
+      const retryX = margin.left + 2 * (rBoxW + gap);
+      const successX = margin.left + 2 * (hBoxW + gap);
+      svg.append('path')
+        .attr('d', `M ${retryX + rBoxW} ${bottomRow + boxH / 2} C ${retryX + rBoxW + 24} ${bottomRow + boxH / 2}, ${successX + hBoxW / 2} ${topRow + boxH + 40}, ${successX + hBoxW / 2} ${topRow + boxH + 2}`)
+        .attr('fill', 'none').attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+        .attr('stroke-dasharray', '4 3').attr('marker-end', 'url(#arr-b)');
+      svg.append('text')
+        .attr('x', successX + hBoxW * 0.7).attr('y', topRow + boxH + 44)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text('success');
+
+      // From retry → error (still 429)
+      const errorBoxX = margin.left + innerW * 0.68;
+      const errorBoxW = innerW * 0.32;
+      const errorBoxY = bottomRow;
+      svg.append('line')
+        .attr('x1', retryX + rBoxW).attr('y1', bottomRow + boxH / 2)
+        .attr('x2', errorBoxX - 2).attr('y2', bottomRow + boxH / 2)
+        .attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5)
+        .attr('marker-end', 'url(#arr-r)');
+      svg.append('text')
+        .attr('x', (retryX + rBoxW + errorBoxX) / 2).attr('y', bottomRow + boxH / 2 - 6)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-red)').text('still 429');
+
+      svg.append('rect').attr('x', errorBoxX).attr('y', errorBoxY)
+        .attr('width', errorBoxW).attr('height', boxH)
+        .attr('fill', 'var(--color-white)').attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5);
+      svg.append('text').attr('x', errorBoxX + errorBoxW / 2).attr('y', errorBoxY + boxH * 0.38)
+        .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', Math.min(12, errorBoxW * 0.09)).attr('font-weight', '700').attr('fill', 'var(--color-red)')
+        .text('Surface error');
+      svg.append('text').attr('x', errorBoxX + errorBoxW / 2).attr('y', errorBoxY + boxH * 0.72)
+        .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', Math.min(9, errorBoxW * 0.075)).attr('fill', 'var(--color-secondary)')
+        .text('throw Error — let operator decide');
+
+      // Rule footer
+      const ruleY = H - margin.bottom;
+      svg.append('rect')
+        .attr('x', margin.left).attr('y', ruleY - 4)
+        .attr('width', innerW).attr('height', 28)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+      svg.append('text')
+        .attr('x', W / 2).attr('y', ruleY + 12)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Bounded retry: once after Retry-After. Never loop unboundedly on rate-limited endpoints.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

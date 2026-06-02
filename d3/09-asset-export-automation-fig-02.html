@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 9.2 — Asset Manifest Structure</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1C1C1C;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #B8622D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink); max-width: 300px; line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const assets = [
+      {
+        figmaName:  '"icon-close"',
+        page:       'icons page',
+        nodeId:     '1:234',
+        format:     'svg',
+        scale:      1,
+        svgo:       true,
+        outputPath: 'src/assets/icons/icon-close.svg',
+        detail:     'nodeId "1:234" is the stable routing key. Rename the frame in Figma — node ID unchanged, manifest unchanged, outputPath unchanged.'
+      },
+      {
+        figmaName:  '"icon-chevron-down"',
+        page:       'icons page',
+        nodeId:     '1:235',
+        format:     'svg',
+        scale:      1,
+        svgo:       true,
+        outputPath: 'src/assets/icons/icon-chevron-down.svg',
+        detail:     'svgo: true — the export pipeline post-processes this SVG with SVGO to remove Figma-specific IDs and reduce file size.'
+      },
+      {
+        figmaName:  '"illustration-empty-state"',
+        page:       'illustrations page',
+        nodeId:     '2:100',
+        format:     'svg',
+        scale:      1,
+        svgo:       false,
+        outputPath: 'src/assets/illustrations/illustration-empty-state.svg',
+        detail:     'svgo: false — complex illustration where mergePaths or convertPathData might cause visible differences. SVGO disabled for safety.'
+      },
+      {
+        figmaName:  '"logo-primary"',
+        page:       'brand page',
+        nodeId:     '3:50',
+        format:     'png',
+        scale:      2,
+        svgo:       false,
+        outputPath: 'src/assets/brand/logo-primary@2x.png',
+        detail:     'PNG format at 2x scale for retina displays. SVGO does not apply to PNG. Integrity check validates PNG magic bytes (89 50 4E 47).'
+      }
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 14) + 'px').style('top', (event.pageY - 32) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 14) + 'px').style('top', (event.pageY - 32) + 'px');
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const w = document.getElementById('chart').clientWidth || 800;
+      const margin = { top: 72, right: 32, bottom: 72, left: 32 };
+      const chartW = w - margin.left - margin.right;
+      const rowH = 64;
+      const totalHeight = margin.top + assets.length * rowH + (assets.length + 1) * 8 + margin.bottom + 32;
+      const colW = [0.22, 0.22, 0.56].map(p => Math.round(chartW * p));
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', w).attr('height', totalHeight)
+        .attr('role', 'img').attr('aria-labelledby', 'ch09-fig02-title ch09-fig02-desc');
+
+      svg.append('title').attr('id', 'ch09-fig02-title').text('Asset manifest structure: Figma node IDs linked to repository output paths');
+      svg.append('desc').attr('id', 'ch09-fig02-desc').text('Four-row table showing Figma frame names and pages in the first column, manifest node IDs and settings in the second column, and deterministic repository output paths in the third column. Hover rows for detail on each field.');
+
+      svg.append('text').attr('x', margin.left).attr('y', 30)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('Asset manifest — node ID to repository path');
+
+      svg.append('text').attr('x', margin.left).attr('y', 50)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 11).attr('fill', 'var(--color-secondary)')
+        .text('Hover a row for field-level detail. Red nodeId = routing key the export script uses. Name = human reference only.');
+
+      svg.append('defs').append('marker').attr('id', 'arrow9b')
+        .attr('markerWidth', 8).attr('markerHeight', 6).attr('refX', 7).attr('refY', 3)
+        .attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+
+      const gChart = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      // Background
+      gChart.append('rect').attr('width', chartW).attr('height', assets.length * rowH + (assets.length + 1) * 8)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+
+      // Column headers
+      const headerLabels = ['FIGMA FILE', 'MANIFEST ENTRY', 'REPOSITORY PATH'];
+      let xCursor = 0;
+      colW.forEach((cw, ci) => {
+        gChart.append('rect').attr('x', xCursor).attr('y', 0).attr('width', cw).attr('height', 32)
+          .attr('fill', ci === 1 ? 'var(--color-ink)' : 'var(--color-secondary)');
+        gChart.append('text')
+          .attr('x', xCursor + cw / 2).attr('y', 20)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('font-weight', 700)
+          .attr('fill', 'var(--color-white)')
+          .attr('letter-spacing', '0.07em')
+          .text(headerLabels[ci]);
+        if (ci < colW.length - 1) {
+          gChart.append('line').attr('x1', xCursor + cw).attr('y1', 0).attr('x2', xCursor + cw).attr('y2', 32)
+            .attr('stroke', 'var(--color-border)').attr('stroke-width', 0.5).attr('aria-hidden', 'true');
+        }
+        xCursor += cw;
+      });
+
+      // Rows
+      assets.forEach((asset, ri) => {
+        const y = 36 + ri * (rowH + 4) + 4;
+        const xCols = [0, colW[0], colW[0] + colW[1]];
+
+        const gRow = gChart.append('g').attr('transform', `translate(0,${y})`)
+          .attr('tabindex', 0)
+          .attr('aria-label', `Asset: ${asset.figmaName} → nodeId ${asset.nodeId} → ${asset.outputPath}. ${asset.detail}`)
+          .style('cursor', 'pointer');
+
+        // Row bg
+        gRow.append('rect').attr('width', chartW).attr('height', rowH)
+          .attr('fill', 'var(--color-white)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.5);
+
+        // Col dividers
+        gRow.append('line').attr('x1', colW[0]).attr('y1', 0).attr('x2', colW[0]).attr('y2', rowH)
+          .attr('stroke', 'var(--color-border)').attr('stroke-width', 0.5).attr('aria-hidden', 'true');
+        gRow.append('line').attr('x1', colW[0] + colW[1]).attr('y1', 0).attr('x2', colW[0] + colW[1]).attr('y2', rowH)
+          .attr('stroke', 'var(--color-border)').attr('stroke-width', 0.5).attr('aria-hidden', 'true');
+
+        // Col 0: Figma frame
+        gRow.append('text').attr('x', 8).attr('y', 22)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 11).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+          .text(asset.figmaName);
+        gRow.append('text').attr('x', 8).attr('y', 38)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+          .text(asset.page);
+
+        // Col 1: Manifest
+        gRow.append('text').attr('x', colW[0] + 8).attr('y', 20)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-red)')
+          .text(`nodeId: "${asset.nodeId}"`);
+        gRow.append('text').attr('x', colW[0] + 8).attr('y', 35)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+          .text(`format: ${asset.format} · scale: ${asset.scale} · svgo: ${asset.svgo}`);
+
+        // Arrow between cols 1 and 2
+        gRow.append('line')
+          .attr('x1', colW[0] + colW[1] - 20).attr('y1', rowH / 2)
+          .attr('x2', colW[0] + colW[1] - 4).attr('y2', rowH / 2)
+          .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+          .attr('marker-end', 'url(#arrow9b)').attr('aria-hidden', 'true');
+
+        // Col 2: Output path
+        const pathParts = asset.outputPath.split('/');
+        const fileName  = pathParts.pop();
+        const dirPath   = pathParts.join('/') + '/';
+        gRow.append('text').attr('x', colW[0] + colW[1] + 8).attr('y', 22)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+          .text(dirPath);
+        gRow.append('text').attr('x', colW[0] + colW[1] + 8).attr('y', 38)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 11).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+          .text(fileName);
+
+        gRow.on('mouseover', function(event) {
+          d3.select(this).select('rect').transition().duration(120).attr('fill', 'var(--color-fill)');
+          showTooltip(event, `<strong>${asset.figmaName}</strong><br><strong>nodeId:</strong> ${asset.nodeId}<br><strong>outputPath:</strong> ${asset.outputPath}<br>${asset.detail}`);
+        }).on('mousemove', moveTooltip)
+          .on('mouseout', function() {
+            d3.select(this).select('rect').transition().duration(120).attr('fill', 'var(--color-white)');
+            hideTooltip();
+          })
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+              showTooltip(event, `<strong>${asset.figmaName}</strong> → ${asset.outputPath}<br>${asset.detail}`);
+            }
+          });
+      });
+
+      // Stability note
+      const noteY = margin.top + assets.length * (rowH + 4) + 4 + 8;
+      svg.append('text').attr('x', margin.left).attr('y', noteY + 16)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-ink)')
+        .text('Rename in Figma → node ID unchanged → manifest valid → outputPath unchanged. Copy-paste creates a new ID — manifest must be updated.');
+
+      svg.append('text').attr('x', margin.left).attr('y', totalHeight - 14)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('The manifest is maintained by a human. The export script reads and trusts it. Nothing else should be responsible for keeping it accurate.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

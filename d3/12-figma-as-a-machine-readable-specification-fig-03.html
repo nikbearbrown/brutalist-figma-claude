@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>build-spec.mjs Output Flows — Figure 12.3</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1E1E1E;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C4723A;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-size: 12px; color: var(--color-ink);
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left',(event.pageX+12)+'px').style('top',(event.pageY-28)+'px')
+        .transition().duration(150).style('opacity',1);
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity',0); }
+
+    const artifacts = [
+      {
+        id: 'manifest',
+        label: 'manifest.json',
+        fields: 'totalComponents · lastModified\nhasVariableData · hasCodeConnect',
+        consumer: 'CI DECISIONS',
+        consumerDetail: 'version gate · changelog · run trigger logic',
+        position: 'top-left',
+        color: 'ink',
+        tooltip: 'manifest.json is the lightweight summary. CI uses it to decide whether to trigger a code generation run, track changelog entries, and gate releases on hasVariableData and hasCodeConnect flags.'
+      },
+      {
+        id: 'components',
+        label: 'components.json',
+        fields: 'all components · full spec\nfills · layout · codeConnect',
+        consumer: 'CODE GEN BATCH RUNS',
+        consumerDetail: 'all-component generation · var() emission',
+        position: 'top-right',
+        color: 'red',
+        tooltip: 'components.json contains the complete spec for every component. Code generators read this for batch runs — generating all components in one pass, emitting var() CSS custom property references from tokenAlias fields.'
+      },
+      {
+        id: 'per-component',
+        label: 'components/*.json',
+        fields: 'one file per component\nname-nodeId.json',
+        consumer: 'MCP AGENT CONTEXT',
+        consumerDetail: 'targeted loading · not full file read',
+        position: 'bottom-left',
+        color: 'brown',
+        tooltip: 'Per-component files in spec-output/components/ allow MCP agent sessions to load only the components relevant to the current generation task. Avoids loading megabytes of spec into context for a single component.'
+      },
+      {
+        id: 'sets',
+        label: 'component-sets.json',
+        fields: 'variant dimensions + values\nper set with full variant list',
+        consumer: 'PROP TYPE GENERATION',
+        consumerDetail: 'TypeScript union types · Code Connect mapping',
+        position: 'bottom-right',
+        color: 'ink',
+        tooltip: 'component-sets.json is the input for TypeScript prop type generation (Exercise 3). Each entry has every variant dimension and its possible values — the exact input needed to produce Props interfaces and Code Connect prop mappings.'
+      }
+    ];
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const w = document.getElementById('chart').clientWidth || 800;
+      const h = Math.max(500, w * 0.65);
+      const cs = getComputedStyle(document.documentElement);
+      const ink = cs.getPropertyValue('--color-ink').trim();
+      const red = cs.getPropertyValue('--color-red').trim();
+      const brown = cs.getPropertyValue('--color-brown').trim();
+      const fill = cs.getPropertyValue('--color-fill').trim();
+      const border = cs.getPropertyValue('--color-border').trim();
+      const sec = cs.getPropertyValue('--color-secondary').trim();
+      const colorMap = { red, brown, ink };
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width',w).attr('height',h)
+        .attr('role','img').attr('aria-labelledby','chart-title chart-desc');
+      svg.append('title').attr('id','chart-title').text('build-spec.mjs output flows — Figure 12.3');
+      svg.append('desc').attr('id','chart-desc').text('Infographic showing how manifest.json flows to CI decisions, components.json to code generator batch runs, per-component files to MCP agent context loading, and component-sets.json to variant prop type generation.');
+
+      const defs = svg.append('defs');
+      defs.append('marker').attr('id','arr').attr('markerWidth',8).attr('markerHeight',6)
+        .attr('refX',7).attr('refY',3).attr('orient','auto')
+        .append('polygon').attr('points','0 0, 8 3, 0 6').attr('fill',ink);
+
+      const gChart = svg.append('g').attr('class','g-chart');
+
+      // Central source
+      const srcW = Math.min(180, w * 0.24);
+      const srcH = 56;
+      const cx = w / 2;
+      const cy = h / 2;
+      gChart.append('rect').attr('x', cx-srcW/2).attr('y', cy-srcH/2).attr('width',srcW).attr('height',srcH)
+        .attr('fill',fill).attr('stroke',red).attr('stroke-width',1);
+      gChart.append('text').attr('x',cx).attr('y',cy-8)
+        .attr('text-anchor','middle')
+        .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size',12).attr('font-weight',700).attr('fill',red)
+        .text('build-spec.mjs');
+      gChart.append('text').attr('x',cx).attr('y',cy+8)
+        .attr('text-anchor','middle')
+        .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size',9).attr('fill',sec).text('spec-output/ → 4 artifacts');
+
+      // Artifact boxes and connections
+      const bw = Math.min(160, w * 0.22);
+      const bh = 52;
+      const consH = 44;
+      const pad = 32;
+
+      const positions = {
+        'top-left':     { ax: pad,        ay: pad,    cx2: pad,        cy2: pad + bh + 32 },
+        'top-right':    { ax: w-pad-bw,   ay: pad,    cx2: w-pad-bw,   cy2: pad + bh + 32 },
+        'bottom-left':  { ax: pad,        ay: h-pad-bh-consH-40, cx2: pad,   cy2: h-pad-consH },
+        'bottom-right': { ax: w-pad-bw,   ay: h-pad-bh-consH-40, cx2: w-pad-bw, cy2: h-pad-consH }
+      };
+
+      artifacts.forEach(a => {
+        const pos = positions[a.position];
+        const col = colorMap[a.color];
+        const dashed = a.position.includes('bottom');
+
+        // Arrow from source to artifact
+        gChart.append('line')
+          .attr('x1', cx + (a.position.includes('left') ? -srcW/2 : srcW/2))
+          .attr('y1', cy + (a.position.includes('top') ? -srcH/2 : srcH/2))
+          .attr('x2', pos.ax + bw/2)
+          .attr('y2', pos.ay + bh)
+          .attr('stroke', ink)
+          .attr('stroke-width', dashed ? 1 : 1.5)
+          .attr('stroke-dasharray', dashed ? '4 3' : null)
+          .attr('marker-end','url(#arr)')
+          .attr('aria-hidden','true');
+
+        // Artifact box
+        const ag = gChart.append('g').attr('tabindex',0)
+          .attr('aria-label', `${a.label}: ${a.tooltip}`)
+          .on('mouseover',(event)=>showTooltip(event,`<strong>${a.label}</strong><br>${a.tooltip}`))
+          .on('mouseout',hideTooltip)
+          .on('keydown',function(event){if(event.key==='Enter'||event.key===' ')showTooltip(event,`<strong>${a.label}</strong><br>${a.tooltip}`);});
+
+        ag.append('rect').attr('x',pos.ax).attr('y',pos.ay).attr('width',bw).attr('height',bh)
+          .attr('fill',fill).attr('stroke',col).attr('stroke-width',1);
+        ag.append('text').attr('x',pos.ax+bw/2).attr('y',pos.ay+16)
+          .attr('text-anchor','middle')
+          .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size',10).attr('font-weight',700).attr('fill',col)
+          .text(a.label);
+        a.fields.split('\n').forEach((line,i) => {
+          ag.append('text').attr('x',pos.ax+bw/2).attr('y',pos.ay+30+i*12)
+            .attr('text-anchor','middle')
+            .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size',8).attr('fill',sec).text(line);
+        });
+
+        // Arrow artifact to consumer
+        gChart.append('line')
+          .attr('x1', pos.ax+bw/2).attr('y1', pos.ay+bh)
+          .attr('x2', pos.cx2+bw/2).attr('y2', pos.cy2)
+          .attr('stroke',ink).attr('stroke-width',1.5)
+          .attr('marker-end','url(#arr)').attr('aria-hidden','true');
+
+        // Consumer box
+        gChart.append('rect').attr('x',pos.cx2).attr('y',pos.cy2).attr('width',bw).attr('height',consH)
+          .attr('fill',fill).attr('stroke',border).attr('stroke-width',1);
+        gChart.append('text').attr('x',pos.cx2+bw/2).attr('y',pos.cy2+14)
+          .attr('text-anchor','middle')
+          .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size',9).attr('font-weight',700).attr('fill',ink)
+          .text(a.consumer);
+        a.consumerDetail.split('·').forEach((d,i) => {
+          gChart.append('text').attr('x',pos.cx2+bw/2).attr('y',pos.cy2+26+i*12)
+            .attr('text-anchor','middle')
+            .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size',8).attr('fill',sec).text(d.trim());
+        });
+      });
+
+      // Legend
+      gChart.append('line').attr('x1',cx-100).attr('y1',h-20).attr('x2',cx-80).attr('y2',h-20)
+        .attr('stroke',ink).attr('stroke-width',1.5);
+      gChart.append('text').attr('x',cx-74).attr('y',h-16)
+        .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size',9).attr('fill',sec).text('direct output');
+      gChart.append('line').attr('x1',cx+10).attr('y1',h-20).attr('x2',cx+30).attr('y2',h-20)
+        .attr('stroke',ink).attr('stroke-width',1).attr('stroke-dasharray','4 3');
+      gChart.append('text').attr('x',cx+36).attr('y',h-16)
+        .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size',9).attr('fill',sec).text('per-component context');
+    }
+
+    draw();
+    const ro = new ResizeObserver(()=>draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

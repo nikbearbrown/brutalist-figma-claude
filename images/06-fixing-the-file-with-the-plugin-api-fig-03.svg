@@ -1,0 +1,104 @@
+<svg viewBox="0 0 700 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig63-title fig63-desc">
+  <title id="fig63-title">Plugin loading flow: development import through production distribution</title>
+  <desc id="fig63-desc">Numbered steps from manifest import through plugin execution, with callouts for development-only vs production distribution paths.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#C8102E"/>
+    </marker>
+  </defs>
+
+  <rect width="700" height="480" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="32" y="28" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="13" font-weight="700" fill="#000000">Plugin loading flow: development → production</text>
+
+  <!-- Dev path header -->
+  <rect x="32" y="44" width="300" height="20" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="182" y="58" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">DEVELOPMENT PATH</text>
+
+  <!-- Step 1 -->
+  <rect x="32" y="68" width="300" height="52" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="48" y="85" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E">1</text>
+  <text x="62" y="85" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000">Open Figma Desktop</text>
+  <text x="62" y="99" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Browser editor cannot run plugins.</text>
+  <text x="62" y="113" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Desktop app required for sandbox.</text>
+
+  <!-- Arrow -->
+  <line x1="182" y1="120" x2="182" y2="136" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Step 2 -->
+  <rect x="32" y="138" width="300" height="52" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="48" y="155" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E">2</text>
+  <text x="62" y="155" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000">Plugins → Development → Import plugin from manifest</text>
+  <text x="62" y="169" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Navigate to figma-fix-plugin/manifest.json</text>
+  <text x="62" y="183" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Select and confirm.</text>
+
+  <!-- Arrow -->
+  <line x1="182" y1="190" x2="182" y2="206" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Step 3 -->
+  <rect x="32" y="208" width="300" height="52" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="48" y="225" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E">3</text>
+  <text x="62" y="225" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000">Plugins → Development → Figma Fix</text>
+  <text x="62" y="239" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Plugin opens. Paste audit-report.json contents</text>
+  <text x="62" y="253" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">into the textarea. Click "Load Audit."</text>
+
+  <!-- Arrow -->
+  <line x1="182" y1="260" x2="182" y2="276" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Step 4 — Gate (RED) -->
+  <rect x="32" y="278" width="300" height="64" fill="#FFFFFF" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="48" y="295" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E">4</text>
+  <text x="62" y="295" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E">Review and approve in Phase 2 preview</text>
+  <text x="62" y="309" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Approve or reject each fix individually.</text>
+  <text x="62" y="323" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E">Human judgment required. Do not click</text>
+  <text x="62" y="337" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E">"Approve All" for NAME001 renames.</text>
+
+  <!-- Arrow step 4 → step 5 -->
+  <line x1="182" y1="342" x2="182" y2="358" stroke="#C8102E" stroke-width="1.5" fill="none" marker-end="url(#arrowRed)"/>
+
+  <!-- Step 5 -->
+  <rect x="32" y="360" width="300" height="52" fill="#F5F5F5" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="48" y="377" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E">5</text>
+  <text x="62" y="377" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E">Click "Apply Approved Changes"</text>
+  <text x="62" y="391" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Confirm the dialog: "This cannot be batch-undone."</text>
+  <text x="62" y="405" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Approved fixes applied to file. Review Phase 3 results.</text>
+
+  <!-- Production path -->
+  <rect x="368" y="44" width="300" height="20" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="518" y="58" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">PRODUCTION DISTRIBUTION</text>
+
+  <rect x="368" y="68" width="300" height="80" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="384" y="86" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000">Publish to organization plugin library</text>
+  <text x="384" y="100" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Figma Admin → Organization →</text>
+  <text x="384" y="114" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Plugins → Publish private plugin</text>
+  <text x="384" y="128" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Team members install from Resources panel.</text>
+  <text x="384" y="142" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Requires Organization or Enterprise plan.</text>
+
+  <!-- Pre-flight callout -->
+  <rect x="368" y="164" width="300" height="96" fill="#FFFFFF" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="518" y="182" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" text-anchor="middle" letter-spacing="0.08em">PRE-FIX CHECKLIST</text>
+  <text x="384" y="198" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">1. Save version history checkpoint in Figma</text>
+  <text x="384" y="212" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">2. Announce fix run in team channel</text>
+  <text x="384" y="226" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">3. Confirm fixture is fresh (re-audit if stale)</text>
+  <text x="384" y="240" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">4. Open audit-report.json for reference</text>
+  <text x="384" y="254" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E">No batch undo after apply. Backup first.</text>
+
+  <!-- Never automate callout -->
+  <rect x="368" y="276" width="300" height="136" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="518" y="294" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">NEVER AUTOMATE</text>
+  <text x="384" y="310" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">NAME001 renames — require design judgment</text>
+  <text x="384" y="324" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">Alias target changes — design decision</text>
+  <text x="384" y="338" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">Value changes — color / spacing / type scale</text>
+  <text x="384" y="352" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">Component restructuring — design + eng alignment</text>
+  <text x="384" y="366" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">Deletions — may have runtime uses API cannot see</text>
+  <rect x="384" y="374" width="268" height="28" fill="#FFFFFF" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="518" y="392" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" text-anchor="middle">AUTO-FIXABLE: TOK002 · COMP001 only</text>
+
+  <!-- Caption -->
+  <text x="32" y="450" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Development: import from manifest. Production: publish to org library. Steps 4 and 5 require</text>
+  <text x="32" y="463" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">human review — the approval gate is not optional. No batch undo exists for plugin operations.</text>
+</svg>

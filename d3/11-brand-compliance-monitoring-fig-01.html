@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CI Gate — Brand Compliance — Figure 11.1</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1E1E1E;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C4723A;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-size: 12px; color: var(--color-ink);
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left',(event.pageX+12)+'px').style('top',(event.pageY-28)+'px')
+        .transition().duration(150).style('opacity',1);
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity',0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const w = document.getElementById('chart').clientWidth || 800;
+      const h = Math.max(520, w * 0.68);
+      const cs = getComputedStyle(document.documentElement);
+      const ink = cs.getPropertyValue('--color-ink').trim();
+      const red = cs.getPropertyValue('--color-red').trim();
+      const fill = cs.getPropertyValue('--color-fill').trim();
+      const border = cs.getPropertyValue('--color-border').trim();
+      const sec = cs.getPropertyValue('--color-secondary').trim();
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width',w).attr('height',h)
+        .attr('role','img').attr('aria-labelledby','chart-title chart-desc');
+      svg.append('title').attr('id','chart-title').text('CI gate — brand compliance check — Figure 11.1');
+      svg.append('desc').attr('id','chart-desc').text('Decision flow showing compliance check exit codes: exit 1 on errors (contrast failures, unapproved fonts), exit 0 with warnings on warnings, diff artifact attached to PR.');
+
+      const defs = svg.append('defs');
+      defs.append('marker').attr('id','arr').attr('markerWidth',8).attr('markerHeight',6)
+        .attr('refX',7).attr('refY',3).attr('orient','auto')
+        .append('polygon').attr('points','0 0, 8 3, 0 6').attr('fill',ink);
+
+      const gChart = svg.append('g').attr('class','g-chart');
+
+      const bw = Math.min(200, w * 0.26);
+      const bh = 52;
+      const cx = w / 2;
+      const rowStep = h / 5.5;
+
+      // Helper: arrow
+      function arrow(x1,y1,x2,y2,dashed,lbl) {
+        gChart.append('line')
+          .attr('x1',x1).attr('y1',y1).attr('x2',x2).attr('y2',y2)
+          .attr('stroke',ink).attr('stroke-width',1.5)
+          .attr('stroke-dasharray',dashed?'4 3':null)
+          .attr('marker-end','url(#arr)')
+          .attr('aria-hidden','true');
+        if (lbl) gChart.append('text')
+          .attr('x',(x1+x2)/2+6).attr('y',(y1+y2)/2-5)
+          .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size',9).attr('fill',sec).text(lbl);
+      }
+
+      function box(x,y,w2,h2,borderCol,lines,accent,dashed,tooltip_text) {
+        const g = gChart.append('g')
+          .attr('tabindex',0)
+          .attr('aria-label', lines.join(' '))
+          .on('mouseover',(event)=>showTooltip(event, tooltip_text || lines.join('<br>')))
+          .on('mouseout',hideTooltip)
+          .on('keydown',function(event){
+            if (event.key==='Enter'||event.key===' ')
+              showTooltip(event, tooltip_text || lines.join('<br>'));
+          });
+        g.append('rect').attr('x',x).attr('y',y).attr('width',w2).attr('height',h2)
+          .attr('fill',fill).attr('stroke',borderCol||border).attr('stroke-width',1)
+          .attr('stroke-dasharray',dashed?'4 3':null);
+        lines.forEach((line,i)=>{
+          g.append('text').attr('x',x+w2/2).attr('y',y+18+i*14)
+            .attr('text-anchor','middle')
+            .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size',10).attr('font-weight',i===0?700:400)
+            .attr('fill',accent&&i===0?accent:ink)
+            .text(line);
+        });
+        return { cx:x+w2/2, bottom:y+h2, top:y, left:x, right:x+w2 };
+      }
+
+      // Row 0: trigger
+      const r0 = box(cx-bw/2, 20, bw, bh, ink,
+        ['Pull Request / Schedule','GitHub Actions trigger'], null, false,
+        'Triggered on PR open/update or weekly Monday morning schedule.');
+
+      // Row 1: compliance check
+      arrow(r0.cx, r0.bottom, r0.cx, rowStep, false, '');
+      const r1 = box(cx-bw/2, rowStep, bw, bh+8, red,
+        ['monitor-brand.mjs','walks node tree · checks all rules','computes diff vs. baseline'], red, false,
+        'Runs against the Figma file, checks every node against approved colors, type scale, spacing grid, and WCAG 2.1 AA thresholds.');
+
+      // Row 2: diamond decision
+      const dY = rowStep * 2;
+      const dSize = 48;
+      arrow(r1.cx, r1.bottom, r1.cx, dY - dSize, false, '');
+      gChart.append('polygon')
+        .attr('points', `${cx},${dY-dSize} ${cx+dSize},${dY} ${cx},${dY+dSize} ${cx-dSize},${dY}`)
+        .attr('fill', fill).attr('stroke', ink).attr('stroke-width', 1)
+        .attr('aria-hidden','true');
+      gChart.append('text').attr('x',cx).attr('y',dY-2)
+        .attr('text-anchor','middle')
+        .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size',10).attr('font-weight',700).attr('fill',ink)
+        .text('errors > 0?');
+      gChart.append('text').attr('x',cx).attr('y',dY+14)
+        .attr('text-anchor','middle')
+        .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size',9).attr('fill',sec).text('severity = error');
+
+      // Exit 1 (right)
+      const exit1X = cx + dSize + 60;
+      arrow(cx+dSize, dY, exit1X, dY, false, 'YES');
+      const e1 = box(exit1X, dY-bh/2, bw, bh+8, red,
+        ['EXIT 1','CI fails · PR blocked','merge gated'], red, false,
+        'Contrast failures and unapproved font families produce errors and fail the build.');
+
+      // Exit 1 annotation
+      const annX = exit1X;
+      const annY = dY + bh/2 + 20;
+      box(annX, annY, bw, 68, border,
+        ['ERRORS → exit 1','contrast failures','unapproved font family','hardcoded unapproved color','configurable by team'], null, true,
+        'These categories produce exit code 1. The severity mapping belongs to the team.');
+
+      // Exit 0 (left)
+      const exit0X = cx - dSize - 60 - bw;
+      arrow(cx-dSize, dY, exit0X+bw, dY, false, 'NO');
+      const e0 = box(exit0X, dY-bh/2, bw, bh+8, border,
+        ['EXIT 0','CI passes · merge allowed','warnings logged'], null, false,
+        'Warnings (hardcoded approved colors, off-scale spacing) let the build pass while informing the designer.');
+
+      // Exit 0 annotation
+      box(exit0X, dY + bh/2 + 20, bw, 68, border,
+        ['WARNS → exit 0','hardcoded approved color','off-scale spacing','small touch target'], null, true,
+        'These categories produce warnings. Build passes; designer is informed.');
+
+      // Artifact arrow (down from diamond)
+      const artY = rowStep * 4;
+      arrow(cx, dY+dSize, cx, artY, true, '');
+      box(cx-bw/2, artY, bw, bh, border,
+        ['compliance-output/ artifact','attached to PR for review'], null, false,
+        'compliance-report.json and compliance-diff.json uploaded as a GitHub Actions artifact for the PR.');
+
+      // Caption
+      svg.append('text').attr('x',32).attr('y',h-10)
+        .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size',10).attr('fill',sec)
+        .text('The severity mapping belongs to the team. The tool provides the detection mechanism.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(()=>draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

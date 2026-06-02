@@ -1,0 +1,104 @@
+<svg viewBox="0 0 700 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig01-title fig01-desc">
+  <title id="fig01-title">Severity matrix — five machine-readiness categories by blocking vs. advisory</title>
+  <desc id="fig01-desc">A grid showing five pipeline readiness categories on the vertical axis against blocking and advisory severity columns, with consequence text in each cell.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas background -->
+  <rect width="700" height="480" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="32" y="52" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="13" font-weight="700" fill="#000000">Severity matrix — machine-readiness categories</text>
+
+  <!-- Plot area background -->
+  <rect x="32" y="68" width="636" height="372" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+
+  <!-- Column header strip -->
+  <rect x="32" y="68" width="636" height="36" fill="#000000"/>
+  <text x="272" y="91" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.08em">BLOCKING</text>
+  <text x="520" y="91" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.08em">ADVISORY</text>
+
+  <!-- Row dividers -->
+  <line x1="32" y1="104" x2="668" y2="104" stroke="#CCCCCC" stroke-width="0.75"/>
+  <line x1="32" y1="178" x2="668" y2="178" stroke="#CCCCCC" stroke-width="0.75"/>
+  <line x1="32" y1="252" x2="668" y2="252" stroke="#CCCCCC" stroke-width="0.75"/>
+  <line x1="32" y1="326" x2="668" y2="326" stroke="#CCCCCC" stroke-width="0.75"/>
+  <line x1="32" y1="400" x2="668" y2="400" stroke="#CCCCCC" stroke-width="0.75"/>
+
+  <!-- Column divider -->
+  <line x1="160" y1="68" x2="160" y2="440" stroke="#CCCCCC" stroke-width="0.75"/>
+  <line x1="400" y1="68" x2="400" y2="440" stroke="#CCCCCC" stroke-width="0.75"/>
+
+  <!-- Category labels (left column) -->
+  <!-- Row 1: Naming -->
+  <rect x="32" y="104" width="128" height="74" fill="#F5F5F5"/>
+  <text x="44" y="127" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" letter-spacing="0.08em">NAMING</text>
+  <text x="44" y="142" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">CONTRACT</text>
+
+  <!-- Row 2: Variable Arch -->
+  <rect x="32" y="178" width="128" height="74" fill="#F5F5F5"/>
+  <text x="44" y="201" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" letter-spacing="0.08em">VARIABLE</text>
+  <text x="44" y="216" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">ARCHITECTURE</text>
+
+  <!-- Row 3: Publication -->
+  <rect x="32" y="252" width="128" height="74" fill="#F5F5F5"/>
+  <text x="44" y="275" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" letter-spacing="0.08em">PUBLICATION</text>
+  <text x="44" y="290" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">STATE</text>
+
+  <!-- Row 4: Component Docs -->
+  <rect x="32" y="326" width="128" height="74" fill="#F5F5F5"/>
+  <text x="44" y="349" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" letter-spacing="0.08em">COMPONENT</text>
+  <text x="44" y="364" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">DOCUMENTATION</text>
+
+  <!-- Row 5: Export Targets -->
+  <rect x="32" y="400" width="128" height="40" fill="#F5F5F5"/>
+  <text x="44" y="423" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" letter-spacing="0.08em">EXPORT TARGETS</text>
+
+  <!-- BLOCKING cells (middle column) -->
+  <!-- R1 Blocking -->
+  <text x="172" y="121" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">Spaces, uppercase, or missing slash</text>
+  <text x="172" y="136" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">hierarchy in variable names.</text>
+  <text x="172" y="154" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Pipeline drops or misclassifies tokens.</text>
+  <!-- R2 Blocking -->
+  <text x="172" y="195" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">Broken alias — referenced variable</text>
+  <text x="172" y="210" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">deleted or renamed out of scope.</text>
+  <text x="172" y="228" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">CSS writes unresolved var() reference.</text>
+  <!-- R3 Blocking -->
+  <text x="172" y="269" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">Components consumed by downstream</text>
+  <text x="172" y="284" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">pipelines are unpublished.</text>
+  <text x="172" y="302" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Generators receive incomplete data silently.</text>
+  <!-- R4 Blocking -->
+  <text x="172" y="343" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">Empty descriptions when pipeline is a</text>
+  <text x="172" y="358" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">documentation generator or MCP provider.</text>
+  <text x="172" y="376" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">AI agent receives names only; context is lost.</text>
+  <!-- R5 Blocking -->
+  <text x="172" y="417" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">Missing export settings on intended targets.</text>
+  <text x="172" y="432" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Asset pipeline sees nothing to export.</text>
+
+  <!-- ADVISORY cells (right column) -->
+  <!-- R1 Advisory -->
+  <text x="412" y="121" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">Violations on non-exported, non-variable</text>
+  <text x="412" y="136" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">nodes the pipeline does not touch.</text>
+  <text x="412" y="154" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Log and schedule remediation.</text>
+  <!-- R2 Advisory -->
+  <text x="412" y="195" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">Duplicate values — same color at two</text>
+  <text x="412" y="210" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">names with no semantic distinction.</text>
+  <text x="412" y="228" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Signals architectural confusion; log it.</text>
+  <!-- R3 Advisory -->
+  <text x="412" y="269" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">Library not re-published in more</text>
+  <text x="412" y="284" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">than fourteen days.</text>
+  <text x="412" y="302" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Warn; consumers may lag behind design intent.</text>
+  <!-- R4 Advisory -->
+  <text x="412" y="343" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">Empty descriptions on published</text>
+  <text x="412" y="358" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">components (default, non-doc pipelines).</text>
+  <text x="412" y="376" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Log; descriptions improve handoff quality.</text>
+  <!-- R5 Advisory -->
+  <text x="412" y="417" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">Missing export settings for non-pipeline assets.</text>
+  <text x="412" y="432" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Monitor; no immediate pipeline impact.</text>
+
+  <!-- Caption -->
+  <text x="32" y="462" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Not every violation stops the pipeline, but every violation degrades the output. Blocking violations make the degradation immediate and detectable.</text>
+</svg>

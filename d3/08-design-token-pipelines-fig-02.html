@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 8.2 — End-to-End Trigger Sequence</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1C1C1C;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #B8622D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink); max-width: 280px; line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const sequence = [
+      { id: 'publish',   label: 'Library publish',       sub: 'Designer in Figma',       detail: 'Designer publishes library update. Figma sends LIBRARY_PUBLISH webhook event to the configured endpoint.',          style: 'normal' },
+      { id: 'webhook',   label: 'Webhook fires',          sub: 'LIBRARY_PUBLISH',         detail: 'Figma POST to the registered webhook URL. Payload includes file key and event type.',                                  style: 'normal' },
+      { id: 'dispatch',  label: 'repository_dispatch',   sub: 'GitHub Actions trigger',  detail: 'Webhook receiver forwards event as a repository_dispatch to GitHub. Actions workflow starts.',                         style: 'normal' },
+      { id: 'preflight', label: 'Preflight check',        sub: 'figma-preflight.mjs',     detail: 'Runs the five-category contract check. If any blocking finding is found, exits non-zero and all subsequent steps halt.', style: 'red' },
+      { id: 'extract',   label: 'Extract tokens',         sub: 'extract-tokens.mjs',      detail: 'Reads variables from Figma Variables API (Enterprise) or Tokens Studio export. Writes DTCG-compatible JSON to tokens/.',  style: 'normal' },
+      { id: 'validate',  label: 'Validate tokens',        sub: 'validate-tokens.mjs',     detail: 'Checks for unresolved aliases, malformed colors, non-slug paths. Exits non-zero on any error.',                        style: 'normal' },
+      { id: 'transform', label: 'Transform',              sub: 'style-dictionary build',  detail: 'Style Dictionary reads tokens/ and emits CSS custom properties, JS module, Swift, Android XML.',                       style: 'normal' },
+      { id: 'pr',        label: 'PR opened',              sub: 'human review required',   detail: 'create-pull-request action opens a PR with the generated diff. Human must review before merge. This is the only human checkpoint.', style: 'human' }
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 14) + 'px').style('top', (event.pageY - 32) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 14) + 'px').style('top', (event.pageY - 32) + 'px');
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const w = document.getElementById('chart').clientWidth || 800;
+      const margin = { top: 72, right: 32, bottom: 56, left: 32 };
+      const chartW = w - margin.left - margin.right;
+      const rowH = 64;
+      const colsPerRow = Math.min(4, Math.floor(chartW / 140));
+      const rows = Math.ceil(sequence.length / colsPerRow);
+      const totalHeight = margin.top + rows * rowH + (rows - 1) * 32 + margin.bottom + 24;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', w).attr('height', totalHeight)
+        .attr('role', 'img').attr('aria-labelledby', 'ch08-fig02-title ch08-fig02-desc');
+
+      svg.append('title').attr('id', 'ch08-fig02-title').text('End-to-end trigger sequence: library publish → webhook → GitHub Actions → extract → validate → transform → PR');
+      svg.append('desc').attr('id', 'ch08-fig02-desc').text('Sequence of eight steps from Figma library publish to pull request creation. Preflight is highlighted in red as the step that halts the pipeline on blocking findings. PR is highlighted as the only human checkpoint.');
+
+      svg.append('text').attr('x', margin.left).attr('y', 32)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('End-to-end trigger sequence — library publish to PR');
+
+      svg.append('text').attr('x', margin.left).attr('y', 50)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 11).attr('fill', 'var(--color-secondary)')
+        .text('Hover each step for detail. Red = gate step. Black filled = human review entry point.');
+
+      svg.append('defs').append('marker').attr('id', 'arrow2')
+        .attr('markerWidth', 8).attr('markerHeight', 6).attr('refX', 7).attr('refY', 3)
+        .attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+
+      const gChart = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      const colW = chartW / colsPerRow;
+      const boxW = colW - 16;
+      const boxH = 56;
+
+      sequence.forEach((step, i) => {
+        const col = i % colsPerRow;
+        const row = Math.floor(i / colsPerRow);
+        const x = col * colW + 8;
+        const y = row * (boxH + 32) + 4;
+        const cx = x + boxW / 2;
+        const cy = y + boxH / 2;
+
+        // Arrow to next step
+        if (i < sequence.length - 1) {
+          const nextCol = (i + 1) % colsPerRow;
+          const nextRow = Math.floor((i + 1) / colsPerRow);
+          const nx = nextCol * colW + 8;
+          const ny = nextRow * (boxH + 32) + 4;
+
+          if (nextRow === row) {
+            // Horizontal arrow
+            gChart.append('line')
+              .attr('x1', x + boxW + 4).attr('y1', cy)
+              .attr('x2', nx - 4).attr('y2', cy)
+              .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+              .attr('marker-end', 'url(#arrow2)').attr('aria-hidden', 'true');
+          } else {
+            // Wrap: down then across
+            const midY = y + boxH + 16;
+            gChart.append('polyline')
+              .attr('points', `${x + boxW / 2},${y + boxH} ${x + boxW / 2},${midY} ${nx + boxW / 2},${midY} ${nx + boxW / 2},${ny}`)
+              .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+              .attr('fill', 'none').attr('marker-end', 'url(#arrow2)').attr('aria-hidden', 'true');
+          }
+        }
+
+        const isRed    = step.style === 'red';
+        const isHuman  = step.style === 'human';
+
+        const gBox = gChart.append('g').attr('transform', `translate(${x},${y})`)
+          .attr('tabindex', 0)
+          .attr('aria-label', `${step.label}: ${step.detail}`)
+          .style('cursor', 'pointer');
+
+        gBox.append('rect').attr('width', boxW).attr('height', boxH)
+          .attr('fill', isHuman ? 'var(--color-ink)' : 'var(--color-white)')
+          .attr('stroke', isRed ? 'var(--color-red)' : isHuman ? 'none' : 'var(--color-border)')
+          .attr('stroke-width', isRed ? 1.5 : 1);
+
+        gBox.append('text').attr('x', boxW / 2).attr('y', 20)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 11).attr('font-weight', 700)
+          .attr('fill', isHuman ? 'var(--color-white)' : isRed ? 'var(--color-red)' : 'var(--color-ink)')
+          .text(step.label);
+
+        gBox.append('text').attr('x', boxW / 2).attr('y', 36)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10)
+          .attr('fill', isHuman ? 'var(--color-border)' : 'var(--color-secondary)')
+          .text(step.sub);
+
+        gBox.on('mouseover', function(event) {
+          d3.select(this).select('rect').transition().duration(120).attr('opacity', 0.85);
+          showTooltip(event, `<strong>${step.label}</strong><br>${step.detail}`);
+        }).on('mousemove', moveTooltip)
+          .on('mouseout', function() {
+            d3.select(this).select('rect').transition().duration(120).attr('opacity', 1);
+            hideTooltip();
+          })
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+              showTooltip(event, `<strong>${step.label}</strong><br>${step.detail}`);
+            }
+          });
+      });
+
+      svg.append('text').attr('x', margin.left).attr('y', totalHeight - 14)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Every gate is enforced by exit codes — not convention. The PR is the only point where a human confirms the values match design intent.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

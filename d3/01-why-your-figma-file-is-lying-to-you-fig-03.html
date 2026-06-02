@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 1.3 — Automated Pipeline Architecture</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1A1A1A;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C0724D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; min-height: 460px; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink); max-width: 260px; line-height: 1.5;
+    }
+    .stage-rect { cursor: pointer; }
+    .stage-rect:focus { outline: 2px solid var(--color-red); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const pipelineStages = [
+      { id: 'trigger',   label: 'Trigger',    sub: 'LIBRARY_PUBLISH',         highlight: false, info: 'A Figma library publish event fires a webhook. The CI system receives it and enqueues a pipeline run. No human initiates this.' },
+      { id: 'read',      label: 'API Read',   sub: 'GET /v1/files/:key',       highlight: true,  info: 'The pipeline calls the Figma REST API with FIGMA_TOKEN and FIGMA_FILE_KEY. It reads the current graph state — not a snapshot, the live source.' },
+      { id: 'transform', label: 'Transform',  sub: 'DTCG JSON',                highlight: false, info: 'Raw Figma variable data is transformed into DTCG-compatible design token JSON. Alias chains are resolved; mode values are mapped.' },
+      { id: 'validate',  label: 'Validate',   sub: 'aliases · values · names', highlight: false, info: 'The transformed tokens are validated: broken aliases caught, malformed values flagged, naming convention checked. Validation failure stops the pipeline — no PR is opened.' },
+      { id: 'deploy',    label: 'PR / Deploy',sub: 'tokens/tokens.json',       highlight: false, info: 'On passing validation, a pull request is opened with the exact diff: which token values changed, which modes, which collections. Engineers review. The filename is always tokens/tokens.json — deterministic, not a function of whoever ran the export.' },
+    ];
+
+    const manualStages = [
+      { id: 'm-update',  label: 'Designer updates', sub: 'variable in Figma' },
+      { id: 'm-export',  label: 'Manual export',    sub: 'tokens_final_v3.json' },
+      { id: 'm-share',   label: 'Slack / commit',   sub: 'if they remember' },
+      { id: 'm-result',  label: '3 platforms, 3 states', sub: 'silent drift', bad: true },
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px');
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const W = document.getElementById('chart').clientWidth || 800;
+      const H = Math.max(460, W * 0.58);
+      const margin = { top: 40, right: 32, bottom: 40, left: 32 };
+      const innerW = W - margin.left - margin.right;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', W).attr('height', H)
+        .attr('role', 'img')
+        .attr('aria-labelledby', 'ch1-fig3-title ch1-fig3-desc');
+      svg.append('title').attr('id', 'ch1-fig3-title').text('Automated Pipeline Architecture');
+      svg.append('desc').attr('id', 'ch1-fig3-desc').text('Flow diagram showing five pipeline stages: Trigger → API Read → Transform → Validate → PR/Deploy. Below, the manual workflow contrast: designer update → manual export → Slack share → three platforms in three states (drift). Hover stages for details.');
+
+      svg.append('rect').attr('width', W).attr('height', H).attr('fill', 'var(--color-white)');
+
+      const defs = svg.append('defs');
+      defs.append('marker').attr('id', 'arr-main')
+        .attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+      defs.append('marker').attr('id', 'arr-red')
+        .attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-red)');
+
+      // SECTION: Automated pipeline
+      const pLabel = svg.append('text')
+        .attr('x', margin.left).attr('y', margin.top - 8)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .attr('letter-spacing', '0.08em')
+        .text('AUTOMATED PIPELINE');
+
+      const stageCount = pipelineStages.length;
+      const stageH = Math.min(64, H * 0.13);
+      const stageY = margin.top + 8;
+      const gap = 16;
+      const stageW = (innerW - gap * (stageCount - 1)) / stageCount;
+
+      pipelineStages.forEach((stage, i) => {
+        const x = margin.left + i * (stageW + gap);
+        const y = stageY;
+        const borderColor = stage.highlight ? 'var(--color-red)' : 'var(--color-border)';
+        const borderW = stage.highlight ? 1.5 : 0.75;
+
+        const g = svg.append('g');
+        g.append('rect')
+          .attr('class', 'stage-rect')
+          .attr('x', x).attr('y', y)
+          .attr('width', stageW).attr('height', stageH)
+          .attr('fill', 'var(--color-fill)')
+          .attr('stroke', borderColor).attr('stroke-width', borderW)
+          .attr('tabindex', 0)
+          .attr('aria-label', `${stage.label}: ${stage.info}`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>${stage.label}</strong><br>${stage.info}`))
+          .on('mousemove', moveTooltip)
+          .on('mouseout', hideTooltip)
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>${stage.label}</strong><br>${stage.info}`);
+          })
+          .on('focus', (ev) => d3.select(ev.target).attr('fill', 'var(--color-white)'))
+          .on('blur', (ev) => d3.select(ev.target).attr('fill', 'var(--color-fill)'));
+
+        g.append('text')
+          .attr('x', x + stageW / 2).attr('y', y + stageH * 0.38)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(12, stageW * 0.1))
+          .attr('font-weight', '700')
+          .attr('fill', stage.highlight ? 'var(--color-red)' : 'var(--color-ink)')
+          .style('pointer-events', 'none')
+          .text(stage.label);
+
+        g.append('text')
+          .attr('x', x + stageW / 2).attr('y', y + stageH * 0.70)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(9, stageW * 0.075))
+          .attr('fill', 'var(--color-secondary)')
+          .style('pointer-events', 'none')
+          .text(stage.sub);
+
+        // Arrow to next
+        if (i < stageCount - 1) {
+          const ax1 = x + stageW;
+          const ax2 = x + stageW + gap;
+          const ay = y + stageH / 2;
+          svg.append('line')
+            .attr('x1', ax1).attr('y1', ay).attr('x2', ax2 - 2).attr('y2', ay)
+            .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+            .attr('marker-end', 'url(#arr-main)');
+        }
+      });
+
+      // Validate → fail branch
+      const vIdx = 3; // validate
+      const vX = margin.left + vIdx * (stageW + gap);
+      const vMidX = vX + stageW / 2;
+      const vBottom = stageY + stageH;
+      const failY = stageY + stageH + 32;
+      const failH = 36;
+      const failW = Math.min(180, stageW * 1.4);
+      const failX = vMidX - failW / 2;
+
+      svg.append('line')
+        .attr('x1', vMidX).attr('y1', vBottom)
+        .attr('x2', vMidX).attr('y2', failY - 2)
+        .attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5)
+        .attr('marker-end', 'url(#arr-red)');
+      svg.append('rect')
+        .attr('x', failX).attr('y', failY)
+        .attr('width', failW).attr('height', failH)
+        .attr('fill', 'var(--color-white)').attr('stroke', 'var(--color-red)').attr('stroke-width', 1);
+      svg.append('text')
+        .attr('x', vMidX).attr('y', failY + 14)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-red)')
+        .text('Validation fails →');
+      svg.append('text')
+        .attr('x', vMidX).attr('y', failY + 28)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-red)')
+        .text('job fails, no PR opened');
+
+      // Divider between sections
+      const divY = Math.max(stageY + stageH + failH + 64, H * 0.42);
+      svg.append('line')
+        .attr('x1', margin.left).attr('y1', divY)
+        .attr('x2', W - margin.right).attr('y2', divY)
+        .attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75)
+        .attr('stroke-dasharray', '4 3');
+      svg.append('text')
+        .attr('x', W / 2).attr('y', divY - 6)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-secondary)')
+        .text('vs. manual export');
+
+      // SECTION: Manual workflow
+      const mStageCount = manualStages.length;
+      const mStageH = Math.min(56, H * 0.12);
+      const mStageY = divY + 16;
+      const mStageW = (innerW - gap * (mStageCount - 1)) / mStageCount;
+
+      manualStages.forEach((stage, i) => {
+        const x = margin.left + i * (mStageW + gap);
+        const y = mStageY;
+        const isBad = stage.bad;
+        svg.append('rect')
+          .attr('x', x).attr('y', y)
+          .attr('width', mStageW).attr('height', mStageH)
+          .attr('fill', isBad ? 'var(--color-white)' : 'var(--color-fill)')
+          .attr('stroke', isBad ? 'var(--color-red)' : 'var(--color-border)')
+          .attr('stroke-width', isBad ? 1.5 : 0.75);
+        svg.append('text')
+          .attr('x', x + mStageW / 2).attr('y', y + mStageH * 0.38)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(11, mStageW * 0.09))
+          .attr('font-weight', '700')
+          .attr('fill', isBad ? 'var(--color-red)' : 'var(--color-ink)')
+          .text(stage.label);
+        svg.append('text')
+          .attr('x', x + mStageW / 2).attr('y', y + mStageH * 0.72)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(9, mStageW * 0.075))
+          .attr('fill', isBad ? 'var(--color-red)' : 'var(--color-secondary)')
+          .text(stage.sub);
+
+        if (i < mStageCount - 1) {
+          const ax1 = x + mStageW;
+          const ax2 = x + mStageW + gap;
+          const ay = y + mStageH / 2;
+          const isLastArrow = i === mStageCount - 2;
+          svg.append('line')
+            .attr('x1', ax1).attr('y1', ay).attr('x2', ax2 - 2).attr('y2', ay)
+            .attr('stroke', isLastArrow ? 'var(--color-red)' : 'var(--color-ink)')
+            .attr('stroke-width', 1.5)
+            .attr('marker-end', isLastArrow ? 'url(#arr-red)' : 'url(#arr-main)');
+        }
+      });
+
+      // Properties bar
+      const propY = H - 44;
+      svg.append('rect')
+        .attr('x', margin.left).attr('y', propY - 4)
+        .attr('width', innerW).attr('height', 36)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+      svg.append('text')
+        .attr('x', margin.left + 8).attr('y', propY + 10)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('font-weight', '700').attr('fill', 'var(--color-ink)')
+        .text('Pipeline properties:');
+      svg.append('text')
+        .attr('x', margin.left + 8).attr('y', propY + 24)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('One source of truth  ·  Deterministic path  ·  Diff in PR  ·  History in Git  ·  Validation enforced');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

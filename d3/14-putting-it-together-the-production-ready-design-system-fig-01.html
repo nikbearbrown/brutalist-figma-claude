@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 14.1 — Full Extraction Stack</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1E1E1E;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink);
+    }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const LAYERS = [
+      {
+        id: 'source',
+        label: 'Figma File',
+        sub: 'source of truth — variables, components, styles',
+        type: 'neutral',
+        chapter: null,
+      },
+      {
+        id: 'audit',
+        label: 'Audit Gate',
+        sub: 'figma-audit.js  ·  Ch 5  ·  blocking errors stop flow',
+        type: 'neutral',
+        chapter: 'Ch 5',
+      },
+      {
+        id: 'extract',
+        label: 'PARALLEL EXTRACTION',
+        type: 'section',
+        items: [
+          { label: 'Tokens', sub: 'Ch 8', script: 'extract-tokens.mjs\nvalidate-tokens.mjs' },
+          { label: 'Assets', sub: 'Ch 9', script: 'export-assets.mjs' },
+          { label: 'Docs',   sub: 'Ch 10', script: 'sync-docs.mjs' },
+          { label: 'Brand',  sub: 'Ch 11', script: 'monitor-brand.mjs' },
+          { label: 'Spec',   sub: 'Ch 12', script: 'build-spec.mjs' },
+        ],
+      },
+      {
+        id: 'ci',
+        label: 'CI Layer — GitHub Actions',
+        sub: 'PR-triggered · push to main · weekly schedule',
+        type: 'neutral',
+        chapter: 'Ch 14',
+      },
+      {
+        id: 'pr',
+        label: 'Pull Request opened',
+        sub: 'create-pull-request@v6',
+        type: 'neutral',
+      },
+      {
+        id: 'gate',
+        label: 'HUMAN APPROVAL GATE',
+        sub: 'Engineer reviews diff · decides · merges · is accountable',
+        type: 'red',
+      },
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip')
+      .style('position', 'absolute').style('pointer-events', 'none').style('opacity', 0);
+
+    function showTip(event, text) {
+      tooltip.html(text)
+        .style('left', (event.pageX + 12) + 'px')
+        .style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTip(event) {
+      tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px');
+    }
+    function hideTip() {
+      tooltip.transition().duration(100).style('opacity', 0);
+    }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+
+      const container = document.getElementById('chart');
+      const totalWidth = container.clientWidth || 700;
+      const totalHeight = Math.max(560, totalWidth * 0.85);
+      const margin = { top: 52, right: 32, bottom: 40, left: 32 };
+      const W = totalWidth - margin.left - margin.right;
+      const H = totalHeight - margin.top - margin.bottom;
+
+      const svg = d3.select('#chart')
+        .append('svg')
+          .attr('width', totalWidth)
+          .attr('height', totalHeight)
+          .attr('role', 'img')
+          .attr('aria-labelledby', 'fig14-1-title fig14-1-desc');
+
+      svg.append('title').attr('id', 'fig14-1-title')
+        .text('Figure 14.1 — Full extraction stack');
+      svg.append('desc').attr('id', 'fig14-1-desc')
+        .text('Complete pipeline from Figma file through blocking audit gate, parallel extraction (tokens, assets, docs, brand, spec), CI layer, pull request, and the mandatory human approval gate shown in red.');
+
+      svg.append('text').attr('x', margin.left).attr('y', 26)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('Figure 14.1 — Full extraction stack');
+      svg.append('text').attr('x', margin.left).attr('y', 42)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 11).attr('fill', 'var(--color-secondary)')
+        .text('Figma file → audit gate → parallel extraction → CI → human approval');
+
+      const defs = svg.append('defs');
+      defs.append('marker').attr('id', 'arrow').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+      defs.append('marker').attr('id', 'arrow-red').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-red)');
+
+      const gChart = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      const cx = W / 2;
+      const mainNodeW = Math.min(W * 0.60, 360);
+      const nodeH = 48;
+      const rowGap = H / 7;
+
+      function box(g, x, y, w, h, title, sub, type, interactive) {
+        const fill = type === 'red' ? 'var(--color-red)' : 'var(--color-fill)';
+        const stroke = type === 'red' ? 'var(--color-red)' : 'var(--color-border)';
+        const tf = type === 'red' ? 'var(--color-white)' : 'var(--color-ink)';
+        const sf = type === 'red' ? 'rgba(255,255,255,0.82)' : 'var(--color-secondary)';
+        const el = g.append('g')
+          .attr('class', 'node')
+          .attr('tabindex', interactive ? 0 : null)
+          .attr('aria-label', interactive ? `${title}: ${sub}` : null);
+        el.append('rect').attr('x', x - w/2).attr('y', y - h/2).attr('width', w).attr('height', h)
+          .attr('fill', fill).attr('stroke', stroke).attr('stroke-width', 1);
+        el.append('text').attr('x', x).attr('y', y - 6)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', type === 'red' ? 13 : 11)
+          .attr('font-weight', type === 'red' ? 700 : 400)
+          .attr('fill', tf).text(title);
+        if (sub) {
+          el.append('text').attr('x', x).attr('y', y + 10)
+            .attr('text-anchor', 'middle')
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 9).attr('fill', sf).text(sub);
+        }
+        return el;
+      }
+
+      function arrow(g, x1, y1, x2, y2, red) {
+        g.append('line').attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)
+          .attr('stroke', red ? 'var(--color-red)' : 'var(--color-ink)')
+          .attr('stroke-width', red ? 2 : 1.5)
+          .attr('marker-end', red ? 'url(#arrow-red)' : 'url(#arrow)');
+      }
+
+      function sectionLabel(g, x, y, text) {
+        g.append('text').attr('x', x).attr('y', y)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+          .attr('letter-spacing', '.08em').text(text);
+      }
+
+      // ── Row 0: Figma File ──
+      const y0 = rowGap * 0.5;
+      box(gChart, cx, y0, mainNodeW, nodeH, 'Figma File', 'source of truth — variables, components, styles', 'neutral', false);
+
+      // Arrow → audit
+      const y1 = rowGap * 1.5;
+      arrow(gChart, cx, y0 + nodeH/2, cx, y1 - nodeH/2);
+
+      // ── Row 1: Audit Gate ──
+      box(gChart, cx, y1, mainNodeW, nodeH, 'Audit Gate', 'figma-audit.js  ·  Ch 5  ·  blocking errors stop flow', 'neutral', false);
+
+      // Blocking error branch
+      const errX = W * 0.04;
+      gChart.append('line')
+        .attr('x1', cx - mainNodeW/2).attr('y1', y1)
+        .attr('x2', errX + 100).attr('y2', y1)
+        .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1).attr('stroke-dasharray', '4 3')
+        .attr('marker-end', 'url(#arrow)');
+      gChart.append('text').attr('x', errX + 50).attr('y', y1 - 12)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text('BLOCKING ERROR');
+      gChart.append('rect').attr('x', errX).attr('y', y1 + 8).attr('width', 100).attr('height', 32)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', .75);
+      gChart.append('text').attr('x', errX + 50).attr('y', y1 + 22)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-ink)').text('Stops here.');
+      gChart.append('text').attr('x', errX + 50).attr('y', y1 + 34)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text('Fix file first.');
+
+      // ── Row 2: Parallel extraction ──
+      const y2 = rowGap * 2.6;
+      sectionLabel(gChart, 0, y2 - nodeH/2 - 10, 'PARALLEL EXTRACTION');
+      arrow(gChart, cx, y1 + nodeH/2, cx, y2 - nodeH/2 - 2);
+      gChart.append('text').attr('x', cx + 8).attr('y', y1 + nodeH/2 + (y2 - nodeH/2 - y1 - nodeH/2)/2)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)').text('PASS');
+
+      const items = [
+        { label: 'Tokens',  ch: 'Ch 8',  script: 'extract-tokens.mjs\nvalidate-tokens.mjs' },
+        { label: 'Assets',  ch: 'Ch 9',  script: 'export-assets.mjs' },
+        { label: 'Docs',    ch: 'Ch 10', script: 'sync-docs.mjs' },
+        { label: 'Brand',   ch: 'Ch 11', script: 'monitor-brand.mjs' },
+        { label: 'Spec',    ch: 'Ch 12', script: 'build-spec.mjs' },
+      ];
+      const itemW = Math.min(W / items.length - 8, 120);
+      const totalExW = items.length * (itemW + 8) - 8;
+      const startX = (W - totalExW) / 2;
+
+      // Horizontal spreader from audit → extraction boxes
+      const spreadY = y2 - nodeH / 2 - 2;
+      gChart.append('line')
+        .attr('x1', startX + itemW/2).attr('y1', spreadY)
+        .attr('x2', startX + totalExW - itemW/2).attr('y2', spreadY)
+        .attr('stroke', 'var(--color-border)').attr('stroke-width', .75);
+
+      items.forEach((item, i) => {
+        const ix = startX + i * (itemW + 8) + itemW / 2;
+        // tick down
+        gChart.append('line').attr('x1', ix).attr('y1', spreadY).attr('x2', ix).attr('y2', y2 - nodeH/2)
+          .attr('stroke', 'var(--color-border)').attr('stroke-width', .75)
+          .attr('marker-end', 'url(#arrow)');
+        // box
+        const el = gChart.append('g')
+          .attr('tabindex', 0)
+          .attr('aria-label', `${item.label} extraction: ${item.ch}`);
+        el.append('rect')
+          .attr('x', ix - itemW/2).attr('y', y2 - nodeH/2).attr('width', itemW).attr('height', nodeH + 8)
+          .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', .75);
+        el.append('text').attr('x', ix).attr('y', y2 - 4)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 11).attr('font-weight', 700).attr('fill', 'var(--color-ink)').text(item.label);
+        el.append('text').attr('x', ix).attr('y', y2 + 12)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text(item.ch);
+        el.on('mouseover', (event) => showTip(event, `<strong>${item.label}</strong><br>${item.script}`))
+          .on('mousemove', moveTip).on('mouseout', hideTip);
+      });
+
+      // Converge lines from extraction → CI
+      const y3 = rowGap * 4.1;
+      sectionLabel(gChart, 0, y3 - nodeH/2 - 10, 'CI LAYER');
+      const convY = y2 + nodeH/2 + 8;
+      gChart.append('line')
+        .attr('x1', startX + itemW/2).attr('y1', convY)
+        .attr('x2', startX + totalExW - itemW/2).attr('y2', convY)
+        .attr('stroke', 'var(--color-border)').attr('stroke-width', .75);
+      items.forEach((item, i) => {
+        const ix = startX + i * (itemW + 8) + itemW / 2;
+        gChart.append('line').attr('x1', ix).attr('y1', y2 + nodeH/2 + 8 - 2).attr('x2', ix).attr('y2', convY)
+          .attr('stroke', 'var(--color-border)').attr('stroke-width', .75);
+      });
+      gChart.append('line').attr('x1', cx).attr('y1', convY).attr('x2', cx).attr('y2', y3 - nodeH/2)
+        .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+        .attr('marker-end', 'url(#arrow)');
+
+      // ── Row 3: CI Layer ──
+      box(gChart, cx, y3, mainNodeW, nodeH + 8, 'GitHub Actions — figma-audit.yml',
+        'PR-triggered · push to main · weekly schedule · preflight → token → asset → spec', 'neutral', false);
+
+      // ── Arrow CI → PR ──
+      const y4 = rowGap * 5.2;
+      arrow(gChart, cx, y3 + (nodeH+8)/2, cx, y4 - nodeH/2);
+
+      // ── Row 4: PR ──
+      box(gChart, cx, y4, mainNodeW, nodeH, 'Pull Request opened',
+        'create-pull-request@v6 — diff is the design-development conversation', 'neutral', false);
+
+      // ── Arrow PR → Human Gate (red) ──
+      const y5 = rowGap * 6.3;
+      gChart.append('line').attr('x1', cx).attr('y1', y4 + nodeH/2).attr('x2', cx).attr('y2', y5 - nodeH/2)
+        .attr('stroke', 'var(--color-red)').attr('stroke-width', 2).attr('marker-end', 'url(#arrow-red)');
+
+      // ── Row 5: Human Gate (RED) ──
+      box(gChart, cx, y5, mainNodeW * 1.05, nodeH + 4,
+        'HUMAN APPROVAL GATE',
+        'Engineer reviews diff · decides · merges · is accountable for what ships', 'red', true);
+
+      // Caption
+      svg.append('text').attr('x', margin.left).attr('y', totalHeight - 10)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('The audit gate is blocking. The human gate is mandatory — pipelines open PRs; engineers merge them.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

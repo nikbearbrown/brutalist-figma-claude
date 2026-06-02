@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Two-process plugin architecture</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1E1E1E;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C07840;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-size: 12px; color: var(--color-ink);
+      font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const sandboxOps = [
+      'figma.variables.getLocalVariableCollectionsAsync()',
+      'figma.variables.getVariableByIdAsync(id)',
+      'variable.name = newValue',
+      'variable.description = text',
+      'figma.getNodeByIdAsync(id)',
+      'component.description = text',
+    ];
+    const uiOps = [
+      'Load + parse audit-report.json',
+      'Generate fix proposals from findings',
+      'Render approve / reject per fix',
+      'Manage approval state',
+      'confirm() dialog before apply',
+      'Display Phase 3 results',
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) { tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px'); }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const container = document.getElementById('chart');
+      const totalWidth  = container.clientWidth || 800;
+      const totalHeight = Math.max(500, totalWidth * 0.65);
+      const margin = { top: 48, right: 40, bottom: 64, left: 40 };
+      const W = totalWidth - margin.left - margin.right;
+      const H = totalHeight - margin.top  - margin.bottom;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', totalWidth).attr('height', totalHeight)
+        .attr('role', 'img').attr('aria-labelledby', 'tw01-title tw01-desc');
+      svg.append('title').attr('id', 'tw01-title').text('Two-process plugin architecture');
+      svg.append('desc').attr('id', 'tw01-desc').text('Plugin sandbox has figma.* access, UI iframe has browser APIs, they communicate via postMessage. Human approval gate in the UI controls what the sandbox writes.');
+
+      svg.append('defs').append('marker')
+        .attr('id', 'arrowTW').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+
+      svg.append('defs').append('marker')
+        .attr('id', 'arrowTWRed').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-red)');
+
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      g.append('text').attr('x', 0).attr('y', -20)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('Two-process plugin architecture: sandbox ↔ UI iframe');
+
+      const colW = (W - 100) / 2;
+      const colH = H * 0.6;
+
+      // Sandbox panel
+      const sbG = g.append('g').attr('tabindex', 0).attr('aria-label', 'Plugin sandbox: QuickJS runtime with figma.* access');
+      sbG.append('rect').attr('x', 0).attr('y', 0).attr('width', colW).attr('height', colH)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+      sbG.append('text').attr('x', colW / 2).attr('y', 18)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-secondary)').attr('letter-spacing', '0.08em')
+        .text('PLUGIN SANDBOX (code.js)');
+      sbG.append('text').attr('x', colW / 2).attr('y', 32)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text('QuickJS WebAssembly · Figma Desktop');
+
+      sandboxOps.forEach((op, i) => {
+        const oy = 46 + i * 28;
+        sbG.append('text').attr('x', 10).attr('y', oy)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', 'var(--color-red)').text('↳ ' + op);
+      });
+
+      sbG.append('text').attr('x', 10).attr('y', colH - 30)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('font-weight', 700).attr('fill', 'var(--color-secondary)').text('Cannot access:');
+      sbG.append('text').attr('x', 10).attr('y', colH - 16)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text('fetch · localStorage · DOM · browser APIs');
+
+      // postMessage channel
+      const chanX = colW + 10, chanW = 80, chanH = 80;
+      const chanY = (colH - chanH) / 2;
+
+      g.append('rect').attr('x', chanX).attr('y', chanY).attr('width', chanW).attr('height', chanH)
+        .attr('fill', 'var(--color-white)').attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5);
+      g.append('text').attr('x', chanX + chanW / 2).attr('y', chanY + 22)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('font-weight', 700).attr('fill', 'var(--color-red)').attr('letter-spacing', '0.08em')
+        .text('post');
+      g.append('text').attr('x', chanX + chanW / 2).attr('y', chanY + 36)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('font-weight', 700).attr('fill', 'var(--color-red)').attr('letter-spacing', '0.08em')
+        .text('Message');
+      g.append('text').attr('x', chanX + chanW / 2).attr('y', chanY + 50)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text('channel');
+
+      // Arrows sandbox ↔ channel
+      const midChanY = chanY + chanH / 2;
+      // Sandbox → channel (APPLY_RESULTS)
+      g.append('line').attr('x1', colW + 2).attr('y1', midChanY - 8).attr('x2', chanX - 2).attr('y2', midChanY - 8)
+        .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5).attr('marker-end', 'url(#arrowTW)');
+      g.append('text').attr('x', colW - 80).attr('y', midChanY - 12)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 8).attr('fill', 'var(--color-secondary)').text('APPLY_RESULTS');
+
+      // Channel → sandbox (APPLY_FIXES)
+      g.append('line').attr('x1', chanX - 2).attr('y1', midChanY + 8).attr('x2', colW + 2).attr('y2', midChanY + 8)
+        .attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5).attr('marker-end', 'url(#arrowTWRed)');
+      g.append('text').attr('x', colW - 80).attr('y', midChanY + 22)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 8).attr('fill', 'var(--color-red)').text('APPLY_FIXES (approved)');
+
+      // UI iframe panel
+      const uiX = colW + 100;
+      const uiG = g.append('g').attr('tabindex', 0).attr('aria-label', 'Plugin UI iframe: browser APIs, approval gate');
+      uiG.append('rect').attr('x', uiX).attr('y', 0).attr('width', colW).attr('height', colH)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+      uiG.append('text').attr('x', uiX + colW / 2).attr('y', 18)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-secondary)').attr('letter-spacing', '0.08em')
+        .text('PLUGIN UI (ui.html — iframe)');
+      uiG.append('text').attr('x', uiX + colW / 2).attr('y', 32)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text('Browser APIs available here');
+
+      uiOps.forEach((op, i) => {
+        const oy = 46 + i * 28;
+        uiG.append('text').attr('x', uiX + 10).attr('y', oy)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', 'var(--color-ink)').text('↳ ' + op);
+      });
+
+      // Gate box in UI panel
+      const gateY = colH - 56;
+      uiG.append('rect').attr('x', uiX + 12).attr('y', gateY).attr('width', colW - 24).attr('height', 48)
+        .attr('fill', 'var(--color-white)').attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5);
+      uiG.append('text').attr('x', uiX + colW / 2).attr('y', gateY + 16)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-red)').attr('letter-spacing', '0.08em')
+        .text('HUMAN APPROVAL GATE');
+      uiG.append('text').attr('x', uiX + colW / 2).attr('y', gateY + 32)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text('Approve / Reject → confirm() → postMessage');
+
+      // Arrows channel ↔ UI
+      g.append('line').attr('x1', chanX + chanW + 2).attr('y1', midChanY - 8).attr('x2', uiX - 2).attr('y2', midChanY - 8)
+        .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5).attr('marker-end', 'url(#arrowTW)');
+      g.append('line').attr('x1', uiX - 2).attr('y1', midChanY + 8).attr('x2', chanX + chanW + 2).attr('y2', midChanY + 8)
+        .attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5).attr('marker-end', 'url(#arrowTWRed)');
+
+      // Three-phase workflow strip
+      const wfY = colH + 32;
+      g.append('text').attr('x', 0).attr('y', wfY - 8)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-secondary)').attr('letter-spacing', '0.08em')
+        .text('THREE-PHASE WORKFLOW');
+
+      const phases = [
+        { label: 'PHASE 1 — LOAD', sub: 'Paste audit JSON → proposals generated', red: false },
+        { label: 'PHASE 2 — PREVIEW', sub: 'Human reviews each fix. Nothing writes.', red: true },
+        { label: 'PHASE 3 — APPLY', sub: 'Approved fixes → sandbox → Figma file', red: false },
+      ];
+      const phW = (W - (phases.length - 1) * 16) / phases.length;
+      phases.forEach((ph, i) => {
+        const phX = i * (phW + 16);
+        const pg = g.append('g').attr('tabindex', 0).attr('aria-label', `${ph.label}: ${ph.sub}`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>${ph.label}</strong><br/>${ph.sub}`))
+          .on('mousemove', moveTooltip).on('mouseout', hideTooltip)
+          .on('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>${ph.label}</strong><br/>${ph.sub}`);
+          });
+        pg.append('rect').attr('x', phX).attr('y', wfY).attr('width', phW).attr('height', 52)
+          .attr('fill', ph.red ? 'var(--color-white)' : 'var(--color-fill)')
+          .attr('stroke', ph.red ? 'var(--color-red)' : 'var(--color-border)')
+          .attr('stroke-width', ph.red ? 1.5 : 0.75);
+        pg.append('text').attr('x', phX + 8).attr('y', wfY + 18)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('font-weight', 700)
+          .attr('fill', ph.red ? 'var(--color-red)' : 'var(--color-ink)').text(ph.label);
+        pg.append('text').attr('x', phX + 8).attr('y', wfY + 34)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text(ph.sub);
+        if (i < phases.length - 1) {
+          g.append('line')
+            .attr('x1', phX + phW + 2).attr('y1', wfY + 26).attr('x2', phX + phW + 14).attr('y2', wfY + 26)
+            .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5).attr('marker-end', 'url(#arrowTW)');
+        }
+      });
+
+      // Caption
+      g.append('text').attr('x', 0).attr('y', H + 36)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Sandbox has figma.* — UI iframe has the browser. External data loads in UI and posts approved fixes to the sandbox. No write without gate.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

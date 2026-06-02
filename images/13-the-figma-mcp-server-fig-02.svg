@@ -1,0 +1,81 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig13-2-title fig13-2-desc">
+  <title id="fig13-2-title">Agent decision tree for a component without Code Connect — three outcome branches</title>
+  <desc id="fig13-2-desc">Decision tree showing how the governance file (FIGMA.md) routes agent behavior: component has Code Connect mapping leads to generate with correct props; component has no mapping but clear description leads to escalate to human; component has no mapping and empty description leads to refuse and explain.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="32" y="28" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="13" font-weight="700" fill="#000000">Agent decision tree — component without Code Connect</text>
+
+  <!-- ── START NODE ── -->
+  <rect x="256" y="48" width="188" height="44" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="350" y="68" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000" text-anchor="middle">Agent receives component</text>
+  <text x="350" y="83" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">request via MCP context</text>
+
+  <!-- Arrow down -->
+  <line x1="350" y1="92" x2="350" y2="132" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ── DECISION 1: Code Connect mapping? ── -->
+  <!-- Diamond shape via polygon -->
+  <polygon points="350,132 440,156 350,180 260,156" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="350" y="152" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000" text-anchor="middle">Code Connect</text>
+  <text x="350" y="166" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000" text-anchor="middle">mapping published?</text>
+
+  <!-- YES branch — left -->
+  <line x1="260" y1="156" x2="148" y2="156" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="204" y="148" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">YES</text>
+
+  <!-- Outcome A: Generate -->
+  <rect x="32" y="132" width="116" height="48" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="90" y="152" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">Generate</text>
+  <text x="90" y="166" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">with correct props</text>
+  <text x="90" y="177" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">+ import path</text>
+
+  <!-- NO branch — down -->
+  <line x1="350" y1="180" x2="350" y2="224" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="362" y="207" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">NO</text>
+
+  <!-- ── DECISION 2: Description clear? ── -->
+  <polygon points="350,224 440,248 350,272 260,248" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="350" y="244" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000" text-anchor="middle">Description field</text>
+  <text x="350" y="258" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000" text-anchor="middle">clear and complete?</text>
+
+  <!-- YES branch — right -->
+  <line x1="440" y1="248" x2="556" y2="248" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="498" y="240" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">YES</text>
+
+  <!-- Outcome B: Escalate to human (RED — human gate) -->
+  <rect x="556" y="224" width="112" height="48" fill="#C8102E" stroke="#C8102E" stroke-width="1"/>
+  <text x="612" y="244" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">Escalate</text>
+  <text x="612" y="258" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#FFFFFF" text-anchor="middle">to human — flag</text>
+  <text x="612" y="270" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#FFFFFF" text-anchor="middle">missing mapping</text>
+
+  <!-- NO branch — down -->
+  <line x1="350" y1="272" x2="350" y2="316" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="362" y="299" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">NO</text>
+
+  <!-- Outcome C: Refuse -->
+  <rect x="256" y="316" width="188" height="48" fill="#F5F5F5" stroke="#000000" stroke-width="1"/>
+  <text x="350" y="336" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">Refuse and explain</text>
+  <text x="350" y="350" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">No mapping + empty description.</text>
+  <text x="350" y="362" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Cannot safely infer props.</text>
+
+  <!-- ── GOVERNANCE FILE annotation ── -->
+  <rect x="32" y="300" width="160" height="60" fill="#FFFFFF" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="40" y="318" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000">FIGMA.md governs</text>
+  <text x="40" y="332" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">each branch choice.</text>
+  <text x="40" y="346" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Without it, the agent</text>
+  <text x="40" y="360" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">chooses for itself.</text>
+
+  <!-- Connecting dashed line from FIGMA.md box to diamond -->
+  <line x1="192" y1="330" x2="260" y2="248" stroke="#555555" stroke-width="1" stroke-dasharray="4 3"/>
+
+  <!-- Caption -->
+  <text x="32" y="406" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">The governance file determines which branch the agent takes. Without it, the agent chooses for itself.</text>
+</svg>

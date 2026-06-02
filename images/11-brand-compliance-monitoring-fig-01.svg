@@ -1,0 +1,73 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig11-01-title fig11-01-desc">
+  <title id="fig11-01-title">CI gate diagram for brand compliance check</title>
+  <desc id="fig11-01-desc">Diagram showing the compliance check CI decision point with exit code 0 and exit code 1 paths, annotating which finding categories produce each exit code, and showing the diff report attached to the PR as an artifact.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Entry: PR trigger -->
+  <rect x="264" y="24" width="172" height="44" fill="#F5F5F5" stroke="#000000" stroke-width="1"/>
+  <text x="350" y="43" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">Pull Request / Schedule</text>
+  <text x="350" y="59" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">GitHub Actions trigger</text>
+
+  <!-- Arrow down to compliance check -->
+  <line x1="350" y1="68" x2="350" y2="110" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Compliance check box -->
+  <rect x="232" y="111" width="236" height="52" fill="#F5F5F5" stroke="#C8102E" stroke-width="1"/>
+  <text x="350" y="132" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#C8102E" text-anchor="middle">monitor-brand.mjs</text>
+  <text x="350" y="149" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">walks node tree · checks all rules</text>
+  <text x="350" y="161" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">computes diff vs. baseline</text>
+
+  <!-- Arrow to decision diamond -->
+  <line x1="350" y1="163" x2="350" y2="204" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Decision diamond -->
+  <polygon points="350,205 430,245 350,285 270,245" fill="#F5F5F5" stroke="#000000" stroke-width="1"/>
+  <text x="350" y="240" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">errors &gt; 0?</text>
+  <text x="350" y="254" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">severity = error</text>
+
+  <!-- Exit code 1 branch (right) -->
+  <line x1="431" y1="245" x2="540" y2="245" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="484" y="237" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E">YES</text>
+  <rect x="541" y="212" width="125" height="66" fill="#F5F5F5" stroke="#C8102E" stroke-width="1"/>
+  <text x="604" y="232" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#C8102E" text-anchor="middle">EXIT 1</text>
+  <text x="604" y="248" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">CI fails</text>
+  <text x="604" y="262" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">PR blocked</text>
+  <text x="604" y="274" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">merge gated</text>
+
+  <!-- Error categories annotation (right) -->
+  <rect x="541" y="295" width="125" height="80" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="604" y="311" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" font-weight="700" fill="#000000" text-anchor="middle">ERRORS → exit 1</text>
+  <text x="604" y="325" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">contrast failures</text>
+  <text x="604" y="339" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">unapproved font family</text>
+  <text x="604" y="353" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">hardcoded unapproved color</text>
+  <text x="604" y="367" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#A0522D" text-anchor="middle">configurable by team</text>
+
+  <!-- Exit code 0 branch (left) -->
+  <line x1="270" y1="245" x2="155" y2="245" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="210" y="237" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000">NO</text>
+  <rect x="32" y="212" width="122" height="66" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="93" y="232" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">EXIT 0</text>
+  <text x="93" y="248" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">CI passes</text>
+  <text x="93" y="262" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">merge allowed</text>
+  <text x="93" y="274" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">warnings logged</text>
+
+  <!-- Warnings annotation (left) -->
+  <rect x="32" y="295" width="122" height="80" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="93" y="311" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" font-weight="700" fill="#000000" text-anchor="middle">WARNS → exit 0</text>
+  <text x="93" y="325" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">hardcoded approved</text>
+  <text x="93" y="339" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">color (wrong method)</text>
+  <text x="93" y="353" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">off-scale spacing</text>
+  <text x="93" y="367" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">small touch target</text>
+
+  <!-- Artifact arrow (from compliance check downward center) -->
+  <line x1="350" y1="285" x2="350" y2="355" stroke="#000000" stroke-width="1" stroke-dasharray="4 3" fill="none" marker-end="url(#arrow)"/>
+  <rect x="250" y="356" width="200" height="44" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="350" y="373" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">compliance-output/ artifact</text>
+  <text x="350" y="388" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">attached to PR for review</text>
+</svg>

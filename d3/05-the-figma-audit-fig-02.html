@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CI pipeline sequence: audit gate before token extraction</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1E1E1E;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C07840;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-size: 12px; color: var(--color-ink);
+      font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const steps = [
+      { id: 'audit',    label: 'Audit Figma file',  sub: 'npm run figma:audit:ci', border: 'red',    note: 'STEP 1' },
+      { id: 'gate',     label: 'Exit code 0 / 1',   sub: 'architectural gate',     border: 'red',    note: 'GATE'   },
+      { id: 'extract',  label: 'Extract tokens',    sub: 'npm run figma:tokens',   border: 'normal', note: 'STEP 2' },
+      { id: 'codegen',  label: 'Code generation',   sub: 'CSS · Swift · Android · JS', border: 'normal', note: 'STEP 3' },
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) { tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px'); }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const container = document.getElementById('chart');
+      const totalWidth  = container.clientWidth || 800;
+      const totalHeight = Math.max(460, totalWidth * 0.58);
+      const margin = { top: 48, right: 40, bottom: 64, left: 40 };
+      const W = totalWidth - margin.left - margin.right;
+      const H = totalHeight - margin.top  - margin.bottom;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', totalWidth).attr('height', totalHeight)
+        .attr('role', 'img').attr('aria-labelledby', 'ci01-title ci01-desc');
+      svg.append('title').attr('id', 'ci01-title').text('CI pipeline sequence with audit gate');
+      svg.append('desc').attr('id', 'ci01-desc').text('Audit step with exit code 0 or 1 gate before token extraction and code generation. Exit code 1 blocks downstream steps.');
+
+      svg.append('defs').append('marker')
+        .attr('id', 'arrowCI').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+
+      svg.append('defs').append('marker')
+        .attr('id', 'arrowRed').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-red)');
+
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      g.append('text').attr('x', 0).attr('y', -20)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('CI pipeline: audit gate blocks downstream on exit code 1');
+
+      // Main pipeline row — top portion
+      const pipeY = H * 0.2;
+      const stepW = W / steps.length - 12;
+      const stepH = 80;
+
+      steps.forEach((s, i) => {
+        const x = i * (stepW + 12);
+        const bc = s.border === 'red' ? 'var(--color-red)' : 'var(--color-border)';
+        const bw = s.border === 'red' ? 1.5 : 0.75;
+
+        const sg = g.append('g')
+          .attr('tabindex', 0)
+          .attr('aria-label', `${s.note}: ${s.label} — ${s.sub}`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>${s.label}</strong><br/>${s.sub}`))
+          .on('mousemove', moveTooltip).on('mouseout', hideTooltip)
+          .on('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>${s.label}</strong><br/>${s.sub}`);
+          });
+
+        sg.append('rect').attr('x', x).attr('y', pipeY).attr('width', stepW).attr('height', stepH)
+          .attr('fill', 'var(--color-fill)').attr('stroke', bc).attr('stroke-width', bw);
+
+        sg.append('text').attr('x', x + 8).attr('y', pipeY + 16)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('font-weight', 700)
+          .attr('fill', s.border === 'red' ? 'var(--color-red)' : 'var(--color-secondary)')
+          .attr('letter-spacing', '0.08em').text(s.note);
+
+        sg.append('text').attr('x', x + 8).attr('y', pipeY + 34)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 11).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+          .text(s.label);
+
+        sg.append('text').attr('x', x + 8).attr('y', pipeY + 50)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+          .text(s.sub);
+
+        // Arrow to next step
+        if (i < steps.length - 1) {
+          const condLabel = i === 1 ? 'exit 0' : (i === 2 ? 'if: success()' : '');
+          g.append('line')
+            .attr('x1', x + stepW + 2).attr('y1', pipeY + stepH / 2)
+            .attr('x2', x + stepW + 10).attr('y2', pipeY + stepH / 2)
+            .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+            .attr('marker-end', 'url(#arrowCI)').attr('aria-hidden', 'true');
+          if (condLabel) {
+            g.append('text').attr('x', x + stepW + 4).attr('y', pipeY + stepH / 2 - 6)
+              .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+              .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text(condLabel);
+          }
+        }
+      });
+
+      // Blocked path — downward arrow from gate
+      const gateX = 1 * (stepW + 12) + stepW / 2;
+      const blockedY = pipeY + stepH + 32;
+
+      g.append('line')
+        .attr('x1', gateX).attr('y1', pipeY + stepH + 2)
+        .attr('x2', gateX).attr('y2', blockedY - 2)
+        .attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5)
+        .attr('marker-end', 'url(#arrowRed)').attr('aria-hidden', 'true');
+
+      g.append('text').attr('x', gateX + 8).attr('y', pipeY + stepH + 20)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-red)').text('exit 1 — errors found');
+
+      const blockedW = stepW + 20, blockedH = 52;
+      g.append('rect').attr('x', gateX - blockedW / 2).attr('y', blockedY)
+        .attr('width', blockedW).attr('height', blockedH)
+        .attr('fill', 'var(--color-white)').attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5);
+      g.append('text').attr('x', gateX).attr('y', blockedY + 18)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 11).attr('font-weight', 700).attr('fill', 'var(--color-red)')
+        .text('PIPELINE BLOCKED');
+      g.append('text').attr('x', gateX).attr('y', blockedY + 34)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Fix naming / token errors first.');
+      g.append('text').attr('x', gateX).attr('y', blockedY + 46)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-secondary)')
+        .text('Pipeline will not run on a bad file.');
+
+      // Ratchet row
+      const ratchetY = H * 0.75;
+      g.append('text').attr('x', 0).attr('y', ratchetY - 8)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-secondary)')
+        .attr('letter-spacing', '0.08em').text('RATCHET: BASELINE SNAPSHOT DIFFING');
+
+      const ratchetItems = [
+        { label: 'audit-report.json', sub: 'current run' },
+        { label: 'audit-baseline.json', sub: 'committed' },
+        { label: 'Regression?', sub: 'count > baseline → fail', red: true },
+        { label: 'No regression', sub: 'audit passed' },
+      ];
+      const rW = (W - ratchetItems.length * 10) / ratchetItems.length;
+      ratchetItems.forEach((ri, i) => {
+        const rx = i * (rW + 10);
+        const ry = ratchetY;
+        const bg = g.append('g').attr('tabindex', 0).attr('aria-label', `${ri.label}: ${ri.sub}`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>${ri.label}</strong><br/>${ri.sub}`))
+          .on('mousemove', moveTooltip).on('mouseout', hideTooltip)
+          .on('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>${ri.label}</strong><br/>${ri.sub}`);
+          });
+        bg.append('rect').attr('x', rx).attr('y', ry).attr('width', rW).attr('height', 44)
+          .attr('fill', 'var(--color-fill)').attr('stroke', ri.red ? 'var(--color-red)' : 'var(--color-border)').attr('stroke-width', 0.75);
+        bg.append('text').attr('x', rx + 8).attr('y', ry + 16)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('font-weight', 700)
+          .attr('fill', ri.red ? 'var(--color-red)' : 'var(--color-ink)').text(ri.label);
+        bg.append('text').attr('x', rx + 8).attr('y', ry + 30)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', 'var(--color-secondary)').text(ri.sub);
+        if (i < ratchetItems.length - 1) {
+          g.append('line')
+            .attr('x1', rx + rW + 2).attr('y1', ry + 22).attr('x2', rx + rW + 8).attr('y2', ry + 22)
+            .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5).attr('marker-end', 'url(#arrowCI)');
+        }
+      });
+
+      // Caption
+      g.append('text').attr('x', 0).attr('y', H + 36)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Audit runs first. Exit code 1 blocks token extraction. Ratchet baseline prevents regressions across PRs.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

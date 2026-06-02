@@ -66,7 +66,15 @@ Two decisions in this configuration deserve explanation.
 
 The WCAG thresholds are exact values from the WCAG 2.1 specification and are not configurable — they are not matters of team preference. [verify — WCAG 2.2 introduced no changes to contrast requirements; WCAG 3.0 proposes APCA, which remains a draft as of writing and is not normative for production compliance] What is configurable is whether a contrast failure is treated as an error or a warning by your CI gate. The recommendation: treat it as an error. A contrast failure is not a style preference. It affects users.
 
-<!-- → [TABLE: Brand rules configuration fields — columns: field, type, what it governs, when to update — rows for approvedColors, type scale, spacing scale, tolerance, WCAG thresholds] -->
+| Field | Type | What it governs | When to update |
+|---|---|---|---|
+| `approvedColors` | Array of `{ name, hex, rgba }` | The complete approved palette; any fill not matching within `colorTolerance` is flagged | When the design system adds or deprecates a brand color |
+| `approvedTypeSizes` | Array of numbers (px) | Valid font sizes; text nodes outside this set are flagged | When the type scale is revised — add new sizes, do not remove unless deprecated |
+| `approvedFontWeights` | Array of numbers | Valid font weight values (e.g., 400, 500, 600, 700) | When the brand adopts or drops a weight across the system |
+| `approvedFontFamilies` | Array of strings | Permitted font family names; unapproved families produce errors | When a new typeface is formally added to or removed from the brand specification |
+| `spacingScale` | Array of numbers (px) | Valid Auto Layout padding and gap values; off-scale values produce warnings | When the spacing system is updated — align with design token changes |
+| `colorTolerance` | Number (0–255 per-channel max delta) | How closely a fill RGBA must match an approved color before flagging | Rarely — the default of 2 accounts for floating-point rounding in the Figma color system |
+| `wcag.normalText.aa` / `wcag.largeText.aa` | Number (ratio) | WCAG 2.1 AA contrast thresholds: 4.5:1 normal text, 3:1 large text | Never — these are fixed WCAG 2.1 AA standards, not team preferences |
 
 ---
 
@@ -474,7 +482,9 @@ jobs:
           path: compliance-output/
 ```
 
-<!-- → [FIGURE: CI gate diagram — compliance check exit code 0/1 decision point; annotations showing which finding categories produce each exit code; diff report attached to PR as artifact] -->
+![CI gate diagram: a GitHub Actions trigger feeds monitor-brand.mjs, which produces a diamond decision point on whether errors exceed zero. Exit code 1 (CI fails, PR blocked) fires on contrast failures and unapproved font families. Exit code 0 (CI passes, warnings logged) fires on hardcoded approved colors and off-scale spacing. A dashed arrow shows the compliance-output artifact attached to the PR for review.](images/11-brand-compliance-monitoring-fig-01.png)
+
+*Figure 11.1 — CI gate for brand compliance*
 
 The exit code drives the gate. Contrast failures and unapproved font families produce errors and fail the build. Hardcoded approved colors and off-scale spacing produce warnings and let the build pass while informing the designer. Off-scale font weights and marginal touch targets produce info items. This severity mapping should reflect the team's actual risk model — not the tool author's defaults.
 
@@ -494,7 +504,13 @@ The tool cannot read intent. WCAG 1.4.3 exempts purely decorative elements from 
 
 The approved color list must be maintained. Every new approved color requires updating `brand-rules.json`. If the list lags behind the design system, new approved colors generate false-positive warnings and engineers start ignoring the report. Assign ownership of the rules file to the design systems team and treat changes to it as requiring review.
 
-<!-- → [TABLE: Tool limitations — columns: what it cannot catch, why, what to do instead — rows: opacity/gradient backgrounds, decorative elements, intent vs. naming accidents, deeply nested nodes, style naming errors] -->
+| What it cannot catch | Why | What to do instead |
+|---|---|---|
+| Semi-transparent, gradient, or image backgrounds | `parentBg` propagation only tracks the nearest solid fill ancestor; opacity stacking and blending modes are not computed | Use a dedicated accessibility tool that renders the file; flag complex backgrounds for manual contrast review |
+| Decorative elements exempt from WCAG 1.4.3 | The API does not mark elements as decorative; all text nodes are checked regardless of design intent | Human reviewer marks confirmed decorative findings as acknowledged exceptions in the report |
+| Styles applied correctly but misnamed | The checker confirms `styles.fill` is present, not that the style name is accurate; a misleadingly named style passes the check | Run the style library audit from Chapter 5 before the compliance check; treat naming hygiene as a separate gate |
+| Deeply nested nodes in very large files | The full file response may truncate deeply nested nodes; the walker only sees what the API returns | Verify detection by checking a known-failing instance and confirming the finding appears; segment large files by page |
+| Style library naming errors | A fill applied via a style with a wrong name (e.g., "Dark Blue" applied where "Primary" was intended) passes the style-reference check | Pair compliance monitoring with a style audit that cross-references style names against the approved token hierarchy |
 
 ---
 
@@ -535,3 +551,197 @@ The chapter argues that contrast failures should always be errors that fail CI, 
 **Exercise 4 — Draft or audit a professional deliverable**
 
 You have just run the compliance tool for the first time and found 43 errors: 12 contrast failures and 31 hardcoded unapproved colors. Write a one-page summary for the design director that covers: what the numbers mean, which findings require immediate action before the next release, and what the remediation plan looks like over the next two sprints. Ask an LLM to draft this document. Then audit the draft: does it accurately convey the severity difference between contrast failures (accessibility risk) and hardcoded colors (process violation)? Does it give the director enough information to prioritize the work?
+
+---
+
+## Chapter 11 Exercises: Brand Compliance Monitoring
+**Project:** figma-tools — Your Design System Extraction Toolkit
+**This chapter adds:** `monitor-brand.mjs`, which checks every node in the Figma file against an approved color palette, type scale, spacing grid, and WCAG 2.1 AA contrast thresholds, and emits a severity-classified, diffable compliance report.
+
+### Exercise 1 — When to Use AI
+
+`monitor-brand.mjs` produces a structured JSON report. Here is where AI adds genuine value to what the tool generates.
+
+**Task 1: Interpreting a large compliance report.** A file with 2,000 nodes may produce 300 findings across four categories. An LLM can read `compliance-report.json` and produce a plain-language triage: which categories account for the most findings, which page has the highest error density, and which single change — fixing all uses of one hardcoded unapproved color — would close the most findings at once.
+
+*Why AI works here:* Aggregation and synthesis from structured data. The model is not computing contrast ratios — the tool did that. It is reading counts, grouping findings by node name and page, and identifying leverage points. The output can be verified against the JSON directly.
+
+**Task 2: Drafting a remediation plan template.** Given a summary of finding categories (12 contrast failures, 31 hardcoded colors, 8 off-scale spacing values), an LLM can produce a sprint-ready remediation plan template: which findings should be addressed before the next release, which can be tracked as a backlog, and what workflow change prevents each category from recurring.
+
+*Why AI works here:* Template generation from categorical inputs. The chapter's severity model (errors gate CI; warnings inform) provides the rules the model applies. The model is not making a judgment call about your team's capacity — you are.
+
+**Task 3: Writing the `compliance-diff.json` summary for a PR comment.** After a remediation sprint, the diff between two compliance runs shows new findings and resolved findings. An LLM can convert the raw diff JSON into a concise PR comment: "12 contrast failures resolved. 3 new hardcoded-color warnings introduced. Net: −9 findings."
+
+*Why AI works here:* Structured-to-narrative conversion. The diff JSON is machine-readable; the PR comment needs to be human-scannable in thirty seconds.
+
+**The tell:** If the task is reading `compliance-report.json` or `compliance-diff.json` and producing a summary, triage, or plan, AI is appropriate — the inputs are structured and the model's output can be checked against the source. When the task is deciding whether a specific finding represents a real violation or an intentional brand exception, that judgment belongs to the designer who made the choice.
+
+### Exercise 2 — When NOT to Use AI
+
+The following tasks involve the compliance report but require human judgment AI cannot replicate.
+
+**Task 1: Deciding whether a contrast failure is a decorative exception.** WCAG 1.4.3 exempts purely decorative elements from contrast requirements. The API does not know which elements are decorative. An LLM asked to classify findings as "real violation" or "exempt decorative element" will produce plausible-sounding classifications that may be wrong in both directions: flagging real violations as decorative, or marking genuinely decorative elements as violations. The designer who placed the element knows its intent. The model does not.
+
+*Why AI fails here:* Intent inaccessibility. The decorative/non-decorative distinction is a semantic judgment about design purpose, not a computable property of the node. A model that classifies confidently is fabricating.
+
+**Task 2: Updating `brand-rules.json` when the design system adds a new approved color.** The rules file is the contract between the design system and the compliance tool. Adding a new color requires knowing: is this color actually approved by the brand team, or is it a one-off that a designer added unilaterally? That question requires organizational knowledge — who approved what, in which review — that is not in the Figma file or the compliance report.
+
+*Why AI fails here:* Authority confusion. An LLM can write the JSON entry for a new color. It cannot verify that the color is approved. Automating rules file updates creates a path for unapproved colors to enter the approved palette without human sign-off.
+
+**Task 3: Calibrating severity mapping for your team's risk model.** The chapter recommends treating contrast failures as errors and hardcoded-approved-colors as warnings — but notes that this mapping belongs to the team. Deciding which finding categories gate CI for your team requires knowing your release cadence, your accessibility commitments, your legal obligations, and your capacity to remediate findings before ship. These are not computable.
+
+*Why AI fails here:* Organizational context. A model asked to propose a severity configuration will produce a reasonable-sounding answer that may not fit your team's actual situation. Treat any AI-generated severity configuration as a starting draft, not a recommendation.
+
+**The tell:** Any task that requires answering "is this finding a real violation in our context?" requires a human. **Series connection:** Tier 4 (AI as pattern-recognition tool on structured data) operates on what the tool can compute. Tier 7 wisdom here is specific: brand and accessibility values are organizational commitments that require human authority to define and human judgment to apply. The model can tell you the contrast ratio. It cannot tell you what your organization owes to the users that ratio affects.
+
+### Exercise 3 — LLM Exercise
+
+**What you're building:** A compliance report interpreter that converts `compliance-report.json` into an actionable triage memo for the design team.
+
+**Tool:** Claude (standard conversation). Why Claude: reading a structured JSON report and producing an accurate, non-embellished plain-language summary is a task where Claude's tendency to stay close to source data is an advantage. This is not a creative task — it is a precision translation task where fabrication is the primary risk.
+
+**The Prompt:**
+
+```
+I am a design systems engineer. The compliance report below was generated by a brand compliance monitoring tool that checks a Figma file against an approved color palette, type scale, spacing grid, and WCAG 2.1 AA contrast thresholds.
+
+The tool uses these exact WCAG 2.1 AA thresholds (do not adjust these values):
+- Normal text: 4.5:1 minimum contrast ratio
+- Large text (18pt+ regular, or 14pt+ bold): 3:1 minimum contrast ratio
+
+Please produce a triage memo with this structure:
+
+## Compliance Triage — [date from generatedAt field]
+
+### Error Summary
+- Total errors: [N]
+- Contrast failures: [N] — these are accessibility violations. WCAG 2.1 AA requires 4.5:1 for normal text and 3:1 for large text. List each unique failing node name and its reported contrast ratio.
+- Unapproved font families: [N] — list each unique font family name found.
+
+### Warning Summary
+- Hardcoded approved colors: [N] — colors that are on-palette but not applied via a style reference. List the top 3 most frequently occurring node names.
+- Off-scale spacing: [N] — list the off-scale values found, sorted from most common to least.
+
+### Highest-Leverage Fix
+Identify the single change — fixing all instances of one specific issue on one specific page — that would close the most findings. State the page name, the issue type, and the finding count.
+
+### What Requires Human Review
+List any finding categories where the tool's detection is known to be approximate (contrast failures on complex backgrounds, decorative elements). Do not recommend exemptions — flag items that need designer review.
+
+Here is the compliance-report.json:
+
+[PASTE compliance-report.json content here]
+
+Important constraints: Use only the contrast ratios as computed in the report. Do not recalculate them. Do not adjust the WCAG thresholds. Do not recommend exempting any finding — that decision belongs to the design team.
+```
+
+**What this produces:** A structured triage memo with exact finding counts, the highest-leverage fix identified from the report data, and a clear list of items needing human review. The contrast ratios come from the tool's computation — the model is reading and reporting them, not computing them.
+
+**How to adapt this prompt:**
+- *Own project:* Paste your actual `compliance-report.json`. If the file is large (500+ findings), paste only the summary object and the errors array — the model does not need every warning to produce the triage.
+- *ChatGPT or Gemini:* Both handle this prompt well. The critical instruction is "Use only the contrast ratios as computed in the report. Do not recalculate them." Include it explicitly — see Exercise 5 for why this matters.
+- *Claude Project:* If you run compliance checks regularly, create a Project with `brand-rules.json` as a context file. The model will reference the correct WCAG thresholds and approved palette when explaining findings, without you needing to paste them each time.
+
+**Connection to previous chapters:** The compliance report builds on the audit concepts from Chapter 5 (`figma-audit.js` classified violations by severity; `monitor-brand.mjs` applies the same pattern to brand and accessibility rules). The node tree walker is the same traversal used in `figma-read.mjs` from Chapter 3. If `sync-docs.mjs` from Chapter 10 flagged a component set with thin descriptions, that component set is also a candidate for compliance findings — components without documentation are often the ones whose colors were applied by hand.
+
+**Preview of next chapter:** Chapter 12 builds `build-spec.mjs`, which produces a machine-readable component specification. A file with known-passing brand compliance is a file the spec generator can trust. The compliance report becomes a prerequisite gate for the spec build: run `monitor-brand.mjs` first, then `build-spec.mjs` if the error count is zero.
+
+### Exercise 4 — CLI Exercise
+
+**What you're building:** A `brand:diff` npm script that runs `monitor-brand.mjs` twice — once against a saved baseline and once against the current file — and outputs a pass/fail decision based on whether the new run introduced new errors.
+
+**Tool:** Claude Code
+**Skill level:** Intermediate — requires reading two JSON reports, computing a diff, and setting an appropriate exit code.
+
+**Setup:**
+- [ ] `monitor-brand.mjs` exists in your `figma-tools` project and produces `compliance-report.json` without errors
+- [ ] `brand-rules.json` is present in the project root
+- [ ] You have at least one previous run's output saved as `compliance-baseline/compliance-report.json` (run `node monitor-brand.mjs --out=compliance-baseline` to create it, then run again with `--out=compliance-current` to create the current report)
+- [ ] `docs-sync-output/component-inventory.json` from Chapter 10 is present (used as scope context — not required for the diff logic, but confirms the prior chapter's output is in place)
+- [ ] `FIGMA_TOKEN` and `FIGMA_FILE_KEY` are set in your environment
+
+**The Task:**
+
+```
+Read monitor-brand.mjs and the existing compliance output files.
+
+Add a new npm script called "brand:diff" to package.json. When run, it should:
+
+1. Run `node monitor-brand.mjs --rules=brand-rules.json --out=compliance-current --baseline=compliance-baseline/compliance-report.json`
+2. Read compliance-current/compliance-diff.json after the run completes.
+3. Print a one-line summary: "Brand diff: [N] new findings, [N] resolved. Net: [±N]."
+4. Exit with code 1 if newFindings > 0 AND any new finding has severity "error". Exit with code 0 otherwise (new warnings are allowed; new errors are not).
+
+Implement this as a small wrapper script called `brand-diff.mjs` that runs monitor-brand.mjs as a child process using Node's `execSync` or `spawn`, reads the diff output, and applies the exit logic above.
+
+Do not modify monitor-brand.mjs itself. Do not add any Figma API calls. Do not delete or overwrite compliance-baseline/ — treat it as read-only input.
+
+Stop after writing brand-diff.mjs and updating package.json. Do not run the script.
+
+Verification step: run `npm run brand:diff`. If the current file has no new errors compared to the baseline, the command should exit 0. Introduce one known violation (add a hardcoded unapproved color in your Figma file, re-export, and re-run) to confirm exit code 1 fires correctly.
+```
+
+**Expected output:** `brand-diff.mjs` in the project root. `package.json` updated with a `"brand:diff"` script. Running `npm run brand:diff` produces a one-line diff summary and exits with the appropriate code.
+
+**What to inspect:** Open `compliance-current/compliance-diff.json` after the run. Confirm `newFindings` and `resolvedFindings` match the one-line summary. Confirm the exit code matches whether new errors were introduced.
+
+**If it goes wrong:** If `compliance-diff.json` is empty or missing, confirm that `--baseline=` points to the correct path and that the baseline file was produced by `monitor-brand.mjs` (not edited by hand). If the exit code is always 0, check that `brand-diff.mjs` is reading the `newFindingsList` array and filtering for severity "error" — not just reading the `newFindings` count.
+
+**CLAUDE.md / AGENTS.md note:** Add to your project's `CLAUDE.md`: "brand:diff compares the current Figma file against compliance-baseline/compliance-report.json. Update the baseline only after a deliberate remediation sprint — not automatically. Overwriting the baseline without human review defeats the purpose of the diff."
+
+### Exercise 5 — AI Validation Exercise
+
+**What you're validating:** The triage memo produced in Exercise 3 — specifically, whether the model accurately reported WCAG contrast ratios from the compliance report or silently recomputed (and potentially mis-stated) them.
+**Validation type:** Numerical accuracy audit and failure-mode demonstration.
+**Risk level:** High — a contrast ratio reported incorrectly in a triage memo sent to a design director may result in accessibility violations being de-prioritized or exempted on false grounds.
+
+**Setup:** Use the triage memo produced in Exercise 3. Also have `compliance-report.json` open alongside it. If you did not run Exercise 3, generate a representative memo: create a minimal `compliance-report.json` with two or three contrast failures (use the actual values your tool computed), paste it into Claude with the Exercise 3 prompt, and save the output.
+
+**The Validation Task:**
+
+```
+Validate the triage memo against the source compliance-report.json using this checklist. For each item, mark Pass, Fail, or N/A and write one sentence.
+
+CORRECTNESS
+[ ] For each contrast failure listed in the memo: does the reported contrast ratio exactly match the ratio in the source compliance-report.json findings? Check to two decimal places (e.g., 2.93:1, not "approximately 3:1").
+[ ] Does the memo correctly apply the WCAG 2.1 AA thresholds? Normal text threshold is 4.5:1. Large text threshold is 3:1. If the memo states different thresholds, flag it as a failure regardless of how confident the language sounds.
+[ ] Are error counts correct? Count the errors in the JSON manually and compare to the memo's "Total errors" line.
+
+COMPLETENESS
+[ ] Are all unique failing node names listed? Check that no contrast-failure finding from the JSON was omitted from the memo.
+[ ] Is the highest-leverage fix identified from actual data — a real page name and real finding count from the JSON — not a generic recommendation?
+
+SCOPE
+[ ] Does the memo recommend exempting any specific finding? If so, flag it — the prompt instructed the model not to recommend exemptions. Exemption recommendations require human authority.
+[ ] Does the memo suggest the WCAG thresholds are adjustable or team-configurable? They are not. WCAG 2.1 AA thresholds are fixed standards, not preferences.
+
+CHAPTER-SPECIFIC: AI MIS-COMPUTING WCAG CONTRAST
+[ ] This is the key check. Find one contrast failure in the memo. Open a calculator and compute the contrast ratio yourself using the formula from the chapter (linearize each channel with srgbToLinear, compute luminance with the 0.2126/0.7152/0.0722 weights, apply (L_lighter + 0.05) / (L_darker + 0.05)). Does your manual calculation match the ratio in compliance-report.json? Does the memo's stated ratio match the JSON?
+[ ] If the memo states a ratio that differs from compliance-report.json — even by 0.1 — this is the "fluent but wrong" failure mode. The model recomputed the ratio rather than reading the tool's output. A recomputed ratio may appear more precise while being less accurate (the tool used the exact sRGB values from the Figma API; the model may have rounded the hex conversion).
+
+CHAPTER-SPECIFIC: BRAND EXCEPTION FLAGGED AS VIOLATION
+[ ] Review the "What Requires Human Review" section. Does the model flag any finding as likely to be an intentional brand exception? If it suggests specific findings are "probably decorative" or "likely intentional," that is out-of-scope inference — the model has no access to design intent. Flag any such suggestion.
+
+FAILURE-MODE CHECK
+[ ] Fluent but wrong: Identify the finding in the memo that is most likely to be acted on incorrectly if taken at face value. Is the ratio accurately reported? Is the correct WCAG threshold applied to it?
+[ ] AI mis-computing WCAG contrast: Did the model use the tool's reported ratios or recompute them? (Hint: look for ratios that differ from the JSON by small amounts, or ratios stated to more decimal places than the tool reported.)
+
+What to do with your findings: A Fail on any CORRECTNESS item — especially a mis-stated contrast ratio — means the memo must not be shared with stakeholders until corrected against the source JSON. The compliance tool computed the ratios; the memo should report them verbatim. Any deviation, however small, represents the model substituting its calculation for the tool's. Correct the memo by hand from the source JSON before forwarding it.
+
+AI Use Disclosure prompt (mandatory — copy this into any document or PR that uses this memo): "This triage memo was drafted by Claude based on compliance-report.json generated by monitor-brand.mjs. Contrast ratios and finding counts were validated against the source JSON by [your name] on [date]. WCAG thresholds used: 4.5:1 normal text AA, 3:1 large text AA."
+
+**Series connection:** The failure mode this exercise demonstrates — AI recomputing a precise numerical value rather than reading the tool's output, and producing a result that sounds more authoritative than it is — is the canonical Tier 4 risk. The tool computed the contrast ratio using the exact sRGB values from the Figma API. The model computed it from a hex string, possibly rounded. Both numbers look like contrast ratios. Only one was computed from the actual source data. Tier 7 wisdom: when a tool produces a number, the validation document must cite the tool's number — not the model's recalculation of it.
+
+---
+
+## Prompts
+
+*Structural prompts for reproducing the figures in this chapter. Each prompt specifies marks, data shape, and deliverable so a model can generate the D3 implementation from scratch.*
+
+**Prerequisites:** D3 v7 from `https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js`. Colors only via `var(--color-*)` CSS custom properties. Font `'Real Head Pro','FF Real',Lato,sans-serif`. ResizeObserver redraw pattern. `(event, d)` event signature. SVG `role="img"` + `aria-labelledby` + `<title>` + `<desc>`.
+
+### Figure 11.1 — CI gate for brand compliance
+
+Produce a single standalone HTML file containing a CI gate flow diagram built with D3 v7. The diagram has five elements arranged vertically: (1) a "Pull Request / Schedule" trigger box at top; (2) a "monitor-brand.mjs" process box with `var(--color-red)` border; (3) a diamond decision node labeled "errors > 0?"; (4) two outcome boxes branching left and right — "EXIT 0" (CI passes) on the left, "EXIT 1" (CI fails, PR blocked) on the right with `var(--color-red)` border; (5) two annotation boxes below each outcome in dashed-border style listing the finding categories that produce that exit code (left: hardcoded approved colors, off-scale spacing, small touch target; right: contrast failures, unapproved font family, hardcoded unapproved colors — with a note that severity mapping is configurable). A dashed arrow descends from the diamond to a "compliance-output/ artifact" box at the bottom center showing the PR attachment. The WCAG thresholds in annotation text must be exactly 4.5:1 for normal text and 3:1 for large text. Tooltips on all interactive elements. Deliverable: single HTML file, inline CSS, D3 v7 CDN.
+
+> Reference implementation: `d3/11-brand-compliance-monitoring-fig-01.html`

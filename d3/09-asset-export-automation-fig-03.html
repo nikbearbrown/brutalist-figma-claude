@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 9.3 — CI Workflow Sequence for Asset Export</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1C1C1C;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #B8622D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink); max-width: 300px; line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const steps = [
+      {
+        label: 'TRIGGER',
+        sub:   'LIBRARY_PUBLISH\nor workflow_dispatch',
+        detail: 'Figma sends LIBRARY_PUBLISH webhook on library publish. workflow_dispatch allows manual runs for dry-run validation, initial setup, and manifest recovery.',
+        style: 'normal'
+      },
+      {
+        label: 'PREFLIGHT',
+        sub:   'figma-preflight.mjs',
+        detail: 'Runs all five machine-readiness checks from Chapter 7. Exit code 1 on any blocking finding — all subsequent steps do not run. Rate-limit and plan-tier errors are handled here.',
+        style: 'red'
+      },
+      {
+        label: 'EXPORT ASSETS',
+        sub:   'export-assets.mjs',
+        detail: 'Groups assets by format+scale, batches 50 node IDs per image request, downloads each URL immediately, runs integrity checks, applies SVGO. Exits 1 on integrity failure.',
+        style: 'red'
+      },
+      {
+        label: 'GIT DIFF',
+        sub:   'src/assets/ changed?',
+        detail: 'Checks whether any file in src/assets/ changed. If no diff, no PR is opened — prevents review-queue noise on runs where no assets changed.',
+        style: 'normal'
+      },
+      {
+        label: 'IF CHANGED',
+        sub:   'changed=true → PR',
+        detail: 'Conditional step: only fires when git diff reports changes. No diff = workflow ends silently. Diff = PR opened with the changed assets for human review.',
+        style: 'normal'
+      },
+      {
+        label: 'PR OPENED',
+        sub:   'design-assets, automated',
+        detail: 'create-pull-request action opens PR with labels. PR body lists what to review: null renders, unexpected changes, new assets not yet in the manifest.',
+        style: 'black'
+      },
+      {
+        label: 'HUMAN REVIEW',
+        sub:   'only checkpoint before merge',
+        detail: 'Reviewer checks null renders for critical assets (navigation, branding). Confirms unexpected changes match designer intent. Traces any integrity failure back to the node in Figma.',
+        style: 'human'
+      }
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 14) + 'px').style('top', (event.pageY - 32) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 14) + 'px').style('top', (event.pageY - 32) + 'px');
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const w = document.getElementById('chart').clientWidth || 800;
+      const margin = { top: 72, right: 32, bottom: 56, left: 32 };
+      const chartW = w - margin.left - margin.right;
+      const n = steps.length;
+      const colsPerRow = Math.max(2, Math.min(4, Math.floor(chartW / 130)));
+      const rows = Math.ceil(n / colsPerRow);
+      const boxW = Math.floor(chartW / colsPerRow) - 12;
+      const boxH = 60;
+      const rowH = boxH + 32;
+      const totalHeight = margin.top + rows * rowH + margin.bottom;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', w).attr('height', totalHeight)
+        .attr('role', 'img').attr('aria-labelledby', 'ch09-fig03-title ch09-fig03-desc');
+
+      svg.append('title').attr('id', 'ch09-fig03-title').text('CI asset export workflow: webhook trigger → preflight → export → git diff → conditional PR → human review');
+      svg.append('desc').attr('id', 'ch09-fig03-desc').text('Seven-step CI workflow sequence. Preflight and export steps are red gate steps that halt on failure. PR is opened only when src/assets/ has changed. Human review is the final checkpoint before merge.');
+
+      svg.append('text').attr('x', margin.left).attr('y', 30)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('CI workflow — asset export sequence');
+      svg.append('text').attr('x', margin.left).attr('y', 50)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 11).attr('fill', 'var(--color-secondary)')
+        .text('Hover each step for detail. Red = gate step exits non-zero on failure. Black = PR. Dashed = human step.');
+
+      svg.append('defs').append('marker').attr('id', 'arrow9c')
+        .attr('markerWidth', 8).attr('markerHeight', 6).attr('refX', 7).attr('refY', 3)
+        .attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+
+      const gChart = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      steps.forEach((step, i) => {
+        const col = i % colsPerRow;
+        const row = Math.floor(i / colsPerRow);
+        const x = col * (boxW + 12);
+        const y = row * rowH;
+
+        // Connector
+        if (i > 0) {
+          const prevCol = (i - 1) % colsPerRow;
+          const prevRow = Math.floor((i - 1) / colsPerRow);
+          const px = prevCol * (boxW + 12);
+          const py = prevRow * rowH;
+
+          if (prevRow === row) {
+            gChart.append('line')
+              .attr('x1', px + boxW + 4).attr('y1', py + boxH / 2)
+              .attr('x2', x - 4).attr('y2', y + boxH / 2)
+              .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+              .attr('marker-end', 'url(#arrow9c)').attr('aria-hidden', 'true');
+          } else {
+            const midY = py + boxH + 14;
+            gChart.append('polyline')
+              .attr('points', `${px + boxW / 2},${py + boxH} ${px + boxW / 2},${midY} ${x + boxW / 2},${midY} ${x + boxW / 2},${y}`)
+              .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+              .attr('fill', 'none').attr('marker-end', 'url(#arrow9c)').attr('aria-hidden', 'true');
+          }
+        }
+
+        const isRed   = step.style === 'red';
+        const isBlack = step.style === 'black';
+        const isHuman = step.style === 'human';
+
+        const gBox = gChart.append('g').attr('transform', `translate(${x},${y})`)
+          .attr('tabindex', 0)
+          .attr('aria-label', `${step.label}: ${step.detail}`)
+          .style('cursor', 'pointer');
+
+        gBox.append('rect').attr('width', boxW).attr('height', boxH)
+          .attr('fill', isBlack ? 'var(--color-ink)' : 'var(--color-white)')
+          .attr('stroke', isRed ? 'var(--color-red)' : isHuman ? 'var(--color-brown)' : 'var(--color-border)')
+          .attr('stroke-width', (isRed || isHuman) ? 1.5 : 1)
+          .attr('stroke-dasharray', isHuman ? '4 3' : null);
+
+        gBox.append('text').attr('x', boxW / 2).attr('y', 20)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('font-weight', 700)
+          .attr('fill', isBlack ? 'var(--color-white)' : isRed ? 'var(--color-red)' : isHuman ? 'var(--color-brown)' : 'var(--color-ink)')
+          .text(step.label);
+
+        const subLines = step.sub.split('\n');
+        subLines.forEach((l, li) => {
+          gBox.append('text').attr('x', boxW / 2).attr('y', 34 + li * 13)
+            .attr('text-anchor', 'middle')
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 10)
+            .attr('fill', isBlack ? 'var(--color-border)' : 'var(--color-secondary)')
+            .text(l);
+        });
+
+        gBox.on('mouseover', function(event) {
+          d3.select(this).select('rect').transition().duration(120).attr('opacity', 0.85);
+          showTooltip(event, `<strong>${step.label}</strong><br>${step.detail}`);
+        }).on('mousemove', moveTooltip)
+          .on('mouseout', function() {
+            d3.select(this).select('rect').transition().duration(120).attr('opacity', 1);
+            hideTooltip();
+          })
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+              showTooltip(event, `<strong>${step.label}</strong><br>${step.detail}`);
+            }
+          });
+      });
+
+      svg.append('text').attr('x', margin.left).attr('y', totalHeight - 14)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('The git diff step prevents PR noise on no-change runs. The PR is the only human checkpoint before assets reach the repository.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

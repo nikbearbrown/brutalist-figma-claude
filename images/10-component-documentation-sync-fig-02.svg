@@ -1,0 +1,59 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig10-02-title fig10-02-desc">
+  <title id="fig10-02-title">Documentation ownership decision tree</title>
+  <desc id="fig10-02-desc">Decision tree showing two branches for documentation ownership: descriptions authored in Figma versus descriptions authored in the documentation platform, with CI behavior and sync direction shown for each path.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Root decision -->
+  <rect x="224" y="32" width="252" height="52" fill="#F5F5F5" stroke="#000000" stroke-width="1"/>
+  <text x="350" y="53" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="12" font-weight="700" fill="#000000" text-anchor="middle">Who authors component descriptions?</text>
+  <text x="350" y="72" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Decide once. Mixed ownership is deferred conflict.</text>
+
+  <!-- Branch arrows -->
+  <line x1="280" y1="84" x2="160" y2="140" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <line x1="420" y1="84" x2="540" y2="140" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <text x="195" y="118" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E">Figma owns it</text>
+  <text x="488" y="118" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000">Platform owns it</text>
+
+  <!-- Left branch: Figma owns -->
+  <rect x="52" y="141" width="216" height="60" fill="#F5F5F5" stroke="#C8102E" stroke-width="1"/>
+  <text x="160" y="161" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#C8102E" text-anchor="middle">FIGMA → PLATFORM</text>
+  <text x="160" y="177" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">sync writes to platform</text>
+  <text x="160" y="190" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">platform content is overwritten</text>
+
+  <!-- Right branch: Platform owns -->
+  <rect x="432" y="141" width="216" height="60" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="540" y="161" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">PLATFORM → FIGMA</text>
+  <text x="540" y="177" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">sync produces report only</text>
+  <text x="540" y="190" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">does not push back to Figma</text>
+
+  <!-- Left: CI behavior -->
+  <line x1="160" y1="201" x2="160" y2="250" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <rect x="52" y="251" width="216" height="72" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="160" y="270" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">CI BEHAVIOR</text>
+  <text x="160" y="286" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">missing set description → error</text>
+  <text x="160" y="300" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">missing component description → warn</text>
+  <text x="160" y="314" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E" text-anchor="middle">sync overwrites on merge</text>
+
+  <!-- Right: CI behavior -->
+  <line x1="540" y1="201" x2="540" y2="250" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <rect x="432" y="251" width="216" height="72" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="540" y="270" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">CI BEHAVIOR</text>
+  <text x="540" y="286" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">sync reports gaps only</text>
+  <text x="540" y="300" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">no writes to Figma or platform</text>
+  <text x="540" y="314" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#A0522D" text-anchor="middle">human edits platform manually</text>
+
+  <!-- Conflict scenario -->
+  <line x1="268" y1="290" x2="315" y2="355" stroke="#000000" stroke-width="1" stroke-dasharray="4 3" fill="none" marker-end="url(#arrow)"/>
+  <line x1="432" y1="290" x2="385" y2="355" stroke="#000000" stroke-width="1" stroke-dasharray="4 3" fill="none" marker-end="url(#arrow)"/>
+  <rect x="248" y="356" width="204" height="48" fill="#F5F5F5" stroke="#000000" stroke-width="1"/>
+  <text x="350" y="374" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">BOTH SOURCES HAVE CONTENT</text>
+  <text x="350" y="390" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E" text-anchor="middle">one source wins; one is destroyed</text>
+  <text x="350" y="403" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">decide ownership before running sync</text>
+</svg>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plugin loading flow: development through production distribution</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1E1E1E;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C07840;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-size: 12px; color: var(--color-ink);
+      font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const devSteps = [
+      { num: '1', label: 'Open Figma Desktop', sub: 'Browser editor cannot run plugins. Desktop required.', gate: false },
+      { num: '2', label: 'Import from manifest', sub: 'Plugins → Development → Import plugin from manifest. Select manifest.json.', gate: false },
+      { num: '3', label: 'Run the plugin', sub: 'Plugins → Development → Figma Fix. Plugin opens. Paste audit-report.json.', gate: false },
+      { num: '4', label: 'Phase 2: Human review', sub: 'Approve or reject each fix. Do not click Approve All for NAME001 renames.', gate: true },
+      { num: '5', label: 'Apply approved changes', sub: 'Confirm dialog. Approved fixes applied. Review Phase 3 results. Save fix log.', gate: true },
+    ];
+
+    const neverAutomate = [
+      'NAME001 renames — require design judgment',
+      'Alias target changes — design decision',
+      'Value changes — color / spacing / type scale',
+      'Component restructuring — design + eng',
+      'Deletions — may have runtime uses',
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) { tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px'); }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const container = document.getElementById('chart');
+      const totalWidth  = container.clientWidth || 800;
+      const totalHeight = Math.max(560, totalWidth * 0.72);
+      const margin = { top: 48, right: 40, bottom: 56, left: 40 };
+      const W = totalWidth - margin.left - margin.right;
+      const H = totalHeight - margin.top  - margin.bottom;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', totalWidth).attr('height', totalHeight)
+        .attr('role', 'img').attr('aria-labelledby', 'lf01-title lf01-desc');
+      svg.append('title').attr('id', 'lf01-title').text('Plugin loading flow: development to production');
+      svg.append('desc').attr('id', 'lf01-desc').text('Five numbered steps from Figma Desktop through manifest import, plugin execution, human approval, and apply. Never-automate list on right.');
+
+      svg.append('defs').append('marker')
+        .attr('id', 'arrowLF').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+
+      svg.append('defs').append('marker')
+        .attr('id', 'arrowLFRed').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-red)');
+
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      g.append('text').attr('x', 0).attr('y', -20)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('Plugin loading flow: development → production');
+
+      // Steps column
+      const stepColW = W * 0.58;
+      const stepH = (H * 0.72) / devSteps.length - 8;
+
+      devSteps.forEach((s, i) => {
+        const sy = i * (stepH + 8);
+        const bc = s.gate ? 'var(--color-red)' : 'var(--color-border)';
+        const bw = s.gate ? 1.5 : 0.75;
+
+        const sg = g.append('g')
+          .attr('tabindex', 0)
+          .attr('aria-label', `Step ${s.num}: ${s.label} — ${s.sub}`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>Step ${s.num}: ${s.label}</strong><br/>${s.sub}`))
+          .on('mousemove', moveTooltip).on('mouseout', hideTooltip)
+          .on('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>Step ${s.num}: ${s.label}</strong><br/>${s.sub}`);
+          });
+
+        sg.append('rect').attr('x', 0).attr('y', sy).attr('width', stepColW).attr('height', stepH)
+          .attr('fill', s.gate ? 'var(--color-white)' : 'var(--color-fill)')
+          .attr('stroke', bc).attr('stroke-width', bw);
+
+        sg.append('text').attr('x', 12).attr('y', sy + 18)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 14).attr('font-weight', 700)
+          .attr('fill', s.gate ? 'var(--color-red)' : 'var(--color-secondary)')
+          .text(s.num);
+
+        sg.append('text').attr('x', 36).attr('y', sy + 18)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 11).attr('font-weight', 700)
+          .attr('fill', s.gate ? 'var(--color-red)' : 'var(--color-ink)')
+          .text(s.label);
+
+        // Wrap sub text
+        const words = s.sub.split(' ');
+        let line = '', lineY = sy + 34, lineN = 0;
+        words.forEach((w) => {
+          const test = line + (line ? ' ' : '') + w;
+          if (test.length > 62 && line) {
+            g.append('text').attr('x', 36).attr('y', lineY + lineN * 14)
+              .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+              .attr('font-size', 10).attr('fill', 'var(--color-secondary)').text(line);
+            line = w; lineN++;
+          } else { line = test; }
+        });
+        if (line) {
+          g.append('text').attr('x', 36).attr('y', lineY + lineN * 14)
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 10).attr('fill', 'var(--color-secondary)').text(line);
+        }
+
+        // Arrow to next step
+        if (i < devSteps.length - 1) {
+          const arrowColor = s.gate ? 'var(--color-red)' : 'var(--color-ink)';
+          const arrowId = s.gate ? 'arrowLFRed' : 'arrowLF';
+          g.append('line')
+            .attr('x1', stepColW / 2).attr('y1', sy + stepH + 2)
+            .attr('x2', stepColW / 2).attr('y2', sy + stepH + 6)
+            .attr('stroke', arrowColor).attr('stroke-width', 1.5)
+            .attr('marker-end', `url(#${arrowId})`);
+        }
+      });
+
+      // Never-automate panel
+      const naX = stepColW + 24;
+      const naW = W - stepColW - 24;
+
+      g.append('text').attr('x', naX).attr('y', -4)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-secondary)').attr('letter-spacing', '0.08em')
+        .text('NEVER AUTOMATE');
+
+      neverAutomate.forEach((item, i) => {
+        const ny = i * 36;
+        g.append('rect').attr('x', naX).attr('y', ny).attr('width', naW).attr('height', 28)
+          .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+        g.append('text').attr('x', naX + 8).attr('y', ny + 18)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', 'var(--color-ink)').text(item);
+      });
+
+      // Auto-fixable box
+      const afY = neverAutomate.length * 36 + 12;
+      g.append('rect').attr('x', naX).attr('y', afY).attr('width', naW).attr('height', 36)
+        .attr('fill', 'var(--color-white)').attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5);
+      g.append('text').attr('x', naX + naW / 2).attr('y', afY + 14)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-red)').attr('letter-spacing', '0.08em')
+        .text('AUTO-FIXABLE ONLY:');
+      g.append('text').attr('x', naX + naW / 2).attr('y', afY + 28)
+        .attr('text-anchor', 'middle').attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-red)')
+        .text('TOK002 · COMP001');
+
+      // Caption
+      g.append('text').attr('x', 0).attr('y', H + 36)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Steps 4 and 5 require human review. No batch undo exists. Save a version history checkpoint before running.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 13.1 — MCP Architecture: Two Context Delivery Paths</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1E1E1E;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C06A3A;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink);
+    }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    // ── Data ──────────────────────────────────────────────────────────────────
+    const nodes = [
+      { id: 'agent',    label: 'AI Coding Agent',   sub: 'Claude Code / Cursor / Copilot', type: 'neutral', col: 1, row: 0 },
+      { id: 'mcp',      label: 'MCP Protocol',      sub: 'open standard',                  type: 'neutral', col: 0, row: 0 },
+      { id: 'server',   label: 'Figma MCP Server',  sub: 'local or remote',                type: 'neutral', col: 0, row: 1 },
+      { id: 'api',      label: 'Figma REST API',    sub: 'Dev Mode required',              type: 'neutral', col: 0, row: 2 },
+      { id: 'file',     label: 'Figma Design File', sub: 'source of truth',                type: 'red',     col: 0, row: 3 },
+      { id: 'audit',    label: 'audit.json',         sub: 'naming / coverage / brand',      type: 'cli',     col: 2, row: 1 },
+      { id: 'spec',     label: 'spec.json',          sub: 'components + Code Connect',      type: 'cli',     col: 2, row: 2 },
+      { id: 'tokens',   label: 'tokens.json',        sub: 'validated token values',         type: 'cli',     col: 2, row: 3 },
+    ];
+
+    const links = [
+      { source: 'agent', target: 'mcp',    label: 'request',         dashed: false  },
+      { source: 'mcp',   target: 'server', label: '',                dashed: false  },
+      { source: 'server',target: 'api',    label: '',                dashed: false  },
+      { source: 'api',   target: 'file',   label: '',                dashed: false  },
+      { source: 'file',  target: 'agent',  label: 'context (live)',  dashed: true, curve: true },
+      { source: 'file',  target: 'audit',  label: 'CLI extract',     dashed: true, brown: true },
+      { source: 'audit', target: 'agent',  label: 'pre-validated',   dashed: false  },
+    ];
+
+    // ── Draw ──────────────────────────────────────────────────────────────────
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+
+      const container = document.getElementById('chart');
+      const totalWidth = container.clientWidth || 700;
+      const totalHeight = Math.max(420, totalWidth * 0.6);
+      const margin = { top: 48, right: 40, bottom: 40, left: 40 };
+      const W = totalWidth - margin.left - margin.right;
+      const H = totalHeight - margin.top - margin.bottom;
+
+      const svg = d3.select('#chart')
+        .append('svg')
+          .attr('width', totalWidth)
+          .attr('height', totalHeight)
+          .attr('role', 'img')
+          .attr('aria-labelledby', 'fig13-1-title fig13-1-desc');
+
+      svg.append('title').attr('id', 'fig13-1-title').text('Figure 13.1 — MCP Architecture: Two Context Delivery Paths');
+      svg.append('desc').attr('id', 'fig13-1-desc').text('Two parallel pipelines feed the AI coding agent: the live MCP path and the CLI context package path. Both depend on Figma file quality.');
+
+      const defs = svg.append('defs');
+      defs.append('marker').attr('id', 'arrow').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+      defs.append('marker').attr('id', 'arrow-brown').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-brown)');
+
+      const gChart = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      // Title
+      svg.append('text').attr('x', margin.left).attr('y', 26)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('Figure 13.1 — MCP architecture: two context delivery paths');
+
+      // Column x positions: 3 columns (left=MCP path, center=agent, right=CLI)
+      const colX = [W * 0.08, W * 0.42, W * 0.74];
+      const rowY = [H * 0.06, H * 0.30, H * 0.55, H * 0.78];
+      const nodeW = Math.min(W * 0.28, 160);
+      const nodeH = 44;
+
+      // Position nodes
+      const nodeMap = {};
+      nodes.forEach(n => {
+        n.x = colX[n.col];
+        n.y = rowY[n.row];
+        nodeMap[n.id] = n;
+      });
+
+      // Draw nodes
+      const gNodes = gChart.append('g').attr('class', 'g-nodes');
+      nodes.forEach(n => {
+        const g = gNodes.append('g')
+          .attr('transform', `translate(${n.x - nodeW / 2}, ${n.y - nodeH / 2})`)
+          .attr('class', 'node')
+          .attr('tabindex', 0)
+          .attr('aria-label', `${n.label}: ${n.sub}`);
+
+        const fill = n.type === 'red' ? 'var(--color-red)' : 'var(--color-fill)';
+        const stroke = n.type === 'red' ? 'var(--color-red)' : 'var(--color-border)';
+        const textFill = n.type === 'red' ? 'var(--color-white)' : 'var(--color-ink)';
+        const subFill = n.type === 'red' ? 'rgba(255,255,255,0.82)' : 'var(--color-secondary)';
+
+        g.append('rect').attr('width', nodeW).attr('height', nodeH)
+          .attr('fill', fill).attr('stroke', stroke).attr('stroke-width', 1);
+
+        g.append('text').attr('x', nodeW / 2).attr('y', 18)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 11).attr('font-weight', n.type === 'red' ? 700 : 400)
+          .attr('fill', textFill).text(n.label);
+
+        g.append('text').attr('x', nodeW / 2).attr('y', 32)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', subFill).text(n.sub);
+      });
+
+      // Draw links
+      const gLinks = gChart.insert('g', '.g-nodes').attr('class', 'g-links');
+
+      function edgeMid(src, tgt) {
+        // simple straight connector from nearest edges
+        const dx = tgt.x - src.x;
+        const dy = tgt.y - src.y;
+        const angle = Math.atan2(dy, dx);
+        const hw = nodeW / 2; const hh = nodeH / 2;
+        const sx = src.x + Math.cos(angle) * hw;
+        const sy = src.y + Math.sin(angle) * hh;
+        const tx = tgt.x - Math.cos(angle) * hw;
+        const ty = tgt.y - Math.sin(angle) * hh;
+        return { sx, sy, tx, ty };
+      }
+
+      links.forEach(lk => {
+        const src = nodeMap[lk.source];
+        const tgt = nodeMap[lk.target];
+        const strokeColor = lk.brown ? 'var(--color-brown)' : 'var(--color-ink)';
+        const markerEnd = lk.brown ? 'url(#arrow-brown)' : 'url(#arrow)';
+
+        if (lk.curve) {
+          // curved return path: file → agent
+          const path = `M ${src.x + nodeW/2} ${src.y}
+                        C ${src.x + nodeW*1.5} ${src.y},
+                          ${tgt.x + nodeW/2} ${tgt.y + nodeH*2},
+                          ${tgt.x + nodeW/2} ${tgt.y + nodeH/2}`;
+          gLinks.append('path').attr('d', path)
+            .attr('stroke', strokeColor).attr('stroke-width', 1.5)
+            .attr('stroke-dasharray', lk.dashed ? '4 3' : 'none')
+            .attr('fill', 'none').attr('marker-end', markerEnd);
+        } else if (lk.source === 'file' && !lk.curve) {
+          // file → audit (brown dashed, diagonal)
+          const sx = src.x + nodeW / 2;
+          const sy = src.y;
+          const tx = tgt.x - nodeW / 2;
+          const ty = tgt.y;
+          const path = `M ${sx} ${sy} C ${sx + 80} ${sy}, ${tx - 60} ${ty}, ${tx} ${ty}`;
+          gLinks.append('path').attr('d', path)
+            .attr('stroke', strokeColor).attr('stroke-width', 1.5)
+            .attr('stroke-dasharray', '5 4')
+            .attr('fill', 'none').attr('marker-end', markerEnd);
+          gLinks.append('text')
+            .attr('x', (sx + tx) / 2).attr('y', (sy + ty) / 2 - 8)
+            .attr('text-anchor', 'middle')
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 9).attr('fill', 'var(--color-brown)')
+            .text('CLI extraction scripts');
+        } else if (lk.source === 'audit' && lk.target === 'agent') {
+          // audit group → agent (all 3 CLI boxes converge)
+          const cliNodes = ['audit','spec','tokens'].map(id => nodeMap[id]);
+          cliNodes.forEach(cn => {
+            const sx = cn.x - nodeW / 2;
+            const sy = cn.y;
+            const tx = nodeMap['agent'].x + nodeW / 2;
+            const ty = nodeMap['agent'].y;
+            const path = `M ${sx} ${sy} C ${sx - 60} ${sy}, ${tx + 60} ${ty}, ${tx} ${ty}`;
+            gLinks.append('path').attr('d', path)
+              .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+              .attr('fill', 'none').attr('marker-end', 'url(#arrow)');
+          });
+        } else {
+          const { sx, sy, tx, ty } = edgeMid(src, tgt);
+          gLinks.append('line')
+            .attr('x1', sx).attr('y1', sy).attr('x2', tx).attr('y2', ty)
+            .attr('stroke', strokeColor).attr('stroke-width', 1.5)
+            .attr('stroke-dasharray', lk.dashed ? '4 3' : 'none')
+            .attr('marker-end', markerEnd);
+          if (lk.label) {
+            gLinks.append('text')
+              .attr('x', (sx + tx) / 2 + 6).attr('y', (sy + ty) / 2 - 4)
+              .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+              .attr('font-size', 9).attr('fill', 'var(--color-secondary)')
+              .text(lk.label);
+          }
+        }
+      });
+
+      // Section labels
+      [
+        { label: 'LIVE MCP PATH', x: colX[0] - nodeW / 2, y: -8 },
+        { label: 'CLI CONTEXT PACKAGE', x: colX[2] - nodeW / 2, y: rowY[0] - 16 },
+      ].forEach(lb => {
+        gChart.append('text').attr('x', lb.x).attr('y', lb.y)
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+          .attr('letter-spacing', '.08em').text(lb.label);
+      });
+
+      // File quality note
+      const noteX = colX[2] - nodeW / 2;
+      const noteY = rowY[3] + 12;
+      gChart.append('rect')
+        .attr('x', noteX).attr('y', noteY).attr('width', nodeW + 60).attr('height', 36)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', .75);
+      gChart.append('text').attr('x', noteX + (nodeW + 60) / 2).attr('y', noteY + 14)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('Both paths depend on file quality.');
+      gChart.append('text').attr('x', noteX + (nodeW + 60) / 2).attr('y', noteY + 28)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-secondary)')
+        .text('Naming · tokens · Code Connect coverage');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Three-tier token hierarchy</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1E1E1E;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C07840;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 12px; color: var(--color-ink);
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const tiers = [
+      {
+        label: 'TIER 1 — PRIMITIVE',
+        tokens: [
+          { name: 'color/palette/blue-500', role: 'Raw value — position in color scale', value: '#0066ff', type: 'primitive' },
+          { name: 'spacing/scale/4',        role: 'Raw spacing unit',                    value: '16px',    type: 'primitive' },
+        ]
+      },
+      {
+        label: 'TIER 2 — SEMANTIC',
+        tokens: [
+          { name: 'color/brand/primary',     role: 'Role alias — consumed by product code', value: '{color.palette.blue-500}', type: 'semantic' },
+          { name: 'spacing/interactive/md',  role: 'Role alias — consumed by product code', value: '{spacing.scale.4}',        type: 'semantic' },
+        ]
+      },
+      {
+        label: 'TIER 3 — COMPONENT',
+        tokens: [
+          { name: 'color/button/background/default', role: 'Component-scoped alias', value: '{color.brand.primary}', type: 'component' },
+        ]
+      }
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px').transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) { tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px'); }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const container = document.getElementById('chart');
+      const totalWidth  = container.clientWidth || 800;
+      const totalHeight = Math.max(480, totalWidth * 0.6);
+      const margin = { top: 48, right: 40, bottom: 64, left: 40 };
+      const W = totalWidth  - margin.left - margin.right;
+      const H = totalHeight - margin.top  - margin.bottom;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', totalWidth).attr('height', totalHeight)
+        .attr('role', 'img').attr('aria-labelledby', 'fig02-title fig02-desc');
+      svg.append('title').attr('id', 'fig02-title').text('Three-tier token hierarchy');
+      svg.append('desc').attr('id', 'fig02-desc').text('Primitive tokens alias to semantic tokens which alias to component tokens. Changing one primitive propagates to all consumers.');
+
+      svg.append('defs').append('marker')
+        .attr('id', 'arrow2').attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      g.append('text').attr('x', 0).attr('y', -20)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', 700).attr('fill', 'var(--color-ink)')
+        .text('Three-tier token hierarchy: primitive → semantic → component');
+
+      const colW = W / 3;
+      const tokenH = 72, tokenGap = 12;
+      const colors = { primitive: 'var(--color-red)', semantic: 'var(--color-brown)', component: 'var(--color-ink)' };
+
+      tiers.forEach((tier, ti) => {
+        const cx = ti * colW;
+
+        // Column header
+        g.append('text').attr('x', cx + colW / 2).attr('y', 0)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-secondary)')
+          .attr('letter-spacing', '0.08em')
+          .text(tier.label);
+
+        // Column divider
+        if (ti > 0) {
+          g.append('line')
+            .attr('x1', cx).attr('y1', -16).attr('x2', cx).attr('y2', H - 80)
+            .attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75)
+            .attr('aria-hidden', 'true');
+        }
+
+        tier.tokens.forEach((tok, ki) => {
+          const ty = 16 + ki * (tokenH + tokenGap);
+          const tx = cx + 8;
+          const tw = colW - 16;
+
+          const tg = g.append('g')
+            .attr('tabindex', 0)
+            .attr('aria-label', `${tok.name}: ${tok.role}`)
+            .on('mouseover', (event) => showTooltip(event, `<strong>${tok.name}</strong><br/>${tok.role}<br/><em>${tok.value}</em>`))
+            .on('mousemove', moveTooltip).on('mouseout', hideTooltip)
+            .on('keydown', (event) => {
+              if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>${tok.name}</strong><br/>${tok.role}<br/><em>${tok.value}</em>`);
+            });
+
+          tg.append('rect')
+            .attr('x', tx).attr('y', ty).attr('width', tw).attr('height', tokenH)
+            .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+
+          tg.append('text')
+            .attr('x', tx + 8).attr('y', ty + 16)
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 10).attr('font-weight', 700)
+            .attr('fill', colors[tok.type])
+            .text(tok.name);
+
+          tg.append('text')
+            .attr('x', tx + 8).attr('y', ty + 32)
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+            .text(tok.role);
+
+          tg.append('text')
+            .attr('x', tx + 8).attr('y', ty + 52)
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+            .text('Value: ' + tok.value);
+
+          // Arrow to next tier (from tier 0 to tier 1, tier 1 to tier 2)
+          if (ti < 2) {
+            const ax1 = tx + tw + 2;
+            const ay  = ty + tokenH / 2;
+            const ax2 = (ti + 1) * colW + 6;
+            g.append('line')
+              .attr('x1', ax1).attr('y1', ay).attr('x2', ax2 - 2).attr('y2', ay)
+              .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5)
+              .attr('marker-end', 'url(#arrow2)').attr('aria-hidden', 'true');
+          }
+        });
+      });
+
+      // Cascade propagation bar
+      const barY = H - 72;
+      g.append('rect')
+        .attr('x', 0).attr('y', barY).attr('width', W).attr('height', 40)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+
+      g.append('text')
+        .attr('x', 8).attr('y', barY - 6)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('font-weight', 700).attr('fill', 'var(--color-secondary)')
+        .attr('letter-spacing', '0.08em')
+        .text('WHEN ONE PRIMITIVE CHANGES:');
+
+      g.append('text')
+        .attr('x', 8).attr('y', barY + 16)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 11).attr('fill', 'var(--color-red)')
+        .text('color/palette/blue-500 updated');
+
+      g.append('text')
+        .attr('x', 210).attr('y', barY + 16)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 11).attr('fill', 'var(--color-ink)')
+        .text('→ color/brand/primary resolves → color/button/background/default resolves');
+
+      g.append('text')
+        .attr('x', 8).attr('y', barY + 34)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('All update automatically. Product code that consumes semantic tokens does not change.');
+
+      // Caption
+      g.append('text')
+        .attr('x', 0).attr('y', H + 20)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('The aliasing chain is the point. Changing one primitive updates every semantic and component token that references it.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

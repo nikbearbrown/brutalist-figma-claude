@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 3.2 — Alias Chain Resolution</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1A1A1A;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C0724D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; min-height: 460px; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink); max-width: 280px; line-height: 1.5;
+    }
+    .step-box { cursor: pointer; }
+    .step-box:focus { outline: 2px solid var(--color-red); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const chainSteps = [
+      {
+        id: 'component',
+        label: 'COMPONENT node',
+        sub: 'fills[0].color',
+        detail: ['fills[0].color:', '{ r:0.082, g:0.337,', '  b:0.855, a:1 }', 'boundVariables →', 'VariableID:12:45'],
+        highlight: false,
+        info: 'The component node has a fills array with a resolved RGB color. But it also has boundVariables pointing to a VariableID. For pipeline extraction, always use the variable reference — the resolved color is a snapshot, the variable is the stable token.',
+      },
+      {
+        id: 'semantic',
+        label: 'VariableID:12:45',
+        sub: 'color/brand/primary',
+        detail: ['resolvedType: COLOR', 'variableCollectionId:', '  "12:0" (Brand Colors)', 'valuesByMode:', '  "12:0" → ALIAS →', '  VariableID:11:30'],
+        highlight: true,
+        info: 'A semantic design token. Its valuesByMode holds VARIABLE_ALIAS references — it points to a primitive token for each mode. The semantic token is what the designer sets; the primitive token holds the actual color value.',
+      },
+      {
+        id: 'primitive',
+        label: 'VariableID:11:30',
+        sub: 'color/primitive/blue-500',
+        detail: ['resolvedType: COLOR', 'variableCollectionId:', '  "11:0" (Primitives)', 'valuesByMode:', '  "11:0" → { r:0.082,', '  g:0.337, b:0.855, a:1 }'],
+        highlight: false,
+        info: 'A primitive design token. Its valuesByMode holds raw { r, g, b, a } values — not aliases. This is the end of the chain. Convert to hex: #1558D6.',
+      },
+      {
+        id: 'terminal',
+        label: '#1558D6',
+        sub: 'terminal raw value',
+        detail: ['r: 0.082 → 15', 'g: 0.337 → 56', 'b: 0.855 → D6', 'hex: #1558D6'],
+        highlight: false,
+        isColor: true,
+        color: '#1558D6',
+        info: 'The terminal hex value, computed from the raw { r, g, b, a } triple. r * 255 = 20.9 → 15 hex. g * 255 = 85.9 → 56 hex. b * 255 = 218 → D6 hex. Result: #1558D6.',
+      },
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px');
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const W = document.getElementById('chart').clientWidth || 800;
+      const H = Math.max(480, W * 0.6);
+      const margin = { top: 48, right: 32, bottom: 48, left: 32 };
+      const innerW = W - margin.left - margin.right;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', W).attr('height', H)
+        .attr('role', 'img')
+        .attr('aria-labelledby', 'ch3-fig2-title ch3-fig2-desc');
+      svg.append('title').attr('id', 'ch3-fig2-title').text('Variable Alias Chain Resolution');
+      svg.append('desc').attr('id', 'ch3-fig2-desc').text('Interactive diagram showing how a COMPONENT node with boundVariables resolves through a semantic token (color/brand/primary) aliasing a primitive token (color/primitive/blue-500) to reach the terminal hex value #1558D6. Hover each step for details.');
+
+      svg.append('rect').attr('width', W).attr('height', H).attr('fill', 'var(--color-white)');
+
+      const defs = svg.append('defs');
+      defs.append('marker').attr('id', 'arr-c')
+        .attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-red)');
+      defs.append('marker').attr('id', 'arr-b')
+        .attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+
+      const stepCount = chainSteps.length;
+      const stepGap = 20;
+      const stepW = (innerW - stepGap * (stepCount - 1)) / stepCount;
+      const topBoxH = 52;
+      const topBoxY = margin.top;
+      const detailH = Math.min(120, H * 0.26);
+      const detailY = topBoxY + topBoxH + 28;
+      const arrowLabels = ['alias ref', 'alias →', 'terminal'];
+
+      chainSteps.forEach((step, i) => {
+        const x = margin.left + i * (stepW + stepGap);
+        const mx = x + stepW / 2;
+
+        // Top box
+        const bc = step.highlight ? 'var(--color-red)' : 'var(--color-border)';
+        const bw = step.highlight ? 1.5 : 0.75;
+
+        svg.append('rect')
+          .attr('class', 'step-box')
+          .attr('x', x).attr('y', topBoxY)
+          .attr('width', stepW).attr('height', topBoxH)
+          .attr('fill', step.isColor ? step.color : 'var(--color-fill)')
+          .attr('stroke', bc).attr('stroke-width', bw)
+          .attr('tabindex', 0)
+          .attr('aria-label', `${step.label}: ${step.info}`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>${step.label}</strong><br>${step.info}`))
+          .on('mousemove', moveTooltip)
+          .on('mouseout', hideTooltip)
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>${step.label}</strong><br>${step.info}`);
+          })
+          .on('focus', (ev) => { if (!step.isColor) d3.select(ev.target).attr('fill', 'var(--color-white)'); })
+          .on('blur', (ev) => { if (!step.isColor) d3.select(ev.target).attr('fill', 'var(--color-fill)'); });
+
+        svg.append('text')
+          .attr('x', mx).attr('y', topBoxY + topBoxH * 0.36)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(11, stepW * 0.09))
+          .attr('font-weight', '700')
+          .attr('fill', step.isColor ? '#FFFFFF' : (step.highlight ? 'var(--color-red)' : 'var(--color-ink)'))
+          .style('pointer-events', 'none')
+          .text(step.label);
+
+        svg.append('text')
+          .attr('x', mx).attr('y', topBoxY + topBoxH * 0.72)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(9, stepW * 0.077))
+          .attr('fill', step.isColor ? 'rgba(255,255,255,0.8)' : 'var(--color-secondary)')
+          .style('pointer-events', 'none')
+          .text(step.sub);
+
+        // Arrow to next
+        if (i < stepCount - 1) {
+          const ax1 = x + stepW + 2;
+          const ax2 = x + stepW + stepGap - 2;
+          const ay = topBoxY + topBoxH / 2;
+          svg.append('line')
+            .attr('x1', ax1).attr('y1', ay).attr('x2', ax2).attr('y2', ay)
+            .attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5)
+            .attr('stroke-dasharray', '4 3')
+            .attr('marker-end', 'url(#arr-c)');
+          svg.append('text')
+            .attr('x', (ax1 + ax2) / 2).attr('y', ay - 5)
+            .attr('text-anchor', 'middle')
+            .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size', 9).attr('fill', 'var(--color-red)')
+            .text(arrowLabels[i]);
+        }
+
+        // Detail box
+        svg.append('line')
+          .attr('x1', mx).attr('y1', topBoxY + topBoxH)
+          .attr('x2', mx).attr('y2', detailY - 2)
+          .attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75)
+          .attr('stroke-dasharray', '4 3');
+
+        svg.append('rect')
+          .attr('x', x).attr('y', detailY)
+          .attr('width', stepW).attr('height', detailH)
+          .attr('fill', 'var(--color-fill)')
+          .attr('stroke', bc).attr('stroke-width', bw);
+
+        const monoFs = Math.min(9, stepW * 0.083);
+        step.detail.forEach((line, j) => {
+          svg.append('text')
+            .attr('x', x + 6).attr('y', detailY + 14 + j * (monoFs + 4))
+            .attr('font-family', "'JetBrains Mono','Fira Code','Courier New',monospace")
+            .attr('font-size', monoFs)
+            .attr('fill', line.includes('ALIAS') ? 'var(--color-red)' : 'var(--color-secondary)')
+            .text(line);
+        });
+      });
+
+      // "Use the reference, not the value" callout
+      const calloutY = detailY + detailH + 20;
+      const calloutH = 44;
+      svg.append('rect')
+        .attr('x', margin.left).attr('y', calloutY)
+        .attr('width', innerW).attr('height', calloutH)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-red)').attr('stroke-width', 1);
+      svg.append('text')
+        .attr('x', W / 2).attr('y', calloutY + calloutH * 0.38)
+        .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', Math.min(12, W * 0.016))
+        .attr('font-weight', '700').attr('fill', 'var(--color-red)')
+        .text('Use the variable reference — not the resolved value');
+      svg.append('text')
+        .attr('x', W / 2).attr('y', calloutY + calloutH * 0.74)
+        .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', Math.min(10, W * 0.013))
+        .attr('fill', 'var(--color-secondary)')
+        .text('The resolved value is a snapshot at extraction time. The variable ID is stable and updates when the token changes.');
+
+      // Caption
+      svg.append('text')
+        .attr('x', W / 2).attr('y', H - 12)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Hover each step for details. Chain: component boundVariables → semantic → primitive → #1558D6.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

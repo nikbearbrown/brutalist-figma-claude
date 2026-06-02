@@ -1,0 +1,106 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig01-title fig01-desc">
+  <title id="fig01-title">Figma variable name transformation chain</title>
+  <desc id="fig01-desc">One string in Figma becomes four identifiers simultaneously. The transformation is deterministic — the input name is the only variable the pipeline author does not control.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas background -->
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="32" y="30" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="13" font-weight="700" fill="#000000">Transformation chain: one name, four outputs</text>
+
+  <!-- Stage boxes — 5 stages across the chain -->
+  <!-- Stage 1: Figma -->
+  <rect x="32" y="52" width="110" height="56" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="87" y="73" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">FIGMA</text>
+  <text x="87" y="90" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000" text-anchor="middle">Variable name</text>
+  <text x="87" y="104" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E" text-anchor="middle">color/brand/primary</text>
+
+  <!-- Arrow 1 -->
+  <line x1="142" y1="80" x2="166" y2="80" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Stage 2: API JSON -->
+  <rect x="168" y="52" width="110" height="56" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="223" y="73" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">REST API</text>
+  <text x="223" y="90" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000" text-anchor="middle">JSON response</text>
+  <text x="223" y="104" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">"name": "color/…"</text>
+
+  <!-- Arrow 2 -->
+  <line x1="278" y1="80" x2="302" y2="80" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Stage 3: Token extractor -->
+  <rect x="304" y="52" width="120" height="56" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="364" y="73" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">STYLE DICTIONARY</text>
+  <text x="364" y="88" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000" text-anchor="middle">Nested object</text>
+  <text x="364" y="102" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">color → brand → primary</text>
+
+  <!-- Arrow 3 — fans out to 4 outputs -->
+  <line x1="424" y1="80" x2="448" y2="80" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Stage 4: Platform formatters box -->
+  <rect x="450" y="52" width="110" height="56" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="505" y="73" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">PLATFORM</text>
+  <text x="505" y="90" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">FORMATTERS</text>
+  <text x="505" y="106" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">case + prefix rules</text>
+
+  <!-- Fan arrows from formatters to 4 outputs -->
+  <!-- CSS -->
+  <path d="M560,65 Q600,65 610,128" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <!-- Swift -->
+  <path d="M560,73 Q605,73 610,196" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <!-- Android -->
+  <path d="M560,87 Q605,87 610,262" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <!-- JS -->
+  <path d="M560,95 Q600,95 610,328" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Output boxes -->
+  <!-- CSS -->
+  <rect x="612" y="110" width="56" height="38" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="640" y="127" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">CSS</text>
+  <text x="640" y="142" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#C8102E" text-anchor="middle">--color-brand-primary</text>
+
+  <!-- Swift -->
+  <rect x="612" y="176" width="56" height="38" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="640" y="193" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">SWIFT</text>
+  <text x="640" y="208" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">colorBrandPrimary</text>
+
+  <!-- Android -->
+  <rect x="612" y="242" width="56" height="38" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="640" y="259" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">ANDROID</text>
+  <text x="640" y="274" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">color_brand_primary</text>
+
+  <!-- JS -->
+  <rect x="612" y="308" width="56" height="38" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="640" y="325" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">JS</text>
+  <text x="640" y="340" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">color.brand.primary</text>
+
+  <!-- Annotation: deterministic label -->
+  <line x1="32" y1="140" x2="560" y2="140" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="5 4"/>
+  <text x="32" y="158" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">The transformation is deterministic. Pipeline authors control the rules — not the input name.</text>
+
+  <!-- Second row: bad name example -->
+  <text x="32" y="192" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" letter-spacing="0.08em">CONTRAST: POORLY NAMED INPUT</text>
+
+  <rect x="32" y="202" width="110" height="44" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="87" y="219" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">FIGMA</text>
+  <text x="87" y="239" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#A0522D" text-anchor="middle">Brand Blue</text>
+
+  <line x1="142" y1="224" x2="240" y2="224" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <rect x="242" y="202" width="110" height="44" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="297" y="219" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">CSS OUTPUT</text>
+  <text x="297" y="239" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#A0522D" text-anchor="middle">--brand-blue</text>
+
+  <!-- Warning annotation -->
+  <text x="370" y="216" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">Name encodes appearance,</text>
+  <text x="370" y="232" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">not role. Becomes inaccurate</text>
+  <text x="370" y="248" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" fill="#000000">the moment the brand color changes.</text>
+
+  <!-- Caption -->
+  <text x="32" y="390" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">One string in Figma becomes four identifiers simultaneously. The transformation is deterministic —</text>
+  <text x="32" y="404" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">the input name is the only variable the pipeline author does not control.</text>
+</svg>

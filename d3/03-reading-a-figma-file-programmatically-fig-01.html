@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 3.1 — Figma File Response Structure</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1A1A1A;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C0724D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; min-height: 500px; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink); max-width: 280px; line-height: 1.5;
+    }
+    .key-box { cursor: pointer; }
+    .key-box:focus { outline: 2px solid var(--color-red); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const topKeys = [
+      {
+        id: 'document', label: 'document', highlight: false,
+        desc: 'Node tree (recursive)',
+        info: 'The full DOCUMENT node tree. DOCUMENT → CANVAS (pages) → FRAME / COMPONENT / COMPONENT_SET / INSTANCE / TEXT / RECTANGLE / VECTOR. Each node has: id, name, type, children, fills, strokes, effects, absoluteBoundingBox, boundVariables.',
+        children: [
+          'DOCUMENT (root, 0:0)',
+          '└ CANVAS (one per page)',
+          '  └ FRAME / COMPONENT / COMPONENT_SET',
+          '    └ INSTANCE / TEXT / RECTANGLE / VECTOR',
+          'Each node: id · name · type · children · fills · boundVariables',
+        ]
+      },
+      {
+        id: 'components', label: 'components', highlight: false,
+        desc: 'Flat ID → meta index',
+        info: 'A flat map from component ID to metadata. Each entry: name, description, stable library key, componentSetId (if part of a variant group). Use this for component inventory — you do not need to walk the document tree.',
+        children: [
+          '"1:23": { name, description, key, componentSetId }',
+          '"1:45": { name, description, key, componentSetId }',
+          '... (one entry per component definition)',
+        ]
+      },
+      {
+        id: 'styles', label: 'styles', highlight: false,
+        desc: 'Color · text · effects',
+        info: 'The older token system. Named, reusable fills (color styles), text properties (text styles), effects, and grids. Accessible on all plan tiers via REST. Many design systems still use styles alongside or instead of variables.',
+        children: [
+          '"S:abc": { name, description, key, styleType }',
+          'styleType: FILL | TEXT | EFFECT | GRID',
+          'Available on all plan tiers via REST',
+        ]
+      },
+      {
+        id: 'variables', label: 'variables', highlight: true,
+        desc: 'Enterprise plan only',
+        info: 'The design token system. Contains variables.variables (map of VariableID → Variable with valuesByMode) and variables.variableCollections (map of collection ID → collection with modes). NOT embedded in the document tree — a separate top-level key. Enterprise plan required for REST access.',
+        children: [
+          'variables.variables: { [VariableID]: Variable }',
+          '  name · resolvedType · valuesByMode · description',
+          '  hiddenFromPublishing · variableCollectionId',
+          'variables.variableCollections: { [CollectionID]: Collection }',
+          '  name · modes[] · defaultModeId',
+          'Enterprise plan required for REST access',
+        ]
+      },
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px');
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const W = document.getElementById('chart').clientWidth || 800;
+      const H = Math.max(500, W * 0.65);
+      const margin = { top: 48, right: 32, bottom: 40, left: 32 };
+      const innerW = W - margin.left - margin.right;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', W).attr('height', H)
+        .attr('role', 'img')
+        .attr('aria-labelledby', 'ch3-fig1-title ch3-fig1-desc');
+      svg.append('title').attr('id', 'ch3-fig1-title').text('Figma File API Response Structure');
+      svg.append('desc').attr('id', 'ch3-fig1-desc').text('Interactive diagram showing the four top-level keys in a GET /v1/files/:key response: document, components, styles, and variables. Click or hover each key for details on its contents and plan requirements.');
+
+      svg.append('rect').attr('width', W).attr('height', H).attr('fill', 'var(--color-white)');
+
+      const defs = svg.append('defs');
+      defs.append('marker').attr('id', 'arr')
+        .attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+      defs.append('marker').attr('id', 'arr-red')
+        .attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-red)');
+
+      // Root node
+      const rootW = Math.min(240, innerW * 0.36);
+      const rootH = 40;
+      const rootX = margin.left + (innerW - rootW) / 2;
+      const rootY = margin.top;
+
+      svg.append('rect').attr('x', rootX).attr('y', rootY).attr('width', rootW).attr('height', rootH)
+        .attr('fill', 'var(--color-ink)');
+      svg.append('text').attr('x', rootX + rootW / 2).attr('y', rootY + rootH / 2)
+        .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 13).attr('font-weight', '700').attr('fill', 'var(--color-white)')
+        .text('GET /v1/files/:key Response');
+
+      // Four key columns
+      const colCount = topKeys.length;
+      const colGap = 12;
+      const colW = (innerW - colGap * (colCount - 1)) / colCount;
+      const topBoxH = 48;
+      const topBoxY = rootY + rootH + 48;
+      const detailY = topBoxY + topBoxH + 24;
+      const detailH = H - detailY - margin.bottom - 8;
+
+      topKeys.forEach((key, i) => {
+        const x = margin.left + i * (colW + colGap);
+        const bx = rootX + rootW / 2;
+        const kx = x + colW / 2;
+
+        // Branch line from root
+        svg.append('path')
+          .attr('d', `M ${bx} ${rootY + rootH} C ${bx} ${topBoxY - 16}, ${kx} ${topBoxY - 16}, ${kx} ${topBoxY}`)
+          .attr('fill', 'none')
+          .attr('stroke', key.highlight ? 'var(--color-red)' : 'var(--color-ink)')
+          .attr('stroke-width', 1.5)
+          .attr('marker-end', key.highlight ? 'url(#arr-red)' : 'url(#arr)');
+
+        // Top key box
+        svg.append('rect')
+          .attr('class', 'key-box')
+          .attr('x', x).attr('y', topBoxY)
+          .attr('width', colW).attr('height', topBoxH)
+          .attr('fill', 'var(--color-fill)')
+          .attr('stroke', key.highlight ? 'var(--color-red)' : 'var(--color-border)')
+          .attr('stroke-width', key.highlight ? 1.5 : 0.75)
+          .attr('tabindex', 0)
+          .attr('aria-label', `${key.label}: ${key.info}`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>${key.label}</strong><br>${key.info}`))
+          .on('mousemove', moveTooltip)
+          .on('mouseout', hideTooltip)
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>${key.label}</strong><br>${key.info}`);
+          })
+          .on('focus', (ev) => d3.select(ev.target).attr('fill', 'var(--color-white)'))
+          .on('blur', (ev) => d3.select(ev.target).attr('fill', 'var(--color-fill)'));
+
+        svg.append('text')
+          .attr('x', kx).attr('y', topBoxY + topBoxH * 0.38)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(13, colW * 0.12))
+          .attr('font-weight', '700')
+          .attr('fill', key.highlight ? 'var(--color-red)' : 'var(--color-ink)')
+          .style('pointer-events', 'none')
+          .text(key.label);
+
+        svg.append('text')
+          .attr('x', kx).attr('y', topBoxY + topBoxH * 0.76)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(9, colW * 0.085))
+          .attr('fill', 'var(--color-secondary)')
+          .style('pointer-events', 'none')
+          .text(key.desc);
+
+        // Detail box
+        svg.append('line')
+          .attr('x1', kx).attr('y1', topBoxY + topBoxH)
+          .attr('x2', kx).attr('y2', detailY - 2)
+          .attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75)
+          .attr('stroke-dasharray', '4 3');
+
+        svg.append('rect')
+          .attr('x', x).attr('y', detailY)
+          .attr('width', colW).attr('height', detailH)
+          .attr('fill', 'var(--color-fill)')
+          .attr('stroke', key.highlight ? 'var(--color-red)' : 'var(--color-border)')
+          .attr('stroke-width', key.highlight ? 1 : 0.75);
+
+        const monoFs = Math.min(9, colW * 0.08);
+        key.children.forEach((line, j) => {
+          svg.append('text')
+            .attr('x', x + 8).attr('y', detailY + 16 + j * (monoFs + 5))
+            .attr('font-family', "'JetBrains Mono','Fira Code','Courier New',monospace")
+            .attr('font-size', monoFs)
+            .attr('fill', line.includes('Enterprise') ? 'var(--color-red)' : (line.includes('boundVariables') ? 'var(--color-red)' : 'var(--color-secondary)'))
+            .text(line.length > Math.floor(colW / monoFs * 1.5) ? line.substring(0, Math.floor(colW / monoFs * 1.5)) + '…' : line);
+        });
+      });
+
+      // Cross-reference arrow from document boundVariables to variables detail
+      const docX = margin.left + colW / 2;
+      const varX = margin.left + 3 * (colW + colGap) + colW / 2;
+      const arcY = H - margin.bottom - 4;
+      svg.append('path')
+        .attr('d', `M ${docX} ${H - margin.bottom - 20} L ${docX} ${arcY} L ${varX} ${arcY} L ${varX} ${H - margin.bottom - 20}`)
+        .attr('fill', 'none').attr('stroke', 'var(--color-red)').attr('stroke-width', 1.5)
+        .attr('stroke-dasharray', '5 4').attr('marker-end', 'url(#arr-red)');
+
+      svg.append('text')
+        .attr('x', (docX + varX) / 2).attr('y', arcY - 4)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 9).attr('fill', 'var(--color-red)')
+        .text('boundVariables IDs resolve into the variables block');
+
+      // Title / caption
+      svg.append('text')
+        .attr('x', W / 2).attr('y', margin.top - 12)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .attr('letter-spacing', '0.08em')
+        .text('GET /v1/files/:key — TOP-LEVEL KEYS  ·  hover each key for details');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

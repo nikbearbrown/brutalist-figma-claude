@@ -1,0 +1,99 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig62-title fig62-desc">
+  <title id="fig62-title">Two-process plugin architecture: sandbox and UI iframe with postMessage channel</title>
+  <desc id="fig62-desc">Plugin code splits into a sandbox with figma.* access and a UI iframe with browser APIs. They communicate via postMessage. The sandbox applies changes; the UI manages approval state.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#C8102E"/>
+    </marker>
+  </defs>
+
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="32" y="28" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="13" font-weight="700" fill="#000000">Two-process plugin architecture: sandbox ↔ UI iframe</text>
+
+  <!-- Sandbox box -->
+  <rect x="32" y="48" width="260" height="200" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="162" y="66" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">PLUGIN SANDBOX (code.js)</text>
+  <text x="162" y="80" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">QuickJS WebAssembly · Figma Desktop only</text>
+
+  <text x="48" y="102" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000">Can access:</text>
+  <text x="48" y="116" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E">figma.variables.getLocalVariableCollectionsAsync()</text>
+  <text x="48" y="130" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E">figma.variables.getVariableByIdAsync(id)</text>
+  <text x="48" y="144" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E">variable.name = newValue</text>
+  <text x="48" y="158" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E">variable.description = text</text>
+  <text x="48" y="172" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E">figma.getNodeByIdAsync(id)</text>
+
+  <text x="48" y="196" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555">Cannot access:</text>
+  <text x="48" y="210" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">fetch · localStorage · DOM · browser APIs</text>
+  <text x="48" y="224" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">External data only via postMessage from UI</text>
+
+  <!-- postMessage channel in the middle -->
+  <rect x="310" y="108" width="80" height="80" fill="#FFFFFF" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="350" y="142" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" font-weight="700" fill="#C8102E" text-anchor="middle" letter-spacing="0.08em">post</text>
+  <text x="350" y="154" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" font-weight="700" fill="#C8102E" text-anchor="middle" letter-spacing="0.08em">Message</text>
+  <text x="350" y="168" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">channel</text>
+
+  <!-- Arrow sandbox → channel -->
+  <line x1="292" y1="148" x2="308" y2="148" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="228" y="140" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">APPLY_RESULTS</text>
+
+  <!-- Arrow channel → sandbox -->
+  <line x1="308" y1="160" x2="292" y2="160" stroke="#C8102E" stroke-width="1.5" fill="none" marker-end="url(#arrowRed)"/>
+  <text x="196" y="174" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#C8102E">APPLY_FIXES (approved only)</text>
+
+  <!-- UI iframe box -->
+  <rect x="408" y="48" width="260" height="200" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="538" y="66" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing="0.08em">PLUGIN UI (ui.html — iframe)</text>
+  <text x="538" y="80" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">Browser APIs available here</text>
+
+  <text x="424" y="102" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000">Runs here:</text>
+  <text x="424" y="116" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">Load + parse audit-report.json</text>
+  <text x="424" y="130" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">Generate fix proposals</text>
+  <text x="424" y="144" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">Render approval preview</text>
+  <text x="424" y="158" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">Manage approve / reject state</text>
+
+  <!-- Gate box inside UI -->
+  <rect x="424" y="172" width="228" height="56" fill="#FFFFFF" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="538" y="190" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" text-anchor="middle" letter-spacing="0.08em">HUMAN APPROVAL GATE</text>
+  <text x="538" y="204" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">Approve / Reject each fix individually</text>
+  <text x="538" y="218" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">confirm() dialog before any write</text>
+
+  <!-- Arrow channel → UI -->
+  <line x1="392" y1="148" x2="406" y2="148" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Arrow UI → channel -->
+  <line x1="406" y1="160" x2="392" y2="160" stroke="#C8102E" stroke-width="1.5" fill="none" marker-end="url(#arrowRed)"/>
+
+  <!-- Three-phase workflow -->
+  <text x="32" y="278" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" letter-spacing="0.08em">THREE-PHASE WORKFLOW</text>
+
+  <!-- Phase 1 -->
+  <rect x="32" y="286" width="195" height="52" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="40" y="302" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555">PHASE 1 — LOAD</text>
+  <text x="40" y="316" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">Paste audit-report.json</text>
+  <text x="40" y="330" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">UI generates fix proposals</text>
+
+  <line x1="227" y1="312" x2="249" y2="312" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Phase 2 -->
+  <rect x="252" y="286" width="195" height="52" fill="#FFFFFF" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="260" y="302" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E">PHASE 2 — PREVIEW</text>
+  <text x="260" y="316" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E">Human reviews each fix</text>
+  <text x="260" y="330" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555">Nothing changes in Figma yet</text>
+
+  <line x1="447" y1="312" x2="469" y2="312" stroke="#C8102E" stroke-width="1.5" fill="none" marker-end="url(#arrowRed)"/>
+
+  <!-- Phase 3 -->
+  <rect x="472" y="286" width="196" height="52" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="480" y="302" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555">PHASE 3 — APPLY</text>
+  <text x="480" y="316" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">Approved fixes → sandbox</text>
+  <text x="480" y="330" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Applied to Figma file</text>
+
+  <!-- Caption -->
+  <text x="32" y="386" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">The sandbox has figma.* — the UI iframe has the browser. External data loads in the UI and posts to the sandbox.</text>
+  <text x="32" y="399" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Only approved fixes are sent via postMessage to execute. No write occurs without human confirmation.</text>
+</svg>

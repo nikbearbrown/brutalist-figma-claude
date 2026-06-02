@@ -22,7 +22,19 @@ Before writing a line of extraction code, it is worth being precise about what t
 
 The API exposes, for every published component: its name, its description field (whatever the designer typed into Figma's component description box), the node ID, the component key used for library references, and — if the component belongs to a component set — the ID of that set. [verify — current as of writing] It exposes variant properties as a key-value map: for a button that exists in the set as `Size=Large, Variant=Primary`, the `variantProperties` field on that specific component node is `{ "Size": "Large", "Variant": "Primary" }`. Collect the variant properties across all components in a set and you have the complete variant dimensions table.
 
-<!-- → [TABLE: What the Figma REST API exposes vs. does not expose about components — rows: name, description, variant properties, component set membership, Code Connect link, usage guidance, accessibility semantics, do/don't examples, whether documentation is correct] -->
+| Property | Exposed by API | Notes |
+|---|---|---|
+| Name | Yes | String exactly as entered in Figma |
+| Description | Yes | Contents of the component's description field — may be empty |
+| Variant properties | Yes | Key-value map: `{ "Size": "Large", "Variant": "Primary" }` |
+| Component set membership | Yes | `componentSetId` links the variant to its parent set |
+| Node ID | Yes | Stable within file; may change on structural refactor |
+| Component key | Yes | More stable library reference for cross-file linking |
+| Code Connect link | No | Configured separately via Code Connect CLI; not in API response |
+| Usage guidance | No | Intent is not a property the file graph stores |
+| Accessibility semantics | No | ARIA roles and keyboard behavior live in the engineering implementation |
+| Do/don't examples | No | Editorial content; authored in documentation platform, not Figma |
+| Whether documentation is correct | No | The API knows what exists, not whether descriptions are accurate |
 
 What the API does not expose is harder to list because the absence is invisible. It does not know what the component is for. The description field holds whatever a designer typed — which may be a thorough explanation, a placeholder, or nothing at all. It does not know when to use a compact card versus a default card, or why the destructive button variant is red. It does not know whether the documentation on the site matches engineering reality. It knows what exists in the file. Intent is not a property the file graph stores.
 
@@ -246,7 +258,11 @@ After one run, four files land in `docs-sync-output/`.
 
 `docs-sync-report.md` is a human-readable summary of the above, suitable for attaching to a PR comment or posting in Slack when the sync job runs.
 
-<!-- → [TABLE: Three severity tiers in missing-docs.json — columns: tier, what it covers, CI behavior, who fixes it, typical examples] -->
+| Tier | What it covers | CI behavior | Who fixes it | Typical examples |
+|---|---|---|---|---|
+| Error | Component sets with no description | Blocks pipeline — `process.exit(1)` | Designer opens Figma and writes a set-level description | "Button" set with no description field; "Card" set with empty string |
+| Warning | Individual component variants with no description | Logged but does not block | Designer adds descriptions to individual variant nodes | "Button/Primary/Large" missing description; unnamed icon variants |
+| Info | Descriptions present but fewer than 20 characters | Logged as informational | Designer replaces placeholder with substantive text | "See Figma" (8 chars); "TBD" (3 chars); "Button variant" (14 chars) |
 
 ---
 
@@ -256,7 +272,9 @@ The three JSON files are the integration point. How they connect depends on whic
 
 Storybook does not consume the Figma API directly. The connection works through Code Connect — a Figma feature [verify — current as of writing] that links a Figma component to its codebase implementation by embedding a code snippet in Figma's Dev Mode panel. When configured, a developer opening the Button component in Dev Mode sees the actual import statement and usage example alongside the design. Code Connect requires explicit configuration per component: installing the CLI (`npm install --save-dev @figma/code-connect`), creating a `.figma.connect.ts` file that maps the Figma node ID to the real component and its prop mappings, and running `figma connect publish` to push the mappings to Figma. It is not inferred automatically, and the missing-docs report should flag components without Code Connect links as documentation debt separate from missing descriptive text.
 
-<!-- → [FIGURE: Diagram showing Code Connect data flow — Figma component node → Code Connect config file → figma connect publish → Figma Dev Mode panel showing code snippet. Caption: Code Connect closes the gap between the visual component and the import statement. It requires explicit setup; the sync tool can detect its absence.] -->
+![Code Connect data flow diagram: Figma component node maps to a Code Connect config file, which is pushed via figma connect publish to the Figma Dev Mode panel, where the developer sees the import statement and usage example. A dashed path shows sync-docs.mjs detecting absence of Code Connect.](images/10-component-documentation-sync-fig-01.png)
+
+*Figure 10.1 — Code Connect data flow*
 
 Zeroheight and Supernova both have native Figma integrations that sync component thumbnails and some metadata. [verify — current as of writing for both platforms] The native sync does not expose variant property tables or coverage metrics. The `variant-tables.json` from `sync-docs.mjs` supplements the native data with structured property tables that editors can incorporate into component pages. The more automated path, where available, uses the platform's API to push descriptions from the inventory JSON directly — but this requires deciding which system owns the canonical description. If Figma owns it, the CLI drives the sync. If the documentation platform owns it, the CLI produces a report but does not push.
 
@@ -274,7 +292,9 @@ Variant property drift is the failure mode that the diff workflow is specificall
 
 The documentation platform de-sync is subtler: if description content has been edited directly in the documentation platform — descriptions written in Zeroheight's editor rather than in Figma — running a sync that overwrites platform content with Figma's description will destroy human-authored content. This is the canonical reason to decide ownership explicitly before automating: Figma owns the descriptions, or the platform does, and only one of those is acceptable for a given team. Mixed ownership is not a policy; it is deferred conflict.
 
-<!-- → [FIGURE: Decision tree for documentation ownership — does the team want descriptions authored in Figma or in the documentation platform? Each branch shows CI behavior, sync direction, and what happens when both sources have content.] -->
+![Documentation ownership decision tree: two branches — descriptions authored in Figma flow to the platform via sync, overwriting platform content; descriptions authored in the platform produce reports only, with no writes back to Figma. Both branches converge on a conflict scenario when both sources have content.](images/10-component-documentation-sync-fig-02.png)
+
+*Figure 10.2 — Documentation ownership decision tree*
 
 ---
 
@@ -301,3 +321,196 @@ Code Connect and programmatic component inventory are the current generation of 
 **3. Stress-test a specific claim.** This chapter argues that generating descriptions using an LLM — filling in the empty description fields automatically — produces the appearance of documentation without communicating anything useful, and is therefore worse than leaving fields empty. Present this argument to the model and ask it to construct the strongest counterargument: a scenario where auto-generated descriptions are genuinely better than empty fields. Then evaluate whether the counterargument changes how you would configure the CI failure threshold.
 
 **4. Draft or audit a professional deliverable.** Write the onboarding documentation for a new design system contributor that explains how the documentation sync pipeline works, what they are responsible for maintaining (descriptions in Figma), and what the machine handles automatically. Ask the model to critique it for clarity and completeness, and to identify the single most common mistake a new contributor would make based on how the documentation is written.
+
+---
+
+## Chapter 10 Exercises: Component Documentation Sync
+**Project:** figma-tools — Your Design System Extraction Toolkit
+**This chapter adds:** `sync-docs.mjs`, which generates a component inventory, variant property tables, and a severity-classified missing-description report from the Figma library API.
+
+### Exercise 1 — When to Use AI
+
+You have just run `sync-docs.mjs` for the first time. The output folder contains `component-inventory.json`, `variant-tables.json`, and `missing-docs.json`. Here is where AI earns its time on this chapter's work.
+
+**Task 1: Prioritizing the missing-docs report.** You have 47 documentation gaps across three severity tiers. An LLM can read `missing-docs.json` and explain which categories of gap — missing component-set descriptions versus thin individual-component descriptions — are most likely to cause downstream failures for engineers using the library. It can propose a triage order based on which components appear most frequently in the codebase.
+
+*Why AI works here:* Pattern recognition and synthesis across a structured list. The model is reading data and applying judgment rules you can verify against the chapter's severity framework. No hidden state.
+
+**Task 2: Drafting variant dimension documentation stubs.** Given a `variant-tables.json` entry — a component set name, its dimensions, and the possible values for each — an LLM can generate a structured markdown stub per dimension: what the dimension controls, what each value means structurally (not behaviorally), and what a developer should verify before using each variant.
+
+*Why AI works here:* Templated generation from structured data. The stub structure is regular; the model fills in what can be inferred from names and values. The developer reviewing the output provides the behavioral knowledge the model cannot.
+
+**Task 3: Explaining the sync pipeline for stakeholders.** Writing a plain-language paragraph for a design director explaining why the CLI reports component sets with no description as a CI-blocking error — and why thin descriptions do not gate the pipeline — requires synthesizing technical rules into business context. An LLM drafts this well from the chapter's severity logic.
+
+*Why AI works here:* Translation between technical and non-technical registers. The underlying logic is explicit; the model repackages it for a different audience.
+
+**The tell:** If the input is a machine-readable artifact from `sync-docs.mjs` — a list, a JSON file, a schema — and the output is a prioritized list, a stub, or an explanation of documented rules, AI is appropriate. When the input requires knowing what a component actually does in production, hand the work to the human who wrote it.
+
+### Exercise 2 — When NOT to Use AI
+
+The following tasks look like documentation work. They are not tasks AI should own.
+
+**Task 1: Writing usage guidance for a component.** The API knows that `Button` has a `destructive` variant. It does not know when to use the destructive button versus a secondary action with a red label, what accessibility implications the color carries, or which interaction patterns it is paired with in production. An LLM presented with the component name and variant properties will generate plausible-sounding guidance. Plausible is not correct.
+
+*Why AI fails here:* Intent fabrication. The model has no access to the decisions made when the component was designed, the user research that informed those decisions, or the production contexts where the component has and has not worked. It will produce confident text about things it cannot know.
+
+**Task 2: Writing accessibility notes.** A11y guidance for a Figma component — which ARIA role applies, which keyboard interactions are required, which screen reader announcements are expected — cannot be derived from the component's API response. The API returns visual properties. Accessibility semantics live in the engineering implementation and in the disability experience of users, neither of which the Figma API exposes.
+
+*Why AI fails here:* Source unavailability. Even a capable model cannot derive keyboard interaction requirements or screen reader behavior from a JSON description of a Figma node. Output that looks authoritative and is fabricated is worse than no output.
+
+**Task 3: Resolving description ownership conflicts.** The documentation platform has descriptions that differ from the Figma descriptions. Deciding which source is canonical — and therefore which content will be overwritten — requires knowing the team's workflows, who has been maintaining which source, and what the consequences are for each direction of sync. This is an organizational decision disguised as a technical one.
+
+*Why AI fails here:* Human authority. No model has access to the team's history, responsibilities, or risk tolerance. A model asked to resolve ownership will propose a framework and miss the specific context that makes one choice right for this team.
+
+**The tell:** If the task requires knowing what a component does (not what it is called or what variants it has), AI cannot reliably perform it. **Series connection:** Tier 4 (AI as generator operating on structured data) requires that the structure contain the relevant information. When it does not — when the facts live in designer intent, engineering implementation, or accessibility specifications — Tier 7 wisdom applies: human-authored usage guidance and accessibility notes are irreplaceable precisely because the machine has no access to what produced them.
+
+### Exercise 3 — LLM Exercise
+
+**What you're building:** A variant dimension documentation assistant that produces first-draft property tables for design system engineers to review and complete.
+
+**Tool:** Claude (standard conversation, not a Project). Why Claude: this task requires reading a JSON artifact and producing structured markdown with reasoning about what each dimension's values imply. A single conversation with the full `variant-tables.json` as context is the right scope — no persistent memory needed, no ambiguity about what the source data is.
+
+**The Prompt:**
+
+```
+I'm building documentation for a Figma design system component library. Below is the variant-tables.json output from a CLI tool that reads the Figma API. Each entry represents a component set with its variant dimensions and possible values.
+
+For each component set in this JSON, produce a markdown documentation stub with this structure:
+
+## [Component Set Name]
+
+**Variants:** [N variants across [X] dimensions]
+
+### Properties
+
+| Dimension | Values | What it controls |
+|-----------|--------|-----------------|
+| [dim]     | [val1, val2, ...] | [inferred from dimension and value names] |
+
+### Notes for reviewers
+- [One sentence on what an engineer should verify before using this component]
+- [Flag any dimension name that is ambiguous or likely to cause prop-mapping confusion]
+
+Here is the JSON:
+
+[PASTE your variant-tables.json content here]
+
+Important: Only describe what the dimension and value names structurally imply. Do not invent behavioral guidance, accessibility requirements, or usage rules. Mark anything you cannot infer from the names with "[REVIEWER: please complete]".
+```
+
+**What this produces:** A markdown file with one stub per component set. Dimensions, values, and inferred descriptions in table form. Explicit "[REVIEWER: please complete]" markers wherever behavioral knowledge is required. This is a starting document, not a finished one — but it cuts first-draft time substantially and surfaces ambiguous dimension names that need renaming before the docs go live.
+
+**How to adapt this prompt:**
+- *Own project:* Replace the bracketed JSON paste with your actual `variant-tables.json` output. If the file is large, paste one component set at a time.
+- *ChatGPT or Gemini:* Both handle this prompt structure well. The "[REVIEWER: please complete]" instruction is important — include it explicitly to prevent the model from filling gaps with fabricated guidance.
+- *Claude Project:* If you work on the same design system regularly, create a Project with `brand-rules.json` and the naming conventions from Chapter 4 as context files. The model will apply your naming conventions when inferring what dimension values mean.
+
+**Connection to previous chapters:** The variant-tables output this prompt consumes was produced by `sync-docs.mjs`, which builds on the component-reading pattern from `figma-read.mjs` (Chapter 3) and depends on the naming conventions from Chapter 4 to make dimension names meaningful. If dimension names are not human-readable — if they follow internal codes rather than the slash convention — the model's inferences will be less useful.
+
+**Preview of next chapter:** Chapter 11 adds `monitor-brand.mjs`, which checks every node in the file against approved colors, type scales, and WCAG contrast thresholds. The component inventory from `sync-docs.mjs` will become context for understanding which components are generating compliance findings.
+
+### Exercise 4 — CLI Exercise
+
+**What you're building:** Extend `sync-docs.mjs` to flag component sets that have descriptions in Figma but no Code Connect mapping — a second tier of documentation debt distinct from the missing-description report.
+
+**Tool:** Claude Code
+**Skill level:** Intermediate — requires reading two output files and producing a merged gap report.
+
+**Setup:**
+- [ ] `sync-docs.mjs` exists in your `figma-tools` project and runs without errors (`npm run docs:sync`)
+- [ ] `docs-sync-output/` contains `component-inventory.json`, `variant-tables.json`, and `missing-docs.json` from a recent run
+- [ ] You have installed `@figma/code-connect` (`npm install --save-dev @figma/code-connect`) and run `figma connect publish` for at least one component, or you have a `code-connect.json` file from a prior session or provided as a fixture
+- [ ] Node.js 18 or later is available
+
+**The Task:**
+
+```
+Read sync-docs.mjs and the three output files in docs-sync-output/.
+
+Add a new check to sync-docs.mjs: after the existing missing-docs computation, read a Code Connect index from a file path passed via --code-connect=<path>. If the file does not exist or the flag is not provided, skip this check gracefully and log "Code Connect check skipped — no --code-connect file provided."
+
+When the Code Connect file is present:
+- Parse it as JSON. Assume it is a flat object keyed by component key (the `key` field in each component inventory entry), with each value containing at least an `importPath` field.
+- For each component set in the variant-tables output, check whether ALL of its component variants have Code Connect mappings. A set passes if every variant's key appears in the Code Connect index. A set fails if any variant's key is absent.
+- Add a new section to missing-docs.json under a key "codeConnectGaps": an array of objects with { setName, setId, missingCount, totalVariants }.
+- Add a new section to docs-sync-report.md: "## Code Connect Gaps" listing each failing set with its missing count.
+
+Do not change the existing missing-docs severity logic. Do not touch variant-tables.json or component-inventory.json. Do not make any Figma API calls that are not already in the script.
+
+Stop after writing the updated files. Do not run the script.
+
+Verification: run `npm run docs:sync -- --code-connect=code-connect.json` (or the path to your Code Connect file). Confirm the new section appears in docs-sync-report.md.
+```
+
+**Expected output:** `docs-sync-output/missing-docs.json` now contains a `codeConnectGaps` array. `docs-sync-output/docs-sync-report.md` has a "## Code Connect Gaps" section. If `--code-connect` is omitted, the script exits cleanly with the skip message.
+
+**What to inspect:** Open `docs-sync-report.md` and confirm the Code Connect gap count makes sense relative to how many components you have configured Code Connect for. If you have Code Connect for zero components, all sets should appear in the gaps list.
+
+**If it goes wrong:** If the script throws on the Code Connect file parse, check that the file is valid JSON and that it is keyed by component `key` (not node ID). If all sets appear in the gaps list when you expect some to pass, confirm the key format in your Code Connect file matches the `key` field in `component-inventory.json`.
+
+**CLAUDE.md / AGENTS.md note:** Add this to your project's `CLAUDE.md`: "Code Connect gap checks require a `--code-connect` flag pointing to the Code Connect CLI's output JSON. The gap check is informational only — it does not change CI exit behavior unless you add a `--strict-code-connect` flag."
+
+### Exercise 5 — AI Validation Exercise
+
+**What you're validating:** The variant dimension documentation stubs produced in Exercise 3.
+**Validation type:** Output quality and failure-mode audit.
+**Risk level:** Medium — fabricated usage guidance embedded in documentation stubs can persist for months before anyone notices it is wrong.
+
+**Setup:** Use the markdown output from Exercise 3, or generate a representative sample: paste two or three entries from `variant-tables.json` into Claude and use the Exercise 3 prompt to produce stubs. Save the output as `variant-stubs-draft.md`.
+
+**The Validation Task:**
+
+```
+Validate the following AI-generated variant documentation stubs against this checklist. For each item, mark Pass, Fail, or N/A and write one sentence explaining your assessment.
+
+CORRECTNESS
+[ ] Every dimension name in the stub matches exactly the dimension name in the source variant-tables.json — no paraphrasing, no reordering.
+[ ] Every value listed for each dimension matches exactly the values in the source — no values added, none omitted.
+[ ] No dimension is described as controlling something that contradicts what its values imply (e.g., a dimension named "State" described as controlling layout).
+
+COMPLETENESS
+[ ] Every component set in the source JSON has a corresponding stub in the output — none skipped, none merged.
+[ ] The reviewer note section is present for every stub, even if the model had no flags to raise.
+
+SCOPE
+[ ] No stub contains usage guidance ("use this variant when...") — only structural descriptions of what dimensions and values are.
+[ ] No stub contains accessibility requirements or keyboard interaction notes.
+[ ] No stub contains claims about when one variant is preferred over another.
+
+CHAPTER-SPECIFIC: HALLUCINATED USAGE GUIDANCE
+[ ] Check each "What it controls" cell in the property tables. Flag any cell that describes a behavioral rule rather than a structural one. Example of a structural description: "Controls the vertical padding of the component container." Example of a hallucinated behavioral rule: "Use Compact when space is limited on mobile screens." The latter cannot be derived from the API response — it requires knowing the design intent.
+[ ] Flag any "[REVIEWER: please complete]" that was replaced by a confident-sounding description. The instruction asked the model to mark unknowns; if it filled them in instead, those cells are fabrication candidates.
+
+CHAPTER-SPECIFIC: ACCESSIBILITY NOTES
+[ ] If any stub contains a sentence about screen reader behavior, ARIA roles, keyboard focus order, or contrast compliance, flag it as out of scope. The sync tool reads names and variant properties. It has no access to semantic HTML, interaction design, or accessibility testing results.
+
+FAILURE-MODE CHECK
+[ ] Fluent but wrong: Identify the single most confident-sounding cell in the output that is most likely to be wrong. What would a developer have to verify to confirm or refute it?
+[ ] AI hallucinating usage guidance: Find one instance (if any) where the model described how or when to use a variant. Rewrite that cell as a structural description or a "[REVIEWER: please complete]" marker.
+
+What to do with your findings: Any Fail on Correctness or on the hallucination checks means the stub requires line-by-line review before it enters the documentation site. Any Fail on Scope means the stub has content that should be deleted entirely — not edited, because the model cannot generate correct content for those cells from this data source. Pass on all items: the stub is ready for the human reviewer to complete the "[REVIEWER: please complete]" sections.
+
+AI Use Disclosure prompt (copy this into your team's documentation PR): "Variant dimension stubs in this PR were generated by Claude using the variant-tables.json output from sync-docs.mjs. The stubs describe structural properties only. Usage guidance, accessibility notes, and behavioral descriptions have been authored or reviewed by [your name]."
+
+**Series connection:** The failure mode here — AI confidently describing usage rules it cannot know — is the same failure the chapter warns against in the auto-generated descriptions section: "A generated description that says 'This is the primary large button component' is technically a non-empty string, but it is not documentation." The validation exercise trains you to see the difference between a string that passes coverage metrics and a string that communicates something. Tier 7 wisdom: the human who designed the component holds the intent. The machine holds the structure.
+```
+
+---
+
+## Prompts
+
+*Structural prompts for reproducing the figures in this chapter. Each prompt specifies marks, data shape, and deliverable so a model can generate the D3 implementation from scratch.*
+
+**Prerequisites:** D3 v7 from `https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js`. Colors only via `var(--color-*)` CSS custom properties. Font `'Real Head Pro','FF Real',Lato,sans-serif`. ResizeObserver redraw pattern. `(event, d)` event signature. SVG `role="img"` + `aria-labelledby` + `<title>` + `<desc>`.
+
+### Figure 10.1 — Code Connect data flow
+
+Produce a single standalone HTML file containing a flow diagram built with D3 v7 that shows the Code Connect data pipeline for a Figma component. The diagram has five rectangular nodes arranged in two rows: a top horizontal row of three nodes (Figma Component Node → Code Connect Config File → figma connect publish) connected by solid arrows with edge labels ("maps to", "publish"), and a bottom row of two nodes (sync-docs.mjs Report on the left, Figma Dev Mode Panel on the right). A solid arrow descends from "figma connect publish" to "Figma Dev Mode Panel" labeled "renders in". Two dashed arrows descend from the top-row nodes to "sync-docs.mjs Report" showing the detection path. Node borders: "Code Connect Config" and "Figma Dev Mode Panel" use `var(--color-red)`; detection nodes use `var(--color-border)` with dashed stroke. All other borders use `var(--color-ink)`. Tooltips on hover for each node explain its role. Chart title, subtitle axis labels in `var(--color-secondary)`. Arrowhead in `<defs>` using `var(--color-ink)` fill. Deliverable: single HTML file, inline CSS, D3 v7 CDN.
+
+> Reference implementation: `d3/10-component-documentation-sync-fig-01.html`
+
+### Figure 10.2 — Documentation ownership decision tree
+
+Produce a single standalone HTML file containing a decision tree built with D3 v7. Root node at top: "Who authors component descriptions?" with explanatory subtitle. Two branches diverge: left branch labeled "Figma" leads to a "Figma → Platform" box (red border), right branch labeled "Platform" leads to a "Platform → Figma" box (border only). Each branch then arrows down to a CI behavior box showing the rules for that path. Both CI behavior boxes converge via dashed arrows to a shared conflict box at bottom: "Both sources have content — one source wins; one is destroyed." The left/red branch uses `var(--color-red)` for borders and accent text; the right branch uses `var(--color-border)`. Tooltips on each box. Deliverable: single HTML file, inline CSS, D3 v7 CDN.
+
+> Reference implementation: `d3/10-component-documentation-sync-fig-02.html`

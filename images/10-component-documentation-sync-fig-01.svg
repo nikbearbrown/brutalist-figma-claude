@@ -1,0 +1,70 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig10-01-title fig10-01-desc">
+  <title id="fig10-01-title">Code Connect data flow</title>
+  <desc id="fig10-01-desc">Diagram showing how a Figma component node flows through a Code Connect config file, through the figma connect publish command, and into the Figma Dev Mode panel as a code snippet.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas background -->
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Box 1: Figma Component Node -->
+  <rect x="32" y="80" width="148" height="80" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="106" y="109" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">FIGMA COMPONENT</text>
+  <text x="106" y="124" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">NODE</text>
+  <text x="106" y="143" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">name · key · nodeId</text>
+  <text x="106" y="156" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">variantProperties</text>
+
+  <!-- Arrow 1→2 -->
+  <line x1="181" y1="120" x2="232" y2="120" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="207" y="113" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">maps to</text>
+
+  <!-- Box 2: Code Connect config file -->
+  <rect x="233" y="80" width="148" height="80" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="307" y="109" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#C8102E" text-anchor="middle">CODE CONNECT</text>
+  <text x="307" y="124" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">CONFIG FILE</text>
+  <text x="307" y="143" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">.figma.connect.ts</text>
+  <text x="307" y="156" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">nodeId → component</text>
+
+  <!-- Arrow 2→3 -->
+  <line x1="382" y1="120" x2="433" y2="120" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="407" y="113" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">publish</text>
+
+  <!-- Box 3: figma connect publish -->
+  <rect x="434" y="80" width="148" height="80" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="508" y="109" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">figma connect</text>
+  <text x="508" y="124" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">publish</text>
+  <text x="508" y="143" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">CLI command</text>
+  <text x="508" y="156" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">pushes mappings</text>
+
+  <!-- Arrow 3 down to 4 -->
+  <line x1="508" y1="161" x2="508" y2="227" stroke="#000000" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="526" y="198" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">renders in</text>
+
+  <!-- Box 4: Figma Dev Mode panel -->
+  <rect x="359" y="228" width="298" height="100" fill="#F5F5F5" stroke="#C8102E" stroke-width="1"/>
+  <text x="508" y="253" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#C8102E" text-anchor="middle">FIGMA DEV MODE PANEL</text>
+  <rect x="379" y="263" width="258" height="48" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="391" y="281" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">import &#123; Button &#125; from '@acme/ds';</text>
+  <text x="391" y="297" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">&lt;Button variant="primary" /&gt;</text>
+  <text x="508" y="326" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">code snippet visible to developer</text>
+
+  <!-- Absence box: sync-docs output -->
+  <rect x="32" y="228" width="280" height="100" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="172" y="253" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="11" font-weight="700" fill="#000000" text-anchor="middle">sync-docs.mjs REPORT</text>
+  <text x="172" y="272" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">detects absence of Code Connect</text>
+  <text x="172" y="287" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">flags as documentation debt</text>
+  <text x="172" y="302" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">separate from missing description</text>
+  <text x="172" y="317" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#A0522D" text-anchor="middle">— informational, not blocking —</text>
+
+  <!-- Legend -->
+  <rect x="32" y="355" width="12" height="12" fill="#F5F5F5" stroke="#C8102E" stroke-width="1"/>
+  <text x="50" y="365" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Dev Mode destination</text>
+  <rect x="160" y="355" width="12" height="12" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="178" y="365" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">CLI detection (no Code Connect)</text>
+
+  <!-- Caption -->
+  <text x="32" y="400" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Code Connect requires explicit per-component setup. The sync tool can detect its absence; it cannot configure it.</text>
+</svg>

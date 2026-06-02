@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 3.3 — walk() Pre-Order Traversal</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1A1A1A;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C0724D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; min-height: 440px; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink); max-width: 260px; line-height: 1.5;
+    }
+    .node-g { cursor: pointer; }
+    .node-g:focus { outline: 2px solid var(--color-red); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    // Tree nodes: { id, label, sub, visitOrder, depth, parent, isLeaf, info }
+    const treeNodes = [
+      { id: 'canvas',    label: 'CANVAS',        sub: '1:0',          visitOrder: 1, depth: 0, parent: null,         isLeaf: false, color: 'red',   info: 'Visit 1 (depth 0). The canvas node — one per page. visitor(canvasNode, 0) is called. Then walk recurses into its children.' },
+      { id: 'frame',     label: 'FRAME',          sub: '2:1 "Buttons"', visitOrder: 2, depth: 1, parent: 'canvas',     isLeaf: false, color: 'red',   info: 'Visit 2 (depth 1). A frame containing button variants. visitor(frameNode, 1) is called. Pre-order: parent before children.' },
+      { id: 'cset',      label: 'COMPONENT_SET',  sub: '3:0 "Button"',  visitOrder: 3, depth: 2, parent: 'frame',      isLeaf: false, color: 'red',   info: 'Visit 3 (depth 2). The variant group for the Button component set. Contains COMPONENT children for each variant.' },
+      { id: 'comp1',     label: 'COMPONENT',      sub: '4:0 Default',   visitOrder: 4, depth: 3, parent: 'cset',       isLeaf: false, color: 'red',   info: 'Visit 4 (depth 3). The Button/Default variant component definition. Has child nodes (e.g., TEXT layer for the label).' },
+      { id: 'text1',     label: 'TEXT',           sub: '"Button"',       visitOrder: 5, depth: 4, parent: 'comp1',      isLeaf: true,  color: 'brown', info: 'Visit 5 (depth 4). Leaf node — no children. The text layer inside Button/Default. visitor(textNode, 4) is called. Walk returns up.' },
+      { id: 'comp2',     label: 'COMPONENT',      sub: '4:1 Hover',     visitOrder: 6, depth: 3, parent: 'cset',       isLeaf: false, color: 'red',   info: 'Visit 6 (depth 3). The Button/Hover variant. After visiting all of comp1\'s subtree, walk moves to the next sibling.' },
+      { id: 'text2',     label: 'TEXT',           sub: '"Button"',       visitOrder: 7, depth: 4, parent: 'comp2',      isLeaf: true,  color: 'brown', info: 'Visit 7 (depth 4). The text layer inside Button/Hover. After this, walk returns up through all ancestors and the traversal is complete.' },
+    ];
+
+    const nodeById = Object.fromEntries(treeNodes.map(n => [n.id, n]));
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px');
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    // Layout: depth → x column, siblings → y rows within column
+    function layout(W, H, margin) {
+      const maxDepth = 4;
+      const colW = (W - margin.left - margin.right) / (maxDepth + 1);
+      const nodeH = 44;
+      const nodeW = Math.min(colW * 0.88, 136);
+
+      // Group by depth
+      const byDepth = d3.group(treeNodes, d => d.depth);
+
+      const positions = {};
+      // For each depth, distribute nodes vertically
+      for (const [depth, nodes] of byDepth) {
+        const totalHeight = nodes.length * (nodeH + 16) - 16;
+        const startY = margin.top + (H - margin.top - margin.bottom - totalHeight) / 2;
+        nodes.forEach((node, i) => {
+          positions[node.id] = {
+            x: margin.left + depth * colW,
+            y: startY + i * (nodeH + 16),
+            w: nodeW, h: nodeH
+          };
+        });
+      }
+      return { positions, colW, nodeH, nodeW };
+    }
+
+    let highlighted = null;
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const W = document.getElementById('chart').clientWidth || 800;
+      const H = Math.max(440, W * 0.56);
+      const margin = { top: 40, right: 32, bottom: 48, left: 32 };
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', W).attr('height', H)
+        .attr('role', 'img')
+        .attr('aria-labelledby', 'ch3-fig3-title ch3-fig3-desc');
+      svg.append('title').attr('id', 'ch3-fig3-title').text('walk() Pre-Order Depth-First Traversal');
+      svg.append('desc').attr('id', 'ch3-fig3-desc').text('Interactive tree diagram showing the walk() traversal order on a sample Figma document tree. Nodes are numbered in visit order 1–7. Hover each node to see why it is visited at that point in the traversal.');
+
+      svg.append('rect').attr('width', W).attr('height', H).attr('fill', 'var(--color-white)');
+
+      const defs = svg.append('defs');
+      defs.append('marker').attr('id', 'arr-w')
+        .attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+
+      const { positions, nodeW, nodeH } = layout(W, H, margin);
+
+      // Depth column labels
+      const maxDepth = 4;
+      const colW = (W - margin.left - margin.right) / (maxDepth + 1);
+      for (let d = 0; d <= maxDepth; d++) {
+        svg.append('text')
+          .attr('x', margin.left + d * colW + nodeW / 2).attr('y', margin.top - 12)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', 'var(--color-secondary)')
+          .attr('letter-spacing', '0.05em')
+          .text(`depth ${d}`);
+        // Vertical guide
+        svg.append('line')
+          .attr('x1', margin.left + d * colW + nodeW / 2).attr('y1', margin.top - 4)
+          .attr('x2', margin.left + d * colW + nodeW / 2).attr('y2', H - margin.bottom)
+          .attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75)
+          .attr('stroke-dasharray', '4 3')
+          .attr('aria-hidden', 'true');
+      }
+
+      // Draw edges first (behind nodes)
+      treeNodes.forEach(node => {
+        if (!node.parent) return;
+        const p = positions[node.parent];
+        const c = positions[node.id];
+        if (!p || !c) return;
+        const x1 = p.x + nodeW;
+        const y1 = p.y + nodeH / 2;
+        const x2 = c.x;
+        const y2 = c.y + nodeH / 2;
+        // Bezier edge
+        svg.append('path')
+          .attr('d', `M ${x1} ${y1} C ${x1 + (x2 - x1) * 0.5} ${y1}, ${x2 - (x2 - x1) * 0.5} ${y2}, ${x2} ${y2}`)
+          .attr('fill', 'none')
+          .attr('stroke', 'var(--color-ink)')
+          .attr('stroke-width', 1.5)
+          .attr('marker-end', 'url(#arr-w)')
+          .attr('aria-hidden', 'true');
+      });
+
+      // Draw nodes
+      treeNodes.forEach(node => {
+        const pos = positions[node.id];
+        if (!pos) return;
+        const fillColor = node.isLeaf ? 'var(--color-brown)' : 'var(--color-red)';
+        const badgeColor = node.isLeaf ? 'var(--color-brown)' : 'var(--color-red)';
+
+        const g = svg.append('g')
+          .attr('class', 'node-g')
+          .attr('tabindex', 0)
+          .attr('aria-label', `Visit ${node.visitOrder}: ${node.label} at depth ${node.depth}. ${node.info}`)
+          .on('mouseover', (event) => showTooltip(event, `<strong>Visit ${node.visitOrder} — ${node.label}</strong><br>${node.info}`))
+          .on('mousemove', moveTooltip)
+          .on('mouseout', hideTooltip)
+          .on('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') showTooltip(event, `<strong>Visit ${node.visitOrder} — ${node.label}</strong><br>${node.info}`);
+          })
+          .style('cursor', 'pointer');
+
+        g.append('rect')
+          .attr('x', pos.x).attr('y', pos.y)
+          .attr('width', nodeW).attr('height', nodeH)
+          .attr('fill', 'var(--color-fill)')
+          .attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+
+        g.append('text')
+          .attr('x', pos.x + nodeW / 2).attr('y', pos.y + nodeH * 0.38)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(10, nodeW * 0.08))
+          .attr('font-weight', '700').attr('fill', 'var(--color-ink)')
+          .style('pointer-events', 'none')
+          .text(node.label);
+
+        g.append('text')
+          .attr('x', pos.x + nodeW / 2).attr('y', pos.y + nodeH * 0.74)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(8, nodeW * 0.066))
+          .attr('fill', 'var(--color-secondary)')
+          .style('pointer-events', 'none')
+          .text(node.sub.length > Math.floor(nodeW / 7) ? node.sub.substring(0, Math.floor(nodeW / 7)) + '…' : node.sub);
+
+        // Visit order badge
+        g.append('circle')
+          .attr('cx', pos.x).attr('cy', pos.y)
+          .attr('r', 11).attr('fill', badgeColor);
+        g.append('text')
+          .attr('x', pos.x).attr('y', pos.y)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 10).attr('font-weight', '700').attr('fill', '#FFFFFF')
+          .style('pointer-events', 'none')
+          .text(node.visitOrder);
+      });
+
+      // Legend
+      const legY = H - margin.bottom + 10;
+      svg.append('circle').attr('cx', margin.left + 8).attr('cy', legY).attr('r', 8).attr('fill', 'var(--color-red)');
+      svg.append('text').attr('x', margin.left + 20).attr('y', legY + 4)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Container — visited before children (pre-order)');
+      svg.append('circle').attr('cx', margin.left + W * 0.44).attr('cy', legY).attr('r', 8).attr('fill', 'var(--color-brown)');
+      svg.append('text').attr('x', margin.left + W * 0.44 + 12).attr('y', legY + 4)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Leaf — no children array');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

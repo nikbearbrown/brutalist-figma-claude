@@ -1,0 +1,105 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig08-02-title fig08-02-desc">
+  <title id="fig08-02-title">End-to-end trigger sequence from Figma library publish to PR opened</title>
+  <desc id="fig08-02-desc">A horizontal sequence diagram showing the event chain from Figma library publish through webhook, GitHub Actions, extract, validate, transform, and PR creation, annotated to show where human review enters the loop.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="32" y="52" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="13" font-weight="700" fill="#000000">End-to-end trigger sequence — library publish to PR</text>
+
+  <!-- Plot area -->
+  <rect x="32" y="64" width="636" height="300" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+
+  <!-- Step boxes — row 1: Figma events -->
+  <!-- Figma publish -->
+  <rect x="52" y="96" width="100" height="52" fill="#FFFFFF" stroke="#000000" stroke-width="1"/>
+  <text x="102" y="118" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">FIGMA</text>
+  <text x="102" y="133" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Library publish</text>
+
+  <line x1="152" y1="122" x2="174" y2="122" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Webhook -->
+  <rect x="174" y="96" width="100" height="52" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="224" y="118" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">WEBHOOK</text>
+  <text x="224" y="133" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">LIBRARY_PUBLISH</text>
+
+  <line x1="274" y1="122" x2="296" y2="122" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- repository_dispatch -->
+  <rect x="296" y="96" width="110" height="52" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="351" y="118" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">GH ACTIONS</text>
+  <text x="351" y="133" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">repository_dispatch</text>
+
+  <line x1="406" y1="122" x2="428" y2="122" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Preflight -->
+  <rect x="428" y="96" width="100" height="52" fill="#FFFFFF" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="478" y="118" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" text-anchor="middle">PREFLIGHT</text>
+  <text x="478" y="133" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">exit non-zero halts</text>
+
+  <line x1="528" y1="122" x2="550" y2="122" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Extract -->
+  <rect x="550" y="96" width="96" height="52" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="598" y="118" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">EXTRACT</text>
+  <text x="598" y="133" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">extract-tokens.mjs</text>
+
+  <!-- Row 2 continues down -->
+  <line x1="598" y1="148" x2="598" y2="180" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Validate -->
+  <rect x="550" y="180" width="96" height="52" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="598" y="202" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">VALIDATE</text>
+  <text x="598" y="217" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">validate-tokens.mjs</text>
+
+  <line x1="550" y1="206" x2="528" y2="206" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Transform -->
+  <rect x="428" y="180" width="100" height="52" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="478" y="202" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">TRANSFORM</text>
+  <text x="478" y="217" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">style-dictionary</text>
+
+  <line x1="428" y1="206" x2="406" y2="206" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- PR Open -->
+  <rect x="296" y="180" width="110" height="52" fill="#000000" stroke="none"/>
+  <text x="351" y="202" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">PR OPENED</text>
+  <text x="351" y="217" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#CCCCCC" text-anchor="middle">design token update</text>
+
+  <!-- Human review annotation -->
+  <line x1="296" y1="206" x2="200" y2="206" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Human review box -->
+  <rect x="52" y="180" width="148" height="52" fill="#FFFFFF" stroke="#A0522D" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="126" y="202" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#A0522D" text-anchor="middle">HUMAN REVIEW</text>
+  <text x="126" y="217" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">designer + developer diff check</text>
+
+  <!-- Annotation callout: where human enters -->
+  <text x="126" y="256" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#A0522D" text-anchor="middle">← only human checkpoint</text>
+  <text x="126" y="269" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">in the synchronization loop</text>
+
+  <!-- Annotation: preflight exit non-zero -->
+  <text x="478" y="168" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E" text-anchor="middle">exit 1 → halt</text>
+
+  <!-- Annotation: validate exit non-zero -->
+  <text x="598" y="168" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">exit 1 → no transform</text>
+
+  <!-- Bottom notes -->
+  <text x="32" y="300" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Every gate is enforced by exit codes — not convention. The PR review is the only point where a human can confirm the values match intent.</text>
+  <text x="32" y="316" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">A pipeline that commits directly to main without a PR has removed the only human checkpoint in the loop.</text>
+
+  <!-- Legend -->
+  <rect x="52" y="334" width="12" height="12" fill="none" stroke="#C8102E" stroke-width="1.5"/>
+  <text x="70" y="345" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Gate that halts pipeline on failure</text>
+  <rect x="52" y="352" width="12" height="12" fill="none" stroke="#A0522D" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="70" y="363" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Human review step</text>
+
+  <!-- Caption -->
+  <text x="32" y="400" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">The designer's Thursday afternoon publish and the developer's Monday morning build are connected by the trigger — and only by the trigger.</text>
+</svg>

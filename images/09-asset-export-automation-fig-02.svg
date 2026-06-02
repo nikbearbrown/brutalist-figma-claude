@@ -1,0 +1,106 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig09-02-title fig09-02-desc">
+  <title id="fig09-02-title">Asset manifest structure linking Figma node IDs to repository paths</title>
+  <desc id="fig09-02-desc">A diagram showing the manifest JSON structure with node IDs as stable keys on the left, connected to Figma frame names in the center and output repository paths on the right, annotating which fields the export script uses for routing versus human reference.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="32" y="44" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="13" font-weight="700" fill="#000000">Asset manifest structure — node ID to repository path</text>
+
+  <!-- Plot area -->
+  <rect x="32" y="56" width="636" height="308" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+
+  <!-- Column headers -->
+  <text x="140" y="82" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle" letter-spacing="0.06em">FIGMA FILE</text>
+  <text x="350" y="82" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#C8102E" text-anchor="middle" letter-spacing="0.06em">MANIFEST — STABLE KEY</text>
+  <text x="568" y="82" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle" letter-spacing="0.06em">REPOSITORY PATH</text>
+
+  <!-- Vertical dividers -->
+  <line x1="236" y1="56" x2="236" y2="364" stroke="#CCCCCC" stroke-width="0.75"/>
+  <line x1="460" y1="56" x2="460" y2="364" stroke="#CCCCCC" stroke-width="0.75"/>
+
+  <!-- Row 1: icon-close -->
+  <rect x="52" y="96" width="160" height="44" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="132" y="116" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">Frame: "icon-close"</text>
+  <text x="132" y="130" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">layers/icons page</text>
+
+  <line x1="212" y1="118" x2="248" y2="118" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="248" y="96" width="196" height="44" fill="#FFFFFF" stroke="#000000" stroke-width="1"/>
+  <text x="346" y="113" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" font-weight="700" fill="#C8102E" text-anchor="middle">nodeId: "1:234" ← routing key</text>
+  <text x="346" y="127" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">format: svg · scale: 1 · svgo: true</text>
+  <text x="346" y="134" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#A0522D" text-anchor="middle">name: human reference only</text>
+
+  <line x1="444" y1="118" x2="468" y2="118" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="468" y="96" width="180" height="44" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="558" y="114" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#000000" text-anchor="middle">src/assets/icons/</text>
+  <text x="558" y="127" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#000000" text-anchor="middle">icon-close.svg</text>
+  <text x="558" y="137" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">deterministic — version-controlled</text>
+
+  <!-- Row 2: icon-chevron-down -->
+  <rect x="52" y="156" width="160" height="44" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="132" y="176" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">Frame: "icon-chevron-down"</text>
+  <text x="132" y="190" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">layers/icons page</text>
+
+  <line x1="212" y1="178" x2="248" y2="178" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="248" y="156" width="196" height="44" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="346" y="173" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" font-weight="700" fill="#C8102E" text-anchor="middle">nodeId: "1:235"</text>
+  <text x="346" y="187" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">format: svg · scale: 1 · svgo: true</text>
+
+  <line x1="444" y1="178" x2="468" y2="178" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="468" y="156" width="180" height="44" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="558" y="174" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#000000" text-anchor="middle">src/assets/icons/</text>
+  <text x="558" y="187" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#000000" text-anchor="middle">icon-chevron-down.svg</text>
+
+  <!-- Row 3: illustration -->
+  <rect x="52" y="216" width="160" height="44" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="132" y="236" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">Frame: "empty-state"</text>
+  <text x="132" y="250" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">illustrations page</text>
+
+  <line x1="212" y1="238" x2="248" y2="238" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="248" y="216" width="196" height="44" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="346" y="233" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" font-weight="700" fill="#C8102E" text-anchor="middle">nodeId: "2:100"</text>
+  <text x="346" y="247" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">format: svg · scale: 1 · svgo: false</text>
+
+  <line x1="444" y1="238" x2="468" y2="238" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="468" y="216" width="180" height="44" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="558" y="234" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#000000" text-anchor="middle">src/assets/illustrations/</text>
+  <text x="558" y="247" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#000000" text-anchor="middle">illustration-empty-state.svg</text>
+
+  <!-- Row 4: logo PNG -->
+  <rect x="52" y="276" width="160" height="44" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="132" y="296" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">Frame: "logo-primary"</text>
+  <text x="132" y="310" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">brand page</text>
+
+  <line x1="212" y1="298" x2="248" y2="298" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="248" y="276" width="196" height="44" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="346" y="293" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" font-weight="700" fill="#C8102E" text-anchor="middle">nodeId: "3:50"</text>
+  <text x="346" y="307" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">format: png · scale: 2 · svgo: false</text>
+
+  <line x1="444" y1="298" x2="468" y2="298" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="468" y="276" width="180" height="44" fill="#FFFFFF" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="558" y="294" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#000000" text-anchor="middle">src/assets/brand/</text>
+  <text x="558" y="307" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#000000" text-anchor="middle">logo-primary@2x.png</text>
+
+  <!-- Rename stability note -->
+  <text x="140" y="350" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Rename in Figma →</text>
+  <text x="350" y="350" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">nodeId unchanged, manifest valid</text>
+  <text x="558" y="350" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">outputPath unchanged</text>
+
+  <!-- Caption -->
+  <text x="32" y="390" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">The node ID is the stable key. The name is for human readability. The outputPath is the version-controlled answer to "where does this asset live?"</text>
+  <text x="32" y="404" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">The export script reads and trusts the manifest. Something else is always responsible for keeping it accurate.</text>
+</svg>

@@ -1,0 +1,96 @@
+<svg viewBox="0 0 700 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig12-01-title fig12-01-desc">
+  <title id="fig12-01-title">Human-readable component doc versus machine-readable spec for Button</title>
+  <desc id="fig12-01-desc">Side-by-side comparison showing what information is present and absent in a human-readable doc versus a machine-readable spec for the same Button component, with annotations identifying which omissions cause code generation failures.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <rect width="700" height="480" fill="#FFFFFF"/>
+
+  <!-- Column headers -->
+  <rect x="32" y="32" width="300" height="32" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="182" y="53" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="12" font-weight="700" fill="#000000" text-anchor="middle">HUMAN-READABLE DOC</text>
+
+  <rect x="368" y="32" width="300" height="32" fill="#F5F5F5" stroke="#C8102E" stroke-width="1"/>
+  <text x="518" y="53" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="12" font-weight="700" fill="#C8102E" text-anchor="middle">MACHINE-READABLE SPEC</text>
+
+  <!-- Row labels -->
+  <text x="182" y="88" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing=".08em">INFORMATION FIELD</text>
+  <text x="518" y="88" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#555555" text-anchor="middle" letter-spacing=".08em">INFORMATION FIELD</text>
+
+  <!-- Row 1: Component name -->
+  <rect x="32" y="96" width="300" height="30" fill="#FFFFFF" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="44" y="116" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">Component name</text>
+  <text x="320" y="116" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="end">present</text>
+  <rect x="368" y="96" width="300" height="30" fill="#FFFFFF" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="380" y="116" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">name, key, nodeId</text>
+  <text x="656" y="116" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="end">present</text>
+
+  <!-- Row 2: Description -->
+  <rect x="32" y="126" width="300" height="30" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="44" y="146" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">Usage description</text>
+  <text x="320" y="146" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="end">present (authored)</text>
+  <rect x="368" y="126" width="300" height="30" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="380" y="146" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">description field (may be empty)</text>
+  <text x="656" y="146" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="end">partial</text>
+
+  <!-- Row 3: Variant dimensions -->
+  <rect x="32" y="156" width="300" height="30" fill="#FFFFFF" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="44" y="176" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">Variant dimensions</text>
+  <text x="320" y="176" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="end">compressed (canonical)</text>
+  <rect x="368" y="156" width="300" height="30" fill="#FFFFFF" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="380" y="176" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">variantProperties exact map</text>
+  <text x="656" y="176" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="end">present</text>
+
+  <!-- Row 4: Token alias chain -->
+  <rect x="32" y="186" width="300" height="30" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="44" y="206" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Token alias chain</text>
+  <text x="320" y="206" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E" text-anchor="end">absent → gen uses hex</text>
+  <rect x="368" y="186" width="300" height="30" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="380" y="206" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">tokenAlias field per fill</text>
+  <text x="656" y="206" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="end">present</text>
+
+  <!-- Row 5: Node ID -->
+  <rect x="32" y="216" width="300" height="30" fill="#FFFFFF" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="44" y="236" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Node ID</text>
+  <text x="320" y="236" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E" text-anchor="end">absent → gen cannot identify</text>
+  <rect x="368" y="216" width="300" height="30" fill="#FFFFFF" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="380" y="236" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">nodeId + key (stable)</text>
+  <text x="656" y="236" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="end">present</text>
+
+  <!-- Row 6: Layout constraints -->
+  <rect x="32" y="246" width="300" height="30" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="44" y="266" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Layout constraints</text>
+  <text x="320" y="266" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E" text-anchor="end">absent → gen guesses sizing</text>
+  <rect x="368" y="246" width="300" height="30" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="380" y="266" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">constraints, sizingMode</text>
+  <text x="656" y="266" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="end">present</text>
+
+  <!-- Row 7: Spacing values -->
+  <rect x="32" y="276" width="300" height="30" fill="#FFFFFF" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="44" y="296" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Spacing values</text>
+  <text x="320" y="296" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E" text-anchor="end">absent → gen invents padding</text>
+  <rect x="368" y="276" width="300" height="30" fill="#FFFFFF" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="380" y="296" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">paddingTop/Right/Bottom/Left</text>
+  <text x="656" y="296" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="end">present</text>
+
+  <!-- Row 8: Code Connect path -->
+  <rect x="32" y="306" width="300" height="30" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="44" y="326" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Code Connect / import path</text>
+  <text x="320" y="326" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E" text-anchor="end">absent → gen invents import</text>
+  <rect x="368" y="306" width="300" height="30" fill="#F5F5F5" stroke="#CCCCCC" stroke-width=".75"/>
+  <text x="380" y="326" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#000000">codeConnect.importPath</text>
+  <text x="656" y="326" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#A0522D" text-anchor="end">present if configured</text>
+
+  <!-- Legend -->
+  <text x="44" y="365" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">present</text>
+  <text x="44" y="381" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">partial</text>
+  <text x="44" y="397" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#C8102E">absent → code gen failure mode</text>
+  <text x="44" y="413" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#A0522D">present if separately configured</text>
+
+  <!-- Caption -->
+  <text x="32" y="450" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">The machine spec is not a better version of the human doc. It is a different artifact.</text>
+  <text x="32" y="464" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Missing fields in the spec force the code generator to guess — and guesses produce wrong code.</text>
+</svg>

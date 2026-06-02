@@ -1,0 +1,104 @@
+<svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fig-title-ch3-03 fig-desc-ch3-03">
+  <title id="fig-title-ch3-03">walk() pre-order traversal sequence on a sample Figma document tree</title>
+  <desc id="fig-desc-ch3-03">Annotated diagram showing numbered visit sequence and depth values for the walk() function on a sample tree: CANVAS at depth 0, FRAME at depth 1, COMPONENT_SET at depth 2, two COMPONENT nodes at depth 3 — illustrating pre-order (parent before children) traversal order.</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas background -->
+  <rect width="700" height="420" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="350" y="40" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle" letter-spacing="0.08em">walk() — PRE-ORDER DEPTH-FIRST TRAVERSAL</text>
+
+  <!-- Depth column headers -->
+  <text x="64" y="64" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">depth 0</text>
+  <text x="180" y="64" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">depth 1</text>
+  <text x="308" y="64" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">depth 2</text>
+  <text x="448" y="64" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">depth 3</text>
+  <text x="600" y="64" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">depth 4</text>
+
+  <!-- Vertical depth guide lines -->
+  <line x1="120" y1="60" x2="120" y2="360" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="4 3"/>
+  <line x1="244" y1="60" x2="244" y2="360" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="4 3"/>
+  <line x1="376" y1="60" x2="376" y2="360" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="4 3"/>
+  <line x1="516" y1="60" x2="516" y2="360" stroke="#CCCCCC" stroke-width="0.75" stroke-dasharray="4 3"/>
+
+  <!-- Node 1: CANVAS -->
+  <rect x="32" y="80" width="112" height="40" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="88" y="98" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">CANVAS</text>
+  <text x="88" y="112" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">id: "1:0"</text>
+  <!-- Visit order badge -->
+  <circle cx="32" cy="80" r="10" fill="#C8102E"/>
+  <text x="32" y="84" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">1</text>
+
+  <!-- Arrow CANVAS → FRAME -->
+  <line x1="144" y1="100" x2="148" y2="100" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Node 2: FRAME -->
+  <rect x="148" y="80" width="112" height="40" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="204" y="98" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">FRAME</text>
+  <text x="204" y="112" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">id: "2:1"</text>
+  <circle cx="148" cy="80" r="10" fill="#C8102E"/>
+  <text x="148" y="84" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">2</text>
+
+  <!-- Arrow FRAME → COMPONENT_SET -->
+  <line x1="260" y1="100" x2="276" y2="100" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Node 3: COMPONENT_SET -->
+  <rect x="276" y="80" width="112" height="40" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="332" y="96" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" font-weight="700" fill="#000000" text-anchor="middle">COMPONENT_SET</text>
+  <text x="332" y="112" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">id: "3:0"</text>
+  <circle cx="276" cy="80" r="10" fill="#C8102E"/>
+  <text x="276" y="84" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">3</text>
+
+  <!-- COMPONENT_SET children arrows (fork) -->
+  <line x1="388" y1="92" x2="416" y2="156" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="388" y1="108" x2="416" y2="244" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Node 4: COMPONENT (Default) -->
+  <rect x="416" y="136" width="120" height="40" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="476" y="154" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">COMPONENT</text>
+  <text x="476" y="168" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">Button / Default</text>
+  <circle cx="416" cy="136" r="10" fill="#C8102E"/>
+  <text x="416" y="140" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">4</text>
+
+  <!-- Node 4 child: TEXT -->
+  <line x1="536" y1="156" x2="552" y2="156" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="552" y="136" width="112" height="40" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="608" y="154" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">TEXT</text>
+  <text x="608" y="168" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">"Button label"</text>
+  <circle cx="552" cy="136" r="10" fill="#A0522D"/>
+  <text x="552" y="140" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">5</text>
+
+  <!-- Node 6: COMPONENT (Hover) -->
+  <rect x="416" y="224" width="120" height="40" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="476" y="242" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">COMPONENT</text>
+  <text x="476" y="256" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">Button / Hover</text>
+  <circle cx="416" cy="224" r="10" fill="#C8102E"/>
+  <text x="416" y="228" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">6</text>
+
+  <!-- Node 6 child: TEXT -->
+  <line x1="536" y1="244" x2="552" y2="244" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="552" y="224" width="112" height="40" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="608" y="242" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#000000" text-anchor="middle">TEXT</text>
+  <text x="608" y="256" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="9" fill="#555555" text-anchor="middle">"Button label"</text>
+  <circle cx="552" cy="224" r="10" fill="#A0522D"/>
+  <text x="552" y="228" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">7</text>
+
+  <!-- Legend -->
+  <circle cx="56" cy="316" r="10" fill="#C8102E"/>
+  <text x="72" y="320" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Container/structural node — visited first (pre-order)</text>
+  <circle cx="56" cy="344" r="10" fill="#A0522D"/>
+  <text x="72" y="348" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555">Leaf node — no children array</text>
+
+  <!-- Key insight -->
+  <rect x="32" y="364" width="636" height="28" fill="#F5F5F5" stroke="#CCCCCC" stroke-width="0.75"/>
+  <text x="350" y="382" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">visitor(node, depth) is called on a parent before any of its children — identical to DOM TreeWalker pre-order</text>
+
+  <!-- Caption -->
+  <text x="350" y="408" font-family="'Real Head Pro','FF Real',Lato,sans-serif" font-size="10" fill="#555555" text-anchor="middle">Visit order: 1 CANVAS → 2 FRAME → 3 COMPONENT_SET → 4 COMPONENT → 5 TEXT → 6 COMPONENT → 7 TEXT</text>
+</svg>

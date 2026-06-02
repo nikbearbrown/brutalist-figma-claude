@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Three Paths to Token Alias Resolution — Figure 12.2</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1E1E1E;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C4723A;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-size: 12px; color: var(--color-ink);
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left',(event.pageX+12)+'px').style('top',(event.pageY-28)+'px')
+        .transition().duration(150).style('opacity',1);
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity',0); }
+
+    const paths = [
+      {
+        id: 'enterprise', label: 'ENTERPRISE', sub: 'Variables API direct', detail: '/files/:key/variables/local',
+        color: 'red',
+        steps: [
+          { text: 'variable collections + modes', sub: 'alias chain preserved' },
+          { text: 'primitive → semantic →', sub: 'component token layers' }
+        ],
+        tooltipDetail: 'Enterprise plan only. Returns complete variable collections with alias chains intact. Most complete path — every token layer is explicit.'
+      },
+      {
+        id: 'tokens-studio', label: 'TOKENS STUDIO', sub: 'Plugin export — any plan tier', detail: 'tokens.json merged at build time',
+        color: 'brown',
+        steps: [
+          { text: 'style-ID → token path lookup', sub: 'merged in build-spec.mjs' },
+          { text: 'partially closes non-Enterprise', sub: 'gap; requires plugin maintenance' }
+        ],
+        tooltipDetail: 'Works on any Figma plan tier. Tokens Studio exports a tokens.json that build-spec.mjs can merge to resolve style names to token aliases. Requires the plugin to be installed and maintained.'
+      },
+      {
+        id: 'style-name', label: 'STYLE-NAME CONVENTION', sub: 'Any plan tier', detail: 'inferred from Chapter 4 naming',
+        color: 'ink',
+        steps: [
+          { text: '"color/brand/primary"', sub: '→ "color.brand.primary"' },
+          { text: 'works only when style names', sub: 'match token hierarchy exactly' }
+        ],
+        tooltipDetail: 'styleNameToTokenAlias() replaces "/" with "." in the style name. Works only when Figma style names follow the slash-path convention from Chapter 4. Returns null for names without "/".'
+      }
+    ];
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const w = document.getElementById('chart').clientWidth || 800;
+      const h = Math.max(480, w * 0.62);
+      const cs = getComputedStyle(document.documentElement);
+      const ink = cs.getPropertyValue('--color-ink').trim();
+      const red = cs.getPropertyValue('--color-red').trim();
+      const brown = cs.getPropertyValue('--color-brown').trim();
+      const fill = cs.getPropertyValue('--color-fill').trim();
+      const border = cs.getPropertyValue('--color-border').trim();
+      const sec = cs.getPropertyValue('--color-secondary').trim();
+
+      const colorMap = { red, brown, ink };
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width',w).attr('height',h)
+        .attr('role','img').attr('aria-labelledby','chart-title chart-desc');
+      svg.append('title').attr('id','chart-title').text('Three paths to token alias resolution — Figure 12.2');
+      svg.append('desc').attr('id','chart-desc').text('Three-column diagram showing Enterprise Variables API, Tokens Studio, and style-name convention paths, each flowing into the tokenAlias field in the component spec.');
+
+      const defs = svg.append('defs');
+      defs.append('marker').attr('id','arr').attr('markerWidth',8).attr('markerHeight',6)
+        .attr('refX',7).attr('refY',3).attr('orient','auto')
+        .append('polygon').attr('points','0 0, 8 3, 0 6').attr('fill',ink);
+
+      const gChart = svg.append('g').attr('class','g-chart');
+
+      const margin = 32;
+      const colGap = 12;
+      const colW = (w - 2*margin - 2*colGap) / 3;
+      const bh = 52;
+      const stepH = 44;
+
+      // Title
+      gChart.append('text').attr('x',w/2).attr('y',20)
+        .attr('text-anchor','middle')
+        .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size',13).attr('font-weight',700).attr('fill',ink)
+        .text('Three paths to token alias resolution');
+
+      paths.forEach((p, i) => {
+        const x = margin + i * (colW + colGap);
+        const col = colorMap[p.color];
+
+        // Header box
+        const hg = gChart.append('g').attr('tabindex',0)
+          .attr('aria-label', `${p.label}: ${p.sub}. ${p.tooltipDetail}`)
+          .on('mouseover',(event)=>showTooltip(event,`<strong>${p.label}</strong><br>${p.sub}<br><em>${p.tooltipDetail}</em>`))
+          .on('mouseout',hideTooltip)
+          .on('keydown',function(event){if(event.key==='Enter'||event.key===' ')showTooltip(event,`<strong>${p.label}</strong><br>${p.tooltipDetail}`);});
+
+        hg.append('rect').attr('x',x).attr('y',32).attr('width',colW).attr('height',bh+8)
+          .attr('fill',fill).attr('stroke',col).attr('stroke-width',1);
+        hg.append('text').attr('x',x+colW/2).attr('y',50)
+          .attr('text-anchor','middle')
+          .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size',10).attr('font-weight',700).attr('fill',col)
+          .text(p.label);
+        hg.append('text').attr('x',x+colW/2).attr('y',65)
+          .attr('text-anchor','middle')
+          .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size',9).attr('fill',sec).text(p.sub);
+        hg.append('text').attr('x',x+colW/2).attr('y',79)
+          .attr('text-anchor','middle')
+          .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size',9).attr('fill',sec).text(p.detail);
+
+        // Step boxes
+        p.steps.forEach((step, si) => {
+          const sy = 32 + bh + 8 + 24 + si * (stepH + 12);
+          // Arrow
+          const arrowStartY = si === 0 ? 32 + bh + 8 : 32 + bh + 8 + 24 + (si-1) * (stepH + 12) + stepH;
+          gChart.append('line')
+            .attr('x1', x + colW/2).attr('y1', arrowStartY).attr('x2', x + colW/2).attr('y2', sy)
+            .attr('stroke', col).attr('stroke-width', 1.5).attr('marker-end','url(#arr)')
+            .attr('aria-hidden','true');
+
+          gChart.append('rect').attr('x',x).attr('y',sy).attr('width',colW).attr('height',stepH)
+            .attr('fill',fill).attr('stroke',border).attr('stroke-width',1);
+          gChart.append('text').attr('x',x+colW/2).attr('y',sy+16)
+            .attr('text-anchor','middle')
+            .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size',9).attr('fill',sec).text(step.text);
+          gChart.append('text').attr('x',x+colW/2).attr('y',sy+30)
+            .attr('text-anchor','middle')
+            .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+            .attr('font-size',9).attr('fill',sec).text(step.sub);
+        });
+      });
+
+      // Convergence arrows
+      const lastStepBottomY = 32 + bh + 8 + 24 + 1 * (44 + 12) + 44;
+      const destY = lastStepBottomY + 48;
+      const destX = w/2 - 100;
+      const destW = 200;
+
+      [0,1,2].forEach(i => {
+        const x = margin + i * (colW + colGap) + colW/2;
+        gChart.append('line')
+          .attr('x1',x).attr('y1',lastStepBottomY)
+          .attr('x2', destX + destW/2).attr('y2', destY)
+          .attr('stroke',ink).attr('stroke-width',1)
+          .attr('marker-end','url(#arr)').attr('aria-hidden','true');
+      });
+
+      // Destination: tokenAlias
+      gChart.append('rect').attr('x',destX).attr('y',destY).attr('width',destW).attr('height',52)
+        .attr('fill',fill).attr('stroke',red).attr('stroke-width',1);
+      gChart.append('text').attr('x',w/2).attr('y',destY+20)
+        .attr('text-anchor','middle')
+        .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size',11).attr('font-weight',700).attr('fill',red)
+        .text('tokenAlias field');
+      gChart.append('text').attr('x',w/2).attr('y',destY+35)
+        .attr('text-anchor','middle')
+        .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size',9).attr('fill',sec)
+        .text('in component spec fill object');
+      gChart.append('text').attr('x',w/2).attr('y',destY+48)
+        .attr('text-anchor','middle')
+        .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size',9).attr('fill',sec)
+        .text('null when path unavailable');
+
+      // Caption
+      svg.append('text').attr('x',32).attr('y',h-10)
+        .attr('font-family',"'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size',10).attr('fill',sec)
+        .text('All three paths write into the same field. The style-name convention fails silently when style names diverge from token names.');
+    }
+
+    draw();
+    const ro = new ResizeObserver(()=>draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

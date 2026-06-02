@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 1.2 — Figma State vs. Production State Timeline</title>
+  <style>
+    :root {
+      --color-white:     #FFFFFF;
+      --color-fill:      #F5F5F5;
+      --color-ink:       #000000;
+      --color-red:       #C8102E;
+      --color-brown:     #A0522D;
+      --color-secondary: #555555;
+      --color-border:    #CCCCCC;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-white:     #111111;
+        --color-fill:      #1A1A1A;
+        --color-ink:       #F0F0F0;
+        --color-red:       #E8243A;
+        --color-brown:     #C0724D;
+        --color-secondary: #999999;
+        --color-border:    #333333;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--color-white); color: var(--color-ink); font-family: 'Real Head Pro','FF Real',Lato,sans-serif; }
+    #chart { width: 100%; min-height: 440px; }
+    .tooltip {
+      position: absolute; pointer-events: none; opacity: 0;
+      background: var(--color-white); border: 1px solid var(--color-border);
+      padding: 8px 12px; font-family: 'Real Head Pro','FF Real',Lato,sans-serif;
+      font-size: 13px; color: var(--color-ink); max-width: 240px; line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart" role="main"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script>
+    // Snapshot events on the timeline
+    const snapshots = [
+      { t: 0.28, label: 'Manual export', sub: 'Snapshot 1', drift: 0.28 },
+      { t: 0.54, label: 'Another export', sub: 'Snapshot 2', drift: 0.48 },
+    ];
+
+    const tooltip = d3.select('body').append('div').attr('class', 'tooltip');
+    function showTooltip(event, html) {
+      tooltip.html(html).style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px')
+        .transition().duration(150).style('opacity', 1);
+    }
+    function moveTooltip(event) {
+      tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px');
+    }
+    function hideTooltip() { tooltip.transition().duration(100).style('opacity', 0); }
+
+    function draw() {
+      d3.select('#chart').selectAll('*').remove();
+      const W = document.getElementById('chart').clientWidth || 800;
+      const H = Math.max(440, W * 0.52);
+      const margin = { top: 48, right: 60, bottom: 80, left: 64 };
+      const chartW = W - margin.left - margin.right;
+      const chartH = H - margin.top - margin.bottom;
+
+      const svg = d3.select('#chart').append('svg')
+        .attr('width', W).attr('height', H)
+        .attr('role', 'img')
+        .attr('aria-labelledby', 'ch1-fig2-title ch1-fig2-desc');
+      svg.append('title').attr('id', 'ch1-fig2-title').text('Figma State vs. Production State Timeline');
+      svg.append('desc').attr('id', 'ch1-fig2-desc').text('Line chart showing the Figma state rising continuously over time while production state remains frozen at each manual snapshot event, creating growing divergence.');
+
+      svg.append('rect').attr('width', W).attr('height', H).attr('fill', 'var(--color-white)');
+
+      const gChart = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      // Chart area background
+      gChart.append('rect')
+        .attr('width', chartW).attr('height', chartH)
+        .attr('fill', 'var(--color-fill)').attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75);
+
+      // Y-axis label
+      gChart.append('text')
+        .attr('transform', `rotate(-90)`)
+        .attr('x', -chartH / 2).attr('y', -48)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 11).attr('fill', 'var(--color-secondary)')
+        .text('STATE VALUE (token / style values)');
+
+      // X-axis label
+      gChart.append('text')
+        .attr('x', chartW / 2).attr('y', chartH + 40)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 11).attr('fill', 'var(--color-secondary)')
+        .text('Time →');
+
+      // t0 label
+      gChart.append('text')
+        .attr('x', 0).attr('y', chartH + 16)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('t₀');
+
+      // "now" label
+      gChart.append('text')
+        .attr('x', chartW).attr('y', chartH + 16)
+        .attr('text-anchor', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('now');
+
+      // Defs: arrowhead
+      const defs = svg.append('defs');
+      defs.append('marker').attr('id', 'arrow-t')
+        .attr('markerWidth', 8).attr('markerHeight', 6)
+        .attr('refX', 7).attr('refY', 3).attr('orient', 'auto')
+        .append('polygon').attr('points', '0 0, 8 3, 0 6').attr('fill', 'var(--color-ink)');
+
+      // Figma state: curves upward from bottom, accelerates
+      // Parametric curve: y(t) = chartH - chartH * (0.05 + 0.95 * t^0.7)
+      const figmaLine = d3.line()
+        .x(t => t * chartW)
+        .y(t => chartH - chartH * (0.05 + 0.9 * Math.pow(t, 0.65)))
+        .curve(d3.curveCatmullRom);
+
+      const tPoints = d3.range(0, 1.01, 0.02);
+
+      // Drift region (shaded)
+      const areaPoints = [
+        ...tPoints.map(t => [t, chartH - chartH * (0.05 + 0.9 * Math.pow(t, 0.65))]),
+        ...[...tPoints].reverse().map(t => [t, chartH * 0.80])
+      ];
+      // Build a proper area: only from t=0 to 1
+      const areaPath = d3.area()
+        .x(d => d[0] * chartW)
+        .y0(chartH * 0.80)
+        .y1(d => chartH - chartH * (0.05 + 0.9 * Math.pow(d[0], 0.65)))
+        .curve(d3.curveCatmullRom);
+
+      gChart.append('path')
+        .datum(tPoints)
+        .attr('d', areaPath)
+        .attr('fill', 'var(--color-red)')
+        .attr('fill-opacity', 0.07);
+
+      // Production "frozen" line — horizontal at 80% of chartH from top
+      gChart.append('line')
+        .attr('x1', 0).attr('y1', chartH * 0.80)
+        .attr('x2', chartW).attr('y2', chartH * 0.80)
+        .attr('stroke', 'var(--color-ink)').attr('stroke-width', 2)
+        .attr('stroke-dasharray', '6 4');
+
+      // Figma state line
+      gChart.append('path')
+        .datum(tPoints)
+        .attr('d', figmaLine)
+        .attr('fill', 'none')
+        .attr('stroke', 'var(--color-red)')
+        .attr('stroke-width', 2.5);
+
+      // Line labels at right edge
+      const figmaY = chartH - chartH * (0.05 + 0.9 * Math.pow(1, 0.65));
+      gChart.append('text')
+        .attr('x', chartW + 6).attr('y', figmaY)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-red)')
+        .attr('dominant-baseline', 'middle')
+        .text('Figma');
+      gChart.append('text')
+        .attr('x', chartW + 6).attr('y', chartH * 0.80)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-ink)')
+        .attr('dominant-baseline', 'middle')
+        .text('Prod');
+
+      // Drift annotation brace at the right
+      const braceX = chartW - 16;
+      gChart.append('line')
+        .attr('x1', braceX).attr('y1', figmaY)
+        .attr('x2', braceX).attr('y2', chartH * 0.80)
+        .attr('stroke', 'var(--color-border)').attr('stroke-width', 0.75)
+        .attr('stroke-dasharray', '4 3');
+      gChart.append('text')
+        .attr('x', braceX - 4).attr('y', (figmaY + chartH * 0.80) / 2)
+        .attr('text-anchor', 'end').attr('dominant-baseline', 'middle')
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-red)')
+        .text('drift');
+
+      // Snapshot event markers
+      snapshots.forEach((snap, i) => {
+        const sx = snap.t * chartW;
+        const prodY = chartH * 0.80;
+
+        // Vertical marker
+        gChart.append('line')
+          .attr('x1', sx).attr('y1', chartH * 0.02)
+          .attr('x2', sx).attr('y2', chartH + 4)
+          .attr('stroke', 'var(--color-ink)').attr('stroke-width', 1.5);
+
+        // Snapshot box
+        const boxW = Math.min(100, chartW * 0.14);
+        const boxH = 36;
+        const boxX = Math.max(4, Math.min(sx - boxW / 2, chartW - boxW - 4));
+        const boxY = chartH * 0.02;
+
+        gChart.append('rect')
+          .attr('x', boxX).attr('y', boxY)
+          .attr('width', boxW).attr('height', boxH)
+          .attr('fill', 'var(--color-white)').attr('stroke', 'var(--color-ink)').attr('stroke-width', 1)
+          .attr('tabindex', 0)
+          .attr('aria-label', `${snap.label}: a snapshot severs the connection between Figma and production`)
+          .style('cursor', 'pointer')
+          .on('mouseover', (event) => showTooltip(event, `<strong>${snap.label}</strong><br>A snapshot is created. Accurate at this moment — and severed from its source immediately.`))
+          .on('mousemove', moveTooltip)
+          .on('mouseout', hideTooltip);
+
+        gChart.append('text')
+          .attr('x', sx).attr('y', boxY + 14)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(10, boxW * 0.1)).attr('font-weight', '700').attr('fill', 'var(--color-ink)')
+          .style('pointer-events', 'none')
+          .text('SNAPSHOT');
+        gChart.append('text')
+          .attr('x', sx).attr('y', boxY + 28)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', Math.min(9, boxW * 0.09)).attr('fill', 'var(--color-secondary)')
+          .style('pointer-events', 'none')
+          .text(snap.sub);
+
+        // Label below axis
+        gChart.append('text')
+          .attr('x', sx).attr('y', chartH + 18)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+          .attr('font-size', 9).attr('fill', 'var(--color-secondary)')
+          .text(snap.label);
+      });
+
+      // Legend
+      const legY = H - 26;
+      gChart.append('line').attr('x1', 0).attr('y1', legY - margin.top + 8).attr('x2', 28).attr('y2', legY - margin.top + 8)
+        .attr('stroke', 'var(--color-red)').attr('stroke-width', 2.5);
+      gChart.append('text').attr('x', 32).attr('y', legY - margin.top + 12)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Figma state (continuous)');
+      gChart.append('line').attr('x1', chartW * 0.4).attr('y1', legY - margin.top + 8).attr('x2', chartW * 0.4 + 28).attr('y2', legY - margin.top + 8)
+        .attr('stroke', 'var(--color-ink)').attr('stroke-width', 2).attr('stroke-dasharray', '6 4');
+      gChart.append('text').attr('x', chartW * 0.4 + 32).attr('y', legY - margin.top + 12)
+        .attr('font-family', "'Real Head Pro','FF Real',Lato,sans-serif")
+        .attr('font-size', 10).attr('fill', 'var(--color-secondary)')
+        .text('Production state (frozen at snapshot)');
+    }
+
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(document.getElementById('chart'));
+  </script>
+</body>
+</html>

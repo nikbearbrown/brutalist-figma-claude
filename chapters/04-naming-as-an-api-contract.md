@@ -543,21 +543,3 @@ AI Use Disclosure (mandatory — copy this into your project log):
 
 Series connection: The "fluent but wrong" failure — a conforming name that misrepresents semantic meaning — is the central Tier 4 metacognitive risk of this chapter. The naming convention catches form; only human review catches intent. This failure mode reappears in Chapter 5 as audit false positives (AI calling designer intent a violation) and in Chapter 6 as unsafe bulk renames that the approval gate lets through under fatigue.
 ```
-
----
-
-## Prompts
-
-*Load NEU/CLAUDE.md and NEU/DESIGN.md before generating any figure from this section.*
-
-### Figure 4.1 — Transformation chain: one name, four outputs
-
-Horizontal flow diagram. Five stages left to right: Figma variable name box → REST API JSON box → Style Dictionary nested object box → Platform Formatters box → four output boxes fanning right (CSS, Swift, Android, JS). Each stage box: fill #F5F5F5, border #CCCCCC/0.75, label in #555555 ALLCAPS 10px, content in #000000 11px. The input name `color/brand/primary` in #C8102E (primary data). Arrows #000000/1.5 with arrowhead marker. Below the chain a dashed reference line #CCCCCC with annotation in #555555 10px: "The transformation is deterministic. Pipeline authors control the rules — not the input name." Add a second row showing a poorly-named input (`Brand Blue`) → CSS output (`--brand-blue`) with text annotation in #555555 explaining the appearance-vs-role failure. viewBox 700×420. Deliverable: single HTML, inline CSS, D3 v7 CDN, responsive via ResizeObserver, dark mode via CSS custom properties, ARIA role="img".
-
-> Reference implementation: `../d3/04-naming-as-an-api-contract-fig-01.html`
-
-### Figure 4.2 — Three-tier token hierarchy
-
-Three-column diagram. Column 1 (Tier 1 — Primitive): two token boxes showing `color/palette/blue-500` (#C8102E label) and `spacing/scale/4`, each with name, role description, and raw value. Column 2 (Tier 2 — Semantic): two token boxes showing `color/brand/primary` (#A0522D label) and `spacing/interactive/md`, each with alias reference in #A0522D. Column 3 (Tier 3 — Component): one token box showing `color/button/background/default` (#000000 label) with alias reference. Horizontal arrows #000000/1.5 from Tier 1 to Tier 2 and Tier 2 to Tier 3. Vertical dividers #CCCCCC/0.75. Below all columns: a full-width bar (#F5F5F5, border #CCCCCC/0.75) showing the cascade: "color/palette/blue-500 updated → color/brand/primary resolves → color/button/background/default resolves — all update automatically." Annotation in #555555. viewBox 700×420. Deliverable: single HTML, inline CSS, D3 v7 CDN, responsive, dark mode, ARIA.
-
-> Reference implementation: `../d3/04-naming-as-an-api-contract-fig-02.html`

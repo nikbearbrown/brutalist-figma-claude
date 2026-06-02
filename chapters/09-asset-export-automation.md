@@ -760,27 +760,3 @@ Assets in this PR were exported by export-assets.mjs, integrity-checked on downl
 ```
 
 **Series connection:** the "expiring-URL stale asset" failure mode is a Tier 4 metacognitive failure: the script ran, the log looks reasonable, but an architectural invariant — download immediately, never persist URLs — was violated. This exercise teaches you to check for that invariant explicitly rather than trusting the exit code. The same pattern of "exit zero but the output is stale or wrong" appears in Chapter 8's broken alias chain — both are cases where the pipeline's own quality gate needs to be tested, not just trusted.
-
----
-
-## Prompts
-
-*Load `/NEU/CLAUDE.md` and `/NEU/DESIGN.md` into context before generating any figure from this section.*
-
-### Figure 9.1 — Informal vs. pipeline-driven asset management
-
-Produce a single standalone HTML file using D3 v7 from the CDN `https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js`. Chart type: split vertical flow diagram — two parallel columns separated by a dashed divider. Left column labeled "INFORMAL — BEFORE PIPELINE" in red, showing five steps: Figma frame → manual export (red border) → design-sys/ folder → LegacyButton.tsx with hardcoded path (red border) → 404 in prod (filled red, white text). Right column labeled "PIPELINE-DRIVEN — THIS CHAPTER" in ink, showing five steps: Figma frame → asset-manifest.json (black border, routing key) → export-assets.mjs (red border, chapter implementation) → src/assets/icons/ → PR review (filled black, human checkpoint). Each step is hoverable with a tooltip. Arrows connect steps downward within each column. ResizeObserver, dark mode, reduced motion, full SVG accessibility. Deliverable: single HTML file.
-
-> Reference implementation: `../d3/09-asset-export-automation-fig-01.html`
-
-### Figure 9.2 — Asset manifest structure: node ID to repository path
-
-Produce a single standalone HTML file using D3 v7. Chart type: three-column table with interactive row highlighting. Columns: "FIGMA FILE" (frame name and page), "MANIFEST ENTRY" (nodeId in red as routing key, format/scale/svgo settings), "REPOSITORY PATH" (directory and filename). Four data rows from `asset-manifest.json`: icon-close (nodeId 1:234, svg, svgo true), icon-chevron-down (1:235, svg, svgo true), illustration-empty-state (2:100, svg, svgo false), logo-primary (3:50, png, scale 2). Column headers in filled rectangles (ink for MANIFEST ENTRY, secondary for the other two) with white text. On row hover, highlight row background to fill color and show a tooltip explaining that row's notable field (routing key stability, svgo decision, PNG magic byte check). A note below the table states that renames do not change the node ID. ResizeObserver, dark mode, reduced motion, full accessibility. Deliverable: single HTML file.
-
-> Reference implementation: `../d3/09-asset-export-automation-fig-02.html`
-
-### Figure 9.3 — CI workflow sequence for asset export
-
-Produce a single standalone HTML file using D3 v7. Chart type: linear sequence diagram that wraps across rows when narrow. Seven steps: TRIGGER (webhook/dispatch) → PREFLIGHT (red border, exit 1 halts) → EXPORT ASSETS (red border, exit 1 on integrity fail) → GIT DIFF (check src/assets/) → IF CHANGED (conditional) → PR OPENED (filled black, white text) → HUMAN REVIEW (dashed brown border). Arrows connect steps sequentially with polyline wrapping at row boundaries. Hover tooltip on each step explains its role and failure behavior. The PREFLIGHT and EXPORT ASSETS steps display a red-border treatment and label "exit 1 → halt." The PR OPENED step is filled black. The HUMAN REVIEW step uses a dashed brown border. Below the diagram, a brief legend explains the three visual treatments. ResizeObserver, dark mode, reduced motion, full SVG accessibility. Deliverable: single HTML file.
-
-> Reference implementation: `../d3/09-asset-export-automation-fig-03.html`

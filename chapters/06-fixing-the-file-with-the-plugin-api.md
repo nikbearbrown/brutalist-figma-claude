@@ -747,27 +747,3 @@ and the accountability is human. A plugin that correctly implements the approval
 code but fails to create friction against fatigue-approval has satisfied the letter of
 the chapter's safety requirement but not its spirit.
 ```
-
----
-
-## Prompts
-
-*Load NEU/CLAUDE.md and NEU/DESIGN.md before generating any figure from this section.*
-
-### Figure 6.1 — REST API (read-only) vs Plugin API (read/write)
-
-Two-column diagram with a dashed vertical boundary between columns. Left column (REST API — Outside Figma): light fill #F5F5F5, border #CCCCCC/0.75. Four operation rows inside (GET /v1/files/:key, GET /v1/files/:key/variables/local, GET /v1/files/:key/components, POST /v1/files/:key/comments), each in a white cell, labels in #555555. Footer text: "Canvas content: READ-ONLY." Right column (Plugin API — Inside Figma Editor): white fill, border #C8102E/1.5. Four operation rows (variable.name = newValue, variable.description = text, component.description = text, node.fills / .visible / .name), labels in #C8102E. At the bottom of the plugin column: a "HUMAN APPROVAL GATE" box, white fill, border #C8102E/1.5, label in #C8102E bold. Below both columns: a three-step workflow strip (REST API reads → audit report | HUMAN REVIEW approves each fix [red box] | Plugin API applies approved fixes) connected by arrows, with the human review box in #C8102E/1.5. viewBox 700×420. Deliverable: single HTML, inline CSS, D3 v7 CDN, responsive, dark mode, ARIA, interactive hover on each operation row.
-
-> Reference implementation: `../d3/06-fixing-the-file-with-the-plugin-api-fig-01.html`
-
-### Figure 6.2 — Two-process plugin architecture
-
-Split diagram with two process boxes and a central channel. Left box "Plugin Sandbox (code.js)": fill #F5F5F5, border #CCCCCC/0.75; six bullet rows of figma.* API calls in #C8102E. Right box "Plugin UI (ui.html — iframe)": fill #F5F5F5, border #CCCCCC/0.75; six bullet rows of UI operations in #000000. Inside the UI box at the bottom: "HUMAN APPROVAL GATE" panel with white fill, border #C8102E/1.5. Center channel box "postMessage channel": white fill, border #C8102E/1.5. Two arrows between sandbox and channel: sandbox → channel labeled "APPLY_RESULTS" in #000000/1.5; channel → sandbox labeled "APPLY_FIXES (approved only)" in #C8102E/1.5 with red arrowhead. Below: three-phase workflow strip (Phase 1 Load | Phase 2 Preview [red border] | Phase 3 Apply) with arrows. viewBox 700×420. Deliverable: single HTML, inline CSS, D3 v7 CDN, responsive, dark mode, ARIA, tooltip on operations.
-
-> Reference implementation: `../d3/06-fixing-the-file-with-the-plugin-api-fig-02.html`
-
-### Figure 6.3 — Plugin loading flow: development through production distribution
-
-Left column: five numbered development steps as stacked boxes. Steps 1–3 fill #F5F5F5, border #CCCCCC/0.75. Steps 4 (Phase 2 review) and 5 (Apply) fill #FFFFFF, border #C8102E/1.5, step number and label in #C8102E — these are the human gate steps. Each box contains a one-line label and two-line description. Arrows between steps: black for steps 1–3 transitions, red for steps 3→4 and 4→5. Right column: "Never Automate" block with five rows (NAME001 renames, alias target changes, value changes, component restructuring, deletions), each in #F5F5F5/border#CCCCCC; below them a single "AUTO-FIXABLE ONLY: TOK002 · COMP001" box with white fill and red border. Column divider is visual space only. Caption: "Steps 4 and 5 require human review. No batch undo exists. Save a version history checkpoint before running." viewBox 700×480. Deliverable: single HTML, inline CSS, D3 v7 CDN, responsive, dark mode, ARIA, tooltip on each step.
-
-> Reference implementation: `../d3/06-fixing-the-file-with-the-plugin-api-fig-03.html`

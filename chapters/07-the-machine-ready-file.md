@@ -562,21 +562,3 @@ This FIGMA.md was drafted with AI assistance (Claude) and validated against the 
 ```
 
 **Series connection:** the "over-broad governance grant" failure mode — a permission clause with no path scope — is a Tier 6 governance failure. It does not break the script; it creates ambiguity about what the pipeline is authorized to do, and that ambiguity compounds in Chapter 13 when an AI coding agent reads `FIGMA.md` as authoritative context. Catching it here prevents it from propagating.
-
----
-
-## Prompts
-
-*Load `/NEU/CLAUDE.md` and `/NEU/DESIGN.md` into context before generating any figure from this section.*
-
-### Figure 7.1 — Machine-readiness severity matrix
-
-Produce a single standalone HTML file using D3 v7 from the CDN `https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js`. Chart type: interactive grid with hover tooltips. Data: five rows (Naming contract, Variable architecture, Publication state, Component documentation, Export targets) by two columns (Blocking, Advisory). Each cell displays a two-line truncated consequence label and a severity badge. Cells in the Blocking column have a red border (`var(--color-red)`); Advisory cells use the standard border color. On hover, show a tooltip with the full consequence text. Category labels on the vertical axis in red bold. Column headers in filled rectangles (black for Blocking, secondary for Advisory) with white text. Color only via CSS custom properties. ResizeObserver redraw pattern. SVG must have `role="img"`, `aria-labelledby`, `<title>`, and `<desc>`. Reduced-motion suppression. Dark-mode block in `:root`. Deliverable: single HTML file, inline CSS, D3 v7 CDN.
-
-> Reference implementation: `../d3/07-the-machine-ready-file-fig-01.html`
-
-### Figure 7.2 — FIGMA.md governance hub
-
-Produce a single standalone HTML file using D3 v7. Chart type: hub-and-spoke diagram. Central node: filled black rectangle labeled "FIGMA.md" with subtitle "Automation governance / declared intent document". Three spoke nodes at roughly 90°, 210°, 330°: CI Pipeline (border only), Preflight Script (red border — it enforces the contract), AI Coding Agent (border only). Arrows from center to each spoke via SVG `<line>` with arrowhead markers. On hover over each spoke, show a tooltip describing what that consumer reads from the document. Background plot area in `var(--color-fill)`. Caption below. ResizeObserver redraw. Full accessibility attributes. Dark-mode support. Deliverable: single HTML file.
-
-> Reference implementation: `../d3/07-the-machine-ready-file-fig-02.html`

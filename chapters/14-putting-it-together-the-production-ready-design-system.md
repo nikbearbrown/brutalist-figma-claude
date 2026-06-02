@@ -735,15 +735,3 @@ The CI/CD configuration in .github/workflows/figma-audit.yml and the figma:* scr
 ```
 
 **Series connection:** The central failure mode here is approval fatigue — the human gate that exists on paper but is bypassed in practice, either because a workflow was configured with auto-merge, because PRs are approved without reading the diff, or because the gate was removed during a "cleanup" pass by an agent that did not understand its significance. This is Tier 4 metacognitive supervision plus Tier 7 accountability: the system is only as reliable as the human who reviews the PR and asks "is this actually right?" Every time that question is skipped, the pipeline becomes the liability the chapter warns against. The capstone validation is not whether the system runs — it is whether the human is still in the loop for the decisions that matter.
-
----
-
-## Prompts
-
-*Prerequisites: load `NEU/CLAUDE.md` and `NEU/DESIGN.md` before any generate phase.*
-
-### Figure 14.1 — Full extraction stack: from Figma file to human approval gate
-
-Produce a standalone D3 v7 HTML file visualizing the complete design system extraction stack as a vertical flow diagram. Chart type: top-down pipeline diagram with labeled nodes and directed edges. Nodes in order from top to bottom: (1) "Figma File" — source of truth; (2) "Audit Gate" (figma-audit.js, Ch 5) — with a dashed left-branch labeled "BLOCKING ERROR" leading to a "Stops here / Fix file first" box; (3) "PARALLEL EXTRACTION" section label — five parallel boxes side-by-side labeled Tokens (Ch 8), Assets (Ch 9), Docs (Ch 10), Brand (Ch 11), Spec (Ch 12); (4) "CI Layer — GitHub Actions" box (figma-audit.yml); (5) "Pull Request opened" box (create-pull-request@v6); (6) "HUMAN APPROVAL GATE" — fill with `--color-red`, white bold text, must be the visually dominant element. A tooltip on each extraction box should show the script name on hover. All other nodes use `--color-fill`. Directed edges use `--color-ink` arrows; the red arrow from PR to human gate uses `--color-red`. The human approval gate node must render in `--color-red` as the primary data category. Add an optional MCP layer annotation (Ch 13) alongside the CI box. Fonts: `'Real Head Pro','FF Real',Lato,sans-serif`. Deliverable: single HTML file, inline CSS, D3 v7 CDN, ResizeObserver redraw, dark-mode `:root` block, `prefers-reduced-motion` suppression, `role="img"` + `aria-labelledby` + `<title>` + `<desc>` on SVG.
-
-> Reference implementation: `../d3/14-putting-it-together-the-production-ready-design-system-fig-01.html`

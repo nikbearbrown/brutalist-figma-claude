@@ -1,12 +1,10 @@
 # Chapter 4 — Naming as an API Contract
 
-> "A variable named `Color 3` becomes garbage at the other end. A variable named `color/brand/primary` becomes `--color-brand-primary` in CSS, `colorBrandPrimary` in Swift, and `color_brand_primary` in Android XML. The designer's naming decision is the API contract."
+*The designer's string in Figma is the engineer's identifier in six platforms simultaneously — and nobody told the designer.*
 
 ---
 
-## The Production Failure
-
-It is 2 PM on release day and the token pipeline is broken. The CSS output looks like this:
+Here is a failure that happened on release day. The token pipeline ran, the CI deployed, and the stylesheet that landed in production looked like this:
 
 ```css
 :root {
@@ -18,190 +16,86 @@ It is 2 PM on release day and the token pipeline is broken. The CSS output looks
 }
 ```
 
-No one touched the pipeline. No one changed the transformation config. The designers renamed some variables two weeks ago — tidying up, they said — and the pipeline swallowed it silently, transformed whatever names came through, and wrote these identifiers into the generated stylesheet that your CI deployed this morning.
+Nobody touched the pipeline. Nobody changed the transformation config. Two weeks earlier, the design team had renamed some variables — tidying up, they said — and the pipeline swallowed whatever names came through, applied its rules mechanically, and wrote those identifiers into the generated stylesheet. `--button-` is not a valid CSS custom property. `--/brand/accent` is worse. `--color-3` is meaningless to every engineer who has to consume it.
 
-`--button-` is not a valid CSS custom property. `--/brand/accent` is worse. And `--color-3` is meaningless to every engineer who has to consume it. The pipeline did exactly what it was told. The names were the bug.
+The pipeline did exactly what it was told. The names were the bug.
 
-This is not a pipeline failure. It is a naming failure that the pipeline faithfully reproduced.
-
----
-
-## What This Chapter Lets You Do
-
-After this chapter you can:
-
-- Define a naming convention that functions as a machine-parseable API contract, not a stylistic preference
-- Map the three-tier token hierarchy — primitive, semantic, component — to concrete slash-notation examples
-- Explain to a designer why their naming decision in Figma determines what ends up in Swift, Android XML, and CSS
-- Write a convention enforcement function that your Chapter 5 audit will call
-- Recognize the six failure modes that bad naming produces downstream
-
-This chapter establishes the convention the audit enforces and the pipelines depend on. Chapters 5 and 6 build directly on top of it.
+This is where the chapter's central idea comes from, and I want to state it plainly before explaining why it's true: when a designer names a variable in Figma, they are not labeling an object for their own organizational convenience. They are writing the first character of an identifier that will be transformed, concatenated, and emitted into CSS, Swift, Android XML, and JavaScript — often automatically, without any human reviewing the result. The name is not a label. It is the source code.
 
 ---
 
-## Diagnosis: What Names Actually Are
+## What Happens to a Name
 
-When a designer names a Figma variable `color/brand/primary`, that string travels through several transformation stages before it reaches any consumer:
+Follow one variable name from Figma to CSS. The name is `color/brand/primary`. The value is `#0066ff`.
 
-1. The Figma REST API returns it as the `name` property of a variable object [verify — current as of writing]
-2. The token extractor reads that name and uses it as the token's identifier
-3. Style Dictionary (or an equivalent transformer) parses the slash hierarchy into an object path: `{ color: { brand: { primary: ... } } }`
-4. Platform formatters convert that path into platform-specific identifiers:
-   - CSS: `--color-brand-primary`
-   - Swift: `colorBrandPrimary` (lowerCamelCase)
-   - Android XML: `color_brand_primary` (snake_case)
-   - JavaScript/TypeScript: `color.brand.primary` (dot-chained)
+The Figma REST API returns this variable as a JSON object. The `name` property is the string `color/brand/primary` — exactly as the designer typed it. Nothing in the API interprets or transforms it. It arrives at the extraction script verbatim.
 
-Every transformation step is deterministic — it applies simple string rules. The input name is the only variable the pipeline author does not control. A name like `Color 3` produces `--color-3` in CSS. A name like `Button / hover` (with spaces around the slash) may produce `--button---hover` or fail entirely, depending on how strictly the transformer handles whitespace.
+The token extractor — Style Dictionary, or an equivalent transformer — reads the slash-separated path as a hierarchy. It parses `color/brand/primary` into a nested object: `color → brand → primary`. This parsing is mechanical: split on `/`, build the object recursively, assign the value at the leaf. No judgment about whether `brand` is a meaningful subcategory. No check that `primary` is a sensible terminal name. It parses whatever it receives.
 
-The naming decision belongs to a designer. The downstream consequence belongs to an engineer. That gap is where silent failures live.
+The platform formatter then converts that nested path into a platform-specific identifier. For CSS, the path becomes `--color-brand-primary`. For Swift, `colorBrandPrimary`. For Android XML, `color_brand_primary`. For JavaScript, `color.brand.primary`. The transformation rules are simple string operations: replace slashes with the platform's separator, apply the platform's case convention, prepend any required prefix.
 
-### The Slash Convention
+<!-- → [FIGURE: Diagram showing the full transformation chain: Figma variable name → API JSON → token extractor object → platform formatters → CSS/Swift/Android/JS output. Caption: One string in Figma becomes four identifiers simultaneously. The transformation is deterministic — the input name is the only variable the pipeline author does not control.] -->
 
-The design tokens ecosystem has converged on slash-separated hierarchy as the standard path separator. Style Dictionary [Source: styledictionary.com] uses it. Tokens Studio [Source: docs.tokens.studio] uses it. The W3C Design Tokens Community Group (DTCG) format [Source: tr.designtokens.org/format/] uses nested objects that map cleanly to it.
+The point I want you to hold in mind is that this chain is deterministic. Given an input name, the output identifiers are fixed. The pipeline author controls the transformation rules. They do not control the input. A name like `Color 3` produces `--color-3` in CSS. A name like `Button / hover` — with spaces around the slash — may produce `--button---hover` or fail silently with an empty string, depending on how strictly the transformer handles whitespace. A name like `🎨 Brand Primary` causes most transformers to drop the non-ASCII character and produce something malformed.
 
-The slash hierarchy carries three pieces of information:
-
-```
-category/subcategory/name
-```
-
-- **category**: the semantic type — `color`, `spacing`, `typography`, `radius`, `shadow`, `motion`
-- **subcategory**: the design role within the category — `brand`, `neutral`, `feedback`, `interactive`
-- **name**: the specific decision — `primary`, `secondary`, `base`, `large`, `xs`
-
-A full name: `color/brand/primary`. Parsed path: `color → brand → primary`. Output: `--color-brand-primary`.
-
-That is the contract. Anyone consuming the CSS knows that this variable represents the primary brand color, without reading a comment or checking a Figma frame. The name is the documentation.
-
-### What Bad Names Produce
-
-Here are six naming failure modes with their downstream consequences:
-
-**1. Enumerated names** — `Color 1`, `Color 2`, `Color 3`
-CSS output: `--color-1`, `--color-2`, `--color-3`. Meaningless to every consumer. Breaks when a designer adds `Color 4` in a different position.
-
-**2. Human-only labels** — `Brand Blue`, `Dark Gray`, `Action Green`
-CSS output: `--brand-blue`, `--dark-gray`, `--action-green`. Describes appearance, not role. Breaks when brand blue becomes navy. Engineers consume by color name, not intent.
-
-**3. Slash-with-spaces** — `Color / Brand / Primary`
-Transformer behavior varies. Style Dictionary may produce `--color---brand---primary` or error. Some pipelines strip the spaces; some preserve them as hyphens. Results are unpredictable across tools.
-
-**4. Inconsistent depth** — some tokens have two segments, others have three
-`color/primary` alongside `color/brand/secondary`. The object shape is inconsistent. Consumers cannot rely on depth to infer category. Documentation scripts cannot group by tier.
-
-**5. Platform-specific names** — `--brand-primary` (CSS variable syntax already in the Figma name)
-The transformer will double-encode: `----brand-primary`. Do not include platform syntax in Figma names. Figma names are the source; the platform format is the output.
-
-**6. Unicode, punctuation, emoji** — `🎨 Brand Primary`
-Many transformers drop or error on non-ASCII characters. The pipeline often passes anyway, silently substituting empty strings or underscores.
+The designer made these outputs. They did not know they were making them. That gap — between the act of naming and the consequence of the name — is where the failure lives.
 
 ---
 
-## The Three-Tier Token Hierarchy
+## Why the Name Is the Contract
 
-The canonical architecture for design tokens — established in practice by Nathan Curtis's systems work, Brad Frost's atomic design, and now formalized in the DTCG format — uses three tiers:
+The word "contract" has a specific meaning in software: a stable interface between a producer and a consumer that both parties can depend on. A CSS custom property name is a contract between the token pipeline (producer) and the component stylesheet that references it (consumer). The component stylesheet writes `var(--color-brand-primary)`. It does not care where that value comes from — whether it was defined in a hand-written CSS file or generated by a pipeline from a Figma variable. It only cares that the name is stable and present.
 
-### Tier 1 — Primitive Tokens
+When a designer renames `color/brand/primary` to `color/brand/blue` — perhaps because the palette subcategory was reorganized — the pipeline regenerates `--color-brand-blue`. The old identifier `--color-brand-primary` disappears from the stylesheet. Every component that referenced `var(--color-brand-primary)` now resolves to nothing, or to the browser's default, depending on whether a fallback was specified. The visual change may be invisible in development if the same value is hardcoded somewhere in the component. It surfaces in production, at scale, when the generated stylesheet is the only source of the value.
 
-Raw values. No semantic meaning. Every value the design system uses, named by what it is.
+This is the contract violation. The consumer was depending on `--color-brand-primary` as a stable identifier. The producer changed it. Neither party may have understood that a rename was a breaking change.
 
-```
-color/palette/blue-500   → #0066ff
-color/palette/gray-900   → #1a1a1a
-spacing/scale/4          → 4px
-spacing/scale/8          → 8px
-spacing/scale/16         → 16px
-typography/size/14       → 14px
-typography/size/16       → 16px
-radius/scale/2           → 2px
-radius/scale/4           → 4px
-```
+<!-- → [TABLE: Analogy table comparing API contract concepts to token naming — columns: API concept, token naming equivalent, example of violation] -->
 
-These are never consumed directly by product code. They are the vocabulary the semantic tier references.
-
-### Tier 2 — Semantic Tokens
-
-Decision tokens. Alias references into the primitive tier. Name by role, not value.
-
-```
-color/brand/primary      → {color.palette.blue-500}
-color/brand/secondary    → {color.palette.gray-900}
-color/interactive/default → {color.palette.blue-500}
-color/interactive/hover  → {color.palette.blue-700}
-color/feedback/error     → {color.palette.red-500}
-spacing/layout/section   → {spacing.scale.16}
-spacing/component/gap    → {spacing.scale.8}
-```
-
-These are what product code consumes. When the brand blue changes from `#0066ff` to `#0055ee`, you update one primitive. All semantic tokens that alias it update automatically.
-
-### Tier 3 — Component Tokens
-
-Component-scoped decisions. Alias references into the semantic tier. Scoped to a specific component.
-
-```
-color/button/background/default   → {color.interactive.default}
-color/button/background/hover     → {color.interactive.hover}
-color/button/label/default        → {color.neutral.white}
-spacing/button/padding/horizontal → {spacing.component.gap}
-radius/button/default             → {radius.scale.4}
-```
-
-Component tokens are optional. Small design systems often skip Tier 3 and have components reference semantic tokens directly. Larger systems with per-component customization requirements benefit from Tier 3 because it allows component-scoped overrides without breaking the semantic layer.
+The analogy to software APIs is not decorative. In a versioned REST API, renaming an endpoint path is a breaking change that requires a major version bump, migration documentation, and a deprecation period. In a token pipeline, renaming a Figma variable is a breaking change that requires updating every consumer — every component stylesheet, every Swift constant, every Android resource reference — before the old name can be retired. The difference is that most teams treat the Figma rename as a cosmetic operation and find out it was breaking when the build fails or, worse, when it doesn't fail and the wrong value silently takes over.
 
 ---
 
-## The Naming Convention: Concrete Rules
+## The Three-Tier Hierarchy
 
-This is the convention the audit in Chapter 5 enforces. Write it into a shared `naming.config.js` file in your project. Every team member, every designer, every engineer should be able to read it.
+Before specifying naming rules, there is a structural question to answer: what does the name's hierarchy actually represent? The design tokens community has converged on three tiers, and understanding the tiers is necessary to understand why the naming rules are what they are.
 
-```js
-// naming.config.js
-// The naming contract this project's pipeline enforces.
-// All Figma variable names must pass these rules before extraction runs.
+The first tier is **primitive tokens**. These are raw values with names that describe what they are, not what they mean. `color/palette/blue-500` is a primitive: it names a position in the color scale. The value is `#0066ff`. This token is never consumed directly by product code. It exists as a vocabulary that the second tier references.
 
-export const NAMING_RULES = {
-  // Segment separator
-  separator: '/',
+The second tier is **semantic tokens**. These are decision tokens — aliases that point into the primitive tier and carry names that describe a role, not a value. `color/brand/primary` is a semantic token. Its value is not a hex code; it is a reference: `{color.palette.blue-500}`. When the primitive resolves, the semantic resolves with it. The product code consumes semantic tokens. When the brand blue changes from `#0066ff` to `#0055ee`, one primitive is updated. Every semantic token that aliases it updates automatically. The consuming code does not change.
 
-  // Allowed categories (first segment of every token name)
-  categories: [
-    'color',
-    'spacing',
-    'typography',
-    'radius',
-    'shadow',
-    'motion',
-    'opacity',
-    'z-index',
-  ],
+The third tier is **component tokens**. These are component-scoped aliases into the semantic tier. `color/button/background/default` is a component token. Its value references `{color.brand.primary}`. Component tokens allow per-component customization without breaking the semantic layer. Small design systems often skip Tier 3; large systems with per-component theming requirements benefit from it.
 
-  // Minimum and maximum depth (segment count)
-  minDepth: 3,
-  maxDepth: 4,
+<!-- → [FIGURE: Three-tier diagram showing primitive → semantic → component aliasing chain, with the cascade of a single primitive value change propagating upward. Caption: The aliasing chain is the point. Changing one primitive updates every semantic and component token that references it.] -->
 
-  // Character rules (applied to each segment individually)
-  segmentPattern: /^[a-z0-9]+(-[a-z0-9]+)*$/,
-  // Allows: color, brand, primary, blue-500, 4xl
-  // Blocks: Color (uppercase), brand primary (space), blue_500 (underscore)
+The naming convention has to encode tier membership. The way it does this is through segment depth: three-segment names are semantic tokens, four-segment names are component tokens, two-segment names are primitives. The first segment — always — is the category: `color`, `spacing`, `typography`, `radius`, `shadow`, `motion`. The remaining segments specify subcategory and name.
 
-  // Required tiers by depth
-  tiers: {
-    3: 'semantic',   // color/brand/primary
-    4: 'component',  // color/button/background/default
-  },
-};
-```
+This means the name `color/brand/primary` tells you, without any other documentation, that this is a semantic token in the color category, representing the primary brand role. The name `color/palette/blue-500` tells you it is a primitive in the color category, at position 500 in the blue scale. The name `color/button/background/default` tells you it is a component token scoped to the button, specifying its default background. The name is the documentation. It is the only documentation that survives the transformation chain and appears in the browser's computed styles inspector.
 
-And a validation function that the audit will call:
+---
+
+## The Convention
+
+A naming convention is only as useful as its enforcement. I will give you the concrete rules first, then the enforcement code.
+
+Every Figma variable name must satisfy these conditions:
+
+**One: lowercase segments, hyphens only.** Each path segment uses lowercase letters, digits, and hyphens. No uppercase, no underscores, no spaces, no Unicode outside ASCII. `blue-500` is valid. `Blue500` is not. `blue_500` is not. The reason is that transformers apply case conversions during formatting. If the source name already has mixed case, the output is unpredictable — the formatter may double-apply a conversion or leave the source casing in place, depending on implementation.
+
+**Two: three or four segments.** Two segments (`color/primary`) is too shallow — it collapses the subcategory and makes grouping impossible. Five segments is too deep — it signals that either the hierarchy is wrong or a concern is being over-specified that belongs in component logic. Three segments for semantic tokens, four for component tokens.
+
+**Three: approved first segment.** The category must be from the controlled vocabulary: `color`, `spacing`, `typography`, `radius`, `shadow`, `motion`, `opacity`, `z-index`. New categories require a deliberate decision, not a unilateral addition.
+
+**Four: no platform syntax in the name.** Do not include `--`, `$`, or any platform-specific prefix in the Figma name. The platform prefix is added by the formatter. `--color-brand-primary` as a Figma name produces `----color-brand-primary` in CSS. The source name is the path; the platform format is the output.
+
+**Five: semantic tokens alias primitives; component tokens alias semantics.** This is a structural rule, not a naming rule, but it belongs in the same enforcement layer. A semantic token that hardcodes a hex value instead of aliasing a primitive has collapsed the tier structure. When the primitive value changes, the semantic will not update.
+
+Here is the validation function:
 
 ```js
 // lib/validate-name.js
 // Validates a single Figma variable name against the naming contract.
-// Returns an object: { valid: boolean, errors: string[] }
-// Illustrative code — adapt segment rules to your naming contract.
+// Returns: { valid: boolean, errors: string[] }
 
 import { NAMING_RULES } from '../naming.config.js';
 
@@ -209,7 +103,6 @@ export function validateTokenName(name) {
   const errors = [];
   const segments = name.split(NAMING_RULES.separator);
 
-  // Rule 1: depth
   if (segments.length < NAMING_RULES.minDepth) {
     errors.push(
       `Too shallow: "${name}" has ${segments.length} segment(s), minimum is ${NAMING_RULES.minDepth}.`
@@ -221,7 +114,6 @@ export function validateTokenName(name) {
     );
   }
 
-  // Rule 2: category
   const category = segments[0];
   if (!NAMING_RULES.categories.includes(category)) {
     errors.push(
@@ -229,7 +121,6 @@ export function validateTokenName(name) {
     );
   }
 
-  // Rule 3: segment characters
   for (const segment of segments) {
     if (!NAMING_RULES.segmentPattern.test(segment)) {
       errors.push(
@@ -238,28 +129,16 @@ export function validateTokenName(name) {
     }
   }
 
-  return {
-    valid: errors.length === 0,
-    errors,
-  };
+  return { valid: errors.length === 0, errors };
 }
 ```
 
-Run this from `package.json`:
-
-```json
-{
-  "scripts": {
-    "figma:validate-names": "node scripts/validate-names.js"
-  }
-}
-```
+And the script that runs it against the full variable set:
 
 ```js
 // scripts/validate-names.js
-// Reads a local fixture or calls the API, checks all variable names.
 // Run: npm run figma:validate-names
-// Illustrative code — wire to your fixture or live API as needed.
+// Exits 1 if any naming violations exist — blocks CI.
 
 import { readFileSync } from 'fs';
 import { validateTokenName } from '../lib/validate-name.js';
@@ -280,61 +159,38 @@ for (const variable of allVariables) {
   }
 }
 
-console.log(`\n${allVariables.length} variables checked. ${errorCount} with naming errors.`);
-if (errorCount > 0) {
-  process.exit(1); // Fail CI if any naming violations exist
-}
+console.log(
+  `\n${allVariables.length} variables checked. ${errorCount} with naming errors.`
+);
+if (errorCount > 0) process.exit(1);
 ```
 
-This script reads the variables fixture written by `figma-read.mjs` (Chapter 3). It does not need to call the API — it validates the local snapshot. If it exits with code 1, CI stops.
+<!-- → [TABLE: Six naming failure modes with downstream consequences — columns: failure mode, example name, CSS output, what breaks, when it breaks] -->
+
+This script reads the variables fixture written by `figma-read.mjs` from Chapter 3. It does not call the API — it validates the local snapshot. If it exits with code 1, CI stops. That is the enforcement: the pipeline cannot run on a file with naming violations, because the pipeline's output is only as useful as the names it transforms.
 
 ---
 
-## Component and Style Naming
+## Component and Layer Names
 
-Variables are not the only names the pipeline consumes. Components, styles, and layer names all become identifiers.
+Variables are not the only names the pipeline consumes. Component names, style names, and export layer names all become identifiers downstream.
 
-### Component Names
+Component names in Figma become documentation paths, Code Connect mappings, and AI agent context. The convention here differs from variable names because component names appear as display strings in the Figma layer panel — they are seen by designers in their natural working environment and need to be legible there. The convention is `Category/Variant/State`, title-cased, slash-separated, no spaces around slashes: `Button/Primary/Default`, `Card/Product/With-Image`, `Input/Text/Error`. The transformer will convert these to whatever the consumer requires — `ButtonPrimaryDefault` for a Swift enum, `button-primary-default` for a CSS class.
 
-Component names in Figma become keys in the component inventory, documentation paths, Code Connect mappings, and AI agent context. Apply the same hierarchical discipline:
+Export layer names — layers the asset pipeline extracts as SVG or PNG — have the strictest stability requirement of any name in the system, because they map directly to repository file paths. A designer who renames `icons/arrow-right` to `icons/arrow-right-v2` has not renamed a layer; they have deleted a file from the asset pipeline's output and created a new one. Every codebase reference to `icons/arrow-right.svg` now points to a missing file. The rename looks cosmetic in Figma. It is a breaking change in production.
 
-```
-Button/Primary/Default
-Button/Primary/Hover
-Button/Secondary/Default
-Card/Product/With-Image
-Input/Text/Error
-Navigation/Top/Mobile
-```
-
-The convention: `Category/Variant/State`. Capitalized, slash-separated, no spaces around slashes. This is different from token names (which use lowercase) because component names appear in Figma's layer panel and documentation as display strings. They still parse cleanly — `Button/Primary/Default` produces `button.primary.default` or `ButtonPrimaryDefault` depending on the transformer.
-
-### Style Names
-
-Text styles, color styles, and effect styles follow the same hierarchy. In Figma, styles are separate from variables — they are applied to layers as reusable definitions. If you are migrating from styles to variables (which Figma encourages as of 2024) [verify — current as of writing], your style names should match your variable names to make the migration path clear.
-
-### Layer Names for Export Targets
-
-Layers that the asset pipeline will export (Chapter 9) need stable, unique names that map to deterministic file paths. The convention:
-
-```
-icons/arrow-right
-icons/check-circle
-illustrations/empty-state/no-results
-```
-
-Lowercase, slash-separated. The pipeline maps these directly to repository paths: `assets/icons/arrow-right.svg`. A designer who renames the layer breaks the path. This is the most common silent failure in asset pipelines — a rename that looks cosmetic deletes the old asset and creates a new one with a new filename, orphaning every reference in the codebase.
+The convention for export targets: lowercase, slash-separated, no version suffixes, unique across the file. `icons/arrow-right`, `icons/check-circle`, `illustrations/empty-state/no-results`. These names should be treated as permanent. Retiring an asset requires explicit deprecation, not a quiet rename.
 
 ---
 
-## The Transformation Chain: One Example, Three Outputs
+## The Transformation Chain: One Name, Four Outputs
 
-Here is what happens to a well-named variable through the full transformation chain. This is the flow Style Dictionary [Source: styledictionary.com] runs. Token transformers from other tools follow the same logic.
+I want to make the determinism concrete by tracing one name all the way through.
 
-**Input (Figma variable name):** `color/brand/primary`
-**Value:** `#0066ff`
+Input: Figma variable `color/brand/primary`, value `#0066ff`.
 
 Style Dictionary parses the slash path into a nested object:
+
 ```json
 {
   "color": {
@@ -348,125 +204,90 @@ Style Dictionary parses the slash path into a nested object:
 }
 ```
 
-**CSS output:**
+The CSS formatter converts `color → brand → primary` to `color-brand-primary`, prepends `--`:
+
 ```css
 :root {
   --color-brand-primary: #0066ff;
 }
 ```
 
-**Swift output (iOS):**
+The Swift formatter converts to lowerCamelCase:
+
 ```swift
 public extension Color {
   static let colorBrandPrimary = Color(hex: "#0066ff")
 }
 ```
 
-**Android XML output:**
+The Android formatter converts to snake_case:
+
 ```xml
 <resources>
   <color name="color_brand_primary">#0066ff</color>
 </resources>
 ```
 
-Three platforms. Three conventions. One source name. The transformation is deterministic — the designer's naming decision propagates exactly.
+Now run the same chain on `Brand Blue`, the common alternative — a name that describes appearance rather than role.
 
-Now run the same chain on `Brand Blue`:
+CSS: `--brand-blue`. Swift: `Color.brandBlue`. Android: `color_brand_blue`.
 
-**CSS output:** `--brand-blue: #0066ff`
-**Swift output:** `Color.brandBlue`
-**Android:** `color_brand_blue`
+The values are correct. The names are wrong in a way that accumulates silently. Six months from now the brand updates to navy. The name `brand-blue` is now inaccurate. Every engineer who searches the codebase for `brand-blue` is consuming an identifier that describes a color that no longer exists. Updating the name requires finding and replacing every consumer — every `var(--brand-blue)`, every `Color.brandBlue`, every `color_brand_blue` — across all platforms, which is the kind of work that takes a sprint and produces regressions.
 
-The values are correct. The names communicate appearance, not role. Six months from now when the brand updates to navy, the name `brand-blue` is wrong, and every hardcoded reference to it in six platforms needs to be audited and updated by hand.
+<!-- → [TABLE: Side-by-side transformation of a well-named variable (color/brand/primary) vs. a poorly named variable (Brand Blue) through CSS, Swift, and Android formatters — showing both outputs and the consequence of a brand color update] -->
 
----
-
-## Designer-Engineer Naming Ownership
-
-A common failure mode is ambiguity about who owns the naming decision. The answer is clear once you understand what the name represents:
-
-| What the name represents | Who owns it | What happens when they get it wrong |
-|---|---|---|
-| Semantic role (`brand/primary`) | Design + Engineering, agreed contract | Pipeline produces wrong identifiers |
-| Primitive value (`palette/blue-500`) | Engineering convention | Token references break |
-| Component category (`Button/Primary`) | Design + Engineering, agreed contract | Documentation and Code Connect mappings break |
-| Layer export path (`icons/arrow-right`) | Engineering convention | Asset pipeline orphans files |
-
-The practical answer: the naming contract lives in `naming.config.js` in the repository, where it is version-controlled and reviewable. Designers learn it once. Violations surface in the audit (Chapter 5). Bulk fixes come from the plugin (Chapter 6).
+The semantic name survives the rebrand. The descriptive name does not. That is the whole argument for semantic naming, stated as a concrete outcome.
 
 ---
 
 ## Migrating a Messy File
 
-If you are applying this convention to an existing file — the common case — the migration path is:
+The more common situation is not building a naming system from scratch. It is inheriting a file with 300 variables, half of them named `Color 1` through `Color 47` and the other half named things like `Brand Blue`, `Action Green`, and `Dark Gray Hover`. The migration path is predictable, and there is a specific order that prevents alias breakage.
 
-1. Run `npm run figma:validate-names` against the current fixture. Count violations.
-2. Generate a rename mapping: old name → new name. Do this in a spreadsheet or script; do not rename in Figma directly yet.
-3. Review the mapping with the design team. Flag any name changes that affect semantic meaning.
-4. Apply bulk renames using the Plugin API fix tool from Chapter 6. Stage the rename; require approval before applying.
-5. Re-run `npm run figma:validate-names`. All names should now pass.
-6. Update all downstream consumers — token references, Code Connect annotations, documentation — to use the new names.
+Step one: run the validator against the current fixture. Get the count and categorize the violations. More than 100 violations means bulk tooling — the Plugin API rename tool from Chapter 6 — is necessary. Fewer than 20 means hand-fixing is tractable.
 
-Do not rename variables without updating their consumers. A variable rename in Figma does not automatically update any alias references. An alias that pointed to `Color 3` will break silently if `Color 3` is renamed to `color/brand/primary` without updating the alias. [verify — current as of writing, alias behavior under renames]
+Step two: generate a rename mapping in a spreadsheet or script. Old name to new name. Do not rename in Figma yet. Review the mapping with the design team and flag any rename that changes semantic meaning — a rename from `Color 3` to `color/brand/primary` is not just a naming fix if `Color 3` was actually used as a neutral background somewhere. The audit has to verify role before the name can be corrected.
 
----
+Step three: check alias chains before renaming. A Figma variable rename does not automatically update alias references that point to the old name. [verify — current as of writing, alias behavior under renames] If `color/button/background/default` aliases `Color 3`, and you rename `Color 3` to `color/palette/blue-500`, the alias will break. Aliases must be updated in the same operation as the rename, or updated immediately after.
 
-## Failure Modes of the Naming Convention Itself
+Step four: apply bulk renames using the Plugin API tool, with a staging review before committing. Re-run the validator. Fix any remaining violations. Only then run the token extractor and downstream pipeline.
 
-Even a well-specified naming convention has failure modes:
-
-**Naming drift over time.** The convention is in a file. The file is not shown in the Figma editor. Designers adding new variables do not see it. Without the audit running in CI, violations accumulate silently. Mitigation: run `figma:validate-names` as a CI step on every PR that touches the Figma fixture.
-
-**Category expansion without governance.** A designer adds `elevation/card/shadow` — a reasonable name, but `elevation` is not in the approved categories list. The pipeline fails. Mitigation: treat the categories list as a controlled vocabulary. Expansion requires a PR to `naming.config.js`, not a unilateral decision in Figma.
-
-**The alias chain problem.** Semantic tokens alias primitive tokens. If a primitive is renamed without updating its aliases, every semantic token that references it resolves to an undefined value. The pipeline may still run and produce empty or fallback values — no error, wrong output. Mitigation: run alias resolution validation (covered in Chapter 8's `validate-tokens.mjs`).
-
-**The tier collapse problem.** A designer who does not understand the three-tier hierarchy names everything as semantic tokens, creating aliases like `color/brand/primary → #0066ff` (direct value, not alias). The primitive tier disappears. Multi-mode support breaks. Mitigation: the audit checks whether semantic tokens alias primitives or hardcode values, and flags hardcoded values as warnings.
+The order matters because the validator catches naming violations but not alias breakage. Those are different checks, both necessary, and the alias check must come after renames are staged but before they are applied.
 
 ---
 
-## Decision Rules
+## What the Convention Cannot Fix
 
-Use this checklist before running any pipeline. If any item fails, fix it before building on top.
+I want to be honest about the limits of naming discipline, because I have seen teams treat naming rules as a complete solution to token governance and discover the gaps expensively.
 
-- [ ] All variable names use lowercase segments, hyphens only, no spaces
-- [ ] All names have exactly 3 or 4 slash-separated segments
-- [ ] All first segments are in the approved categories list
-- [ ] All semantic tokens alias primitive tokens (no hardcoded values in the semantic tier)
-- [ ] All component tokens alias semantic tokens (no skipped tiers)
-- [ ] Component names follow `Category/Variant/State` format
-- [ ] Export layer names are stable, lowercase, slash-separated, and unique
-- [ ] The naming config is version-controlled and referenced in the project README
-- [ ] `npm run figma:validate-names` exits 0
+The naming convention ensures that names are machine-readable and semantically descriptive. It does not ensure that the names are correct — that `color/brand/primary` actually represents the primary brand color and not an accent or an error state that was mislabeled at creation. Correctness is a semantic audit problem, not a naming problem. The naming rules verify form; only a human reviewing the name-to-value mapping can verify intent.
 
-When this checklist passes, the file's naming layer is machine-readable. When it fails, fix the names before running the token extractor, the asset pipeline, or anything downstream.
+The convention also does not prevent tier collapse, the failure where semantic tokens alias other semantic tokens rather than primitives. `color/brand/primary → {color.interactive.default}` where `color/interactive/default → {color.palette.blue-500}` is technically valid naming but structurally wrong: the semantic tier now has variable-length alias chains that are hard to trace and break unpredictably when intermediate tokens are renamed. The validator catches this if it includes alias resolution checking; a naming-only check does not.
+
+Finally, the convention does not solve the communication problem of who owns the naming decision. The answer is that both design and engineering own it jointly, because the name has to serve both Figma's organizational needs and the pipeline's technical requirements. The practical resolution is to put the naming contract in a version-controlled file — `naming.config.js` — where it is legible to engineers, and to present a summary of it to designers in the form they can absorb: a short Notion doc, a plugin that flags violations in the Figma editor, a training session when a new designer joins the team. The contract lives in code. The communication of the contract is a separate, ongoing responsibility.
 
 ---
 
-## AI Wayback Machine: BEM and the History of Naming as a Contract
+## The History Behind the Convention
 
-Long before design tokens, the front-end community was already learning that names are API contracts. In 2009, Yandex engineers published the Block-Element-Modifier (BEM) methodology. The insight was identical to what design tokens formalized a decade later: if you name HTML class attributes by semantic role rather than visual appearance (`.button--primary` rather than `.blue-button`), the name survives reskinning. The class name becomes a contract between the HTML structure and the CSS rule. Change the visual representation; the contract holds.
+Long before design tokens existed, the front-end community was learning the same lesson through CSS architecture. In 2009, Yandex engineers published the Block-Element-Modifier methodology — BEM. The insight was identical to what design tokens formalized a decade later: if you name HTML class attributes by semantic role rather than visual appearance, the name survives reskinning. `.button--primary` survives a color change. `.blue-button` does not. The class name is a contract between the HTML structure and the CSS rule that styles it. Change the visual representation; the contract holds.
 
-The same lesson was learned independently in CSS architecture (OOCSS, SMACSS), in API design (semantic versioning, stable endpoint naming), and in database schema design (meaningful column names over positional indexing). Every domain that had to maintain code across time came to the same conclusion: names are not labels. They are the stable interface between the producer and every consumer that comes after.
+The same lesson emerged independently in CSS architecture frameworks — OOCSS, SMACSS — and in API design, where the semantic versioning specification codified the intuition that a stable interface name is not the same as a stable implementation. In database schema design, meaningful column names over positional indexing was a hard-won lesson that predates relational databases. Every domain that had to maintain code across time arrived at the same conclusion: names are stable interfaces, not labels.
 
-Design tokens extended this insight from two parties (HTML and CSS) to an arbitrary number: a Figma variable consumed by CSS, iOS, Android, documentation, AI agents, and code generators simultaneously. The stakes of a bad name multiplied. The discipline required multiplied with it.
+Design tokens extended this insight from two parties — HTML and CSS — to an arbitrary number: a Figma variable consumed simultaneously by CSS, iOS, Android, documentation generators, AI agents, and code generators. The consequence of a bad name multiplied with the number of consumers. The discipline required multiplied with it.
 
-The CSS Custom Properties specification (W3C) reinforced the convention by making variable names part of the language syntax — you cannot define `var(--color-3)` and later claim it means something specific without the name itself carrying that meaning. The variable name is the only documentation that survives into the browser's computed styles inspector.
-
-Design systems teams who internalized BEM in the 2010s had a head start when design tokens arrived. Teams who had named everything by appearance had technical debt that cost weeks of migration work. The lesson travels.
+Teams that had internalized BEM in the 2010s had a head start when design tokens arrived. Teams that had named everything by appearance — `.blue-button`, `.large-card`, `.dark-header` — had migration debt that cost sprints to resolve. The lesson is not new. The surface where it applies keeps expanding.
 
 ---
 
-## Try This
+**LLM Exercises**
 
-**Exercise 1 — Audit your current variable names**
+*Use these with Claude or any capable language model to deepen your understanding of the concepts in this chapter.*
 
-Export your Figma variables fixture (use `figma-read.mjs` from Chapter 3 or download from the Figma developer console). Run `scripts/validate-names.js` from this chapter against it. Count the violations. Categorize them: how many are enumerated names? Human-only labels? Slash-with-spaces?
+**1. Generate and examine.** Give the model a set of ten real variable names from your Figma file — whatever names are currently there, good or bad. Ask it to evaluate each name against the three-tier hierarchy and the naming rules from this chapter, explain what each name would produce in CSS and Swift, and flag any that would cause downstream failures. Then run the actual transformer and compare.
 
-If you have fewer than 20 violations: your naming is already in reasonable shape. Fix the violations and wire the validator into CI.
+**2. Apply to known context.** Describe a design system you have worked with — the domain (e-commerce, enterprise SaaS, consumer mobile, whatever it is), the rough scale (number of variables, number of platforms), and the current naming approach. Ask the model to generate a naming convention proposal tailored to that context: the tier structure, the approved category list, the depth rules, and three example token names for each tier. Evaluate whether the proposal is more or less strict than what this chapter recommends and why.
 
-If you have more than 100 violations: do not try to fix them by hand. Document the convention first, then use the Plugin API rename tool from Chapter 6 to apply bulk fixes.
+**3. Stress-test a specific claim.** This chapter argues that a name like `Brand Blue` fails because it describes appearance rather than role, and will produce naming debt when the brand color changes. Present this claim to the model and ask it to construct the strongest counterargument: a scenario where appearance-descriptive names are actually more stable, more useful, or more maintainable than role-descriptive names. Then evaluate whether the counterargument changes your view of when descriptive naming is acceptable.
 
-**Exercise 2 — Trace one name through the transformation chain**
-
-Pick your most important brand color. Find its name in the Figma fixture. Run it through Style Dictionary's CLI (or write the JSON transform manually) and check the CSS, Swift, and Android outputs. Is the output name what you would want engineers to use? If not, the problem is in Figma — fix it at the source.
+**4. Draft or audit a professional deliverable.** Write a one-page naming convention document for your design team — the kind of document you would put in Notion or Confluence and reference in onboarding. It should cover the tier hierarchy, the segment rules, three or four concrete examples, and the migration path for non-conforming names. Ask the model to critique it for completeness, clarity, and enforceability. Then ask it to identify the single most common violation it would expect a new designer to make and whether your document addresses it.

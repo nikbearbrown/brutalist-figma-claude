@@ -22,7 +22,7 @@ Before you can reason about why Figma and production diverge, you need a working
 
 A Figma file is a document graph. It is a tree of nodes, each with a type, a set of typed properties, and references either to child nodes or to shared resources — style definitions, variable collections, component definitions. The canvas you see when you open Figma is a rendering of that graph. Figma's rendering engine traverses the node tree, resolves the references, and produces pixels on screen. But the pixels are not the data. The graph is the data.
 
-![Figma document graph on the left showing DOCUMENT → CANVAS → COMPONENT → boundVariables → VariableID nodes, contrasted with a rendered canvas panel on the right showing the same button as pixels](images/01-why-your-figma-file-is-lying-to-you-fig-01.png)
+![Figma document graph on the left showing DOCUMENT → CANVAS → COMPONENT → boundVariables → VariableID nodes, contrasted with a rendered canvas panel on the right showing the same button as pixels](../images/01-why-your-figma-file-is-lying-to-you-fig-01.png)
 *Figure 1.1 — The file is a graph; the canvas is a rendering of the graph.*
 
 Here is a simplified fragment of what a primary button component looks like in that graph:
@@ -63,7 +63,7 @@ When you change a variable in Figma, you change a value in Figma's servers — i
 
 The technical name for this situation is a **snapshot**. Every time a designer exports a token file, copies a hex value from Dev Mode, downloads an SVG, or even screenshots a component and attaches it to a Jira ticket, they are producing a snapshot: a copy of the current state, severed from its source at the moment of creation. The copy is accurate when made. The source continues to change. The copy does not.
 
-![Timeline showing the Figma state line rising continuously over time while the production state line remains frozen at the manual export snapshot point, with the gap between them labeled "drift"](images/01-why-your-figma-file-is-lying-to-you-fig-02.png)
+![Timeline showing the Figma state line rising continuously over time while the production state line remains frozen at the manual export snapshot point, with the gap between them labeled "drift"](../images/01-why-your-figma-file-is-lying-to-you-fig-02.png)
 *Figure 1.2 — Every manual crossing produces a snapshot. Snapshots drift.*
 
 This is not a communication problem. Two people talking constantly about a design change does not prevent divergence — it just means both people know the intention. The implementation still has to cross from Figma to production through a manual step, and that step is, by definition, a one-time operation. It does not repeat when the design changes again next week.
@@ -109,7 +109,7 @@ Not a better naming convention. Not a more careful export checklist. Not a Confl
 
 What I mean by pipeline is a sequence of automated steps with a defined input, a defined set of outputs, and a defined trigger. The input is a Figma file key and credentials. The outputs are platform-ready artifacts: token JSON files, exported SVG assets, component documentation, machine-readable specs. The trigger is an event — a Figma library publish, a CI run, a scheduled job. The pipeline runs, reads the current graph state from the Figma API, transforms it, validates it, and writes to production. No human performs the crossing.
 
-![Five-stage pipeline flow diagram: Trigger (LIBRARY_PUBLISH) leads to API Read (GET /v1/files/:key), Transform (DTCG JSON), Validate (aliases and values), and PR/Deploy (tokens.json), with a red failure branch from Validate showing the job failing rather than opening a PR](images/01-why-your-figma-file-is-lying-to-you-fig-03.png)
+![Five-stage pipeline flow diagram: Trigger (LIBRARY_PUBLISH) leads to API Read (GET /v1/files/:key), Transform (DTCG JSON), Validate (aliases and values), and PR/Deploy (tokens.json), with a red failure branch from Validate showing the job failing rather than opening a PR](../images/01-why-your-figma-file-is-lying-to-you-fig-03.png)
 *Figure 1.3 — The automated crossing eliminates the snapshot. The current graph state is always readable.*
 
 The human's role in this system is governance, not crossing. A designer decides what is authoritative. An engineer decides what the pipeline is allowed to read and write, what changes require human review before reaching production, what the validation rules are. The judgment is human. The mechanical act of moving a value from Figma to a token file is not.

@@ -60,7 +60,7 @@ figma-audit.js
 └── report (markdown + JSON output)
 ```
 
-![Figma audit pipeline showing data flowing from the Figma API or a local fixture through six check functions into a findings array, then rendered in parallel as a markdown report and a JSON file with severity levels annotated](images/05-the-figma-audit-fig-01.png)
+![Figma audit pipeline showing data flowing from the Figma API or a local fixture through six check functions into a findings array, then rendered in parallel as a markdown report and a JSON file with severity levels annotated](../images/05-the-figma-audit-fig-01.png)
 *Figure 5.1 — Audit pipeline: API → six checks → findings → reports*
 
 The main script takes either a live API call or a local fixture via `--fixture`. The fixture path is not optional ceremony — it is how you run the audit in CI without hammering the rate limits on every pull request. Updating the fixture is a separate scheduled step; the audit itself runs against the committed fixture on every PR.
@@ -356,7 +356,7 @@ steps:
     run: npm run figma:tokens
 ```
 
-![CI pipeline sequence showing the audit step with an exit code 0 or 1 gate; exit code 1 blocks token extraction and code generation; the ratchet baseline diff runs alongside to prevent regressions](images/05-the-figma-audit-fig-02.png)
+![CI pipeline sequence showing the audit step with an exit code 0 or 1 gate; exit code 1 blocks token extraction and code generation; the ratchet baseline diff runs alongside to prevent regressions](../images/05-the-figma-audit-fig-02.png)
 *Figure 5.2 — CI pipeline: audit gate before token extraction*
 
 When a warning deserves promotion to error — because accessibility compliance is now non-negotiable, because the variable migration is complete and hardcoded colors have no excuse left — update a severity override in the audit config rather than modifying the check function itself. This keeps the rule logic stable while the team's tolerance changes:

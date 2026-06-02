@@ -10,7 +10,7 @@ This is not a time-management problem. It is an architectural one. The Figma RES
 
 That boundary is intentional. Understanding why it exists is the first thing this chapter has to explain, because the design of the fix tool follows directly from it.
 
-![Architectural split between the REST API running outside Figma as read-only and the Plugin API running inside the Figma editor with read-write access; the human approval gate sits at the Plugin API boundary before any write executes](images/06-fixing-the-file-with-the-plugin-api-fig-01.png)
+![Architectural split between the REST API running outside Figma as read-only and the Plugin API running inside the Figma editor with read-write access; the human approval gate sits at the Plugin API boundary before any write executes](../images/06-fixing-the-file-with-the-plugin-api-fig-01.png)
 *Figure 6.1 — REST API (read-only) vs Plugin API (read/write): where the human approval gate sits*
 
 ---
@@ -47,7 +47,7 @@ Plugin Sandbox (figma.*)          Plugin UI (iframe)
 
 The sandbox has `figma.*`. The UI iframe has the browser. If the plugin needs to load external data — like the audit JSON from Chapter 5 — it fetches that data in the UI iframe and posts it to the sandbox. The sandbox applies the changes and posts results back to the UI for display.
 
-![Two-process plugin architecture: sandbox with figma.* access on the left, UI iframe with browser APIs on the right, postMessage channel in the middle; the human approval gate and confirm dialog live in the UI iframe and control what the sandbox is permitted to write](images/06-fixing-the-file-with-the-plugin-api-fig-02.png)
+![Two-process plugin architecture: sandbox with figma.* access on the left, UI iframe with browser APIs on the right, postMessage channel in the middle; the human approval gate and confirm dialog live in the UI iframe and control what the sandbox is permitted to write](../images/06-fixing-the-file-with-the-plugin-api-fig-02.png)
 *Figure 6.2 — Two-process plugin architecture: sandbox and UI iframe with postMessage channel*
 
 This split is not a quirk to work around. It is the plugin model. The approach taken here is to do everything we can in the UI iframe — loading and parsing the audit JSON, generating fix proposals, rendering the preview, managing approval state — and to send only the final approved change list to the sandbox for execution.
@@ -354,7 +354,7 @@ For team distribution, publish to your organization's private plugin library thr
 
 The desktop application is required. The plugin sandbox is not available in the browser-based Figma editor.
 
-![Step-by-step plugin loading flow with five numbered development steps on the left — including the Phase 2 human review gate and confirm dialog highlighted in red — and a production distribution path with pre-flight checklist and never-automate list on the right](images/06-fixing-the-file-with-the-plugin-api-fig-03.png)
+![Step-by-step plugin loading flow with five numbered development steps on the left — including the Phase 2 human review gate and confirm dialog highlighted in red — and a production distribution path with pre-flight checklist and never-automate list on the right](../images/06-fixing-the-file-with-the-plugin-api-fig-03.png)
 *Figure 6.3 — Plugin loading flow: development import through production distribution*
 
 ---

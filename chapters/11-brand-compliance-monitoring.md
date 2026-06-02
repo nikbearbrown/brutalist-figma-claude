@@ -482,7 +482,7 @@ jobs:
           path: compliance-output/
 ```
 
-![CI gate diagram: a GitHub Actions trigger feeds monitor-brand.mjs, which produces a diamond decision point on whether errors exceed zero. Exit code 1 (CI fails, PR blocked) fires on contrast failures and unapproved font families. Exit code 0 (CI passes, warnings logged) fires on hardcoded approved colors and off-scale spacing. A dashed arrow shows the compliance-output artifact attached to the PR for review.](images/11-brand-compliance-monitoring-fig-01.png)
+![CI gate diagram: a GitHub Actions trigger feeds monitor-brand.mjs, which produces a diamond decision point on whether errors exceed zero. Exit code 1 (CI fails, PR blocked) fires on contrast failures and unapproved font families. Exit code 0 (CI passes, warnings logged) fires on hardcoded approved colors and off-scale spacing. A dashed arrow shows the compliance-output artifact attached to the PR for review.](../images/11-brand-compliance-monitoring-fig-01.png)
 
 *Figure 11.1 — CI gate for brand compliance*
 

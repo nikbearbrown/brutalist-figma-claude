@@ -59,7 +59,7 @@ The contract has five categories, each with two severity levels: **blocking** (t
 
 **Category five: export targets.** All frames and components intended for export have export settings configured. Export target names do not conflict with each other across pages. Export target names map to valid filesystem paths — no reserved characters, no leading slashes. Missing export settings on intended export targets are blocking for asset export pipelines and advisory for everything else.
 
-![Severity matrix showing five machine-readiness categories against blocking and advisory severity columns](images/07-the-machine-ready-file-fig-01.png)
+![Severity matrix showing five machine-readiness categories against blocking and advisory severity columns](../images/07-the-machine-ready-file-fig-01.png)
 *Figure 7.1 — Machine-readiness severity matrix*
 
 The distinction between blocking and advisory is important because it determines the pipeline's behavior when findings exist. A pipeline that halts on every advisory finding will never run in a real project — real projects accumulate advisory findings faster than they are resolved. A pipeline that ignores blocking findings will silently produce wrong output and deploy it. The severity classification is the policy decision that determines which failures the team accepts responsibility for surfacing immediately versus monitoring over time.
@@ -114,7 +114,7 @@ If rate limits are exhausted, the pipeline exits with code 2 and logs
 the retry-after header. [verify — current as of writing]
 ```
 
-![Hub diagram showing FIGMA.md at the center with arrows to CI pipeline, preflight script, and AI coding agent](images/07-the-machine-ready-file-fig-02.png)
+![Hub diagram showing FIGMA.md at the center with arrows to CI pipeline, preflight script, and AI coding agent](../images/07-the-machine-ready-file-fig-02.png)
 *Figure 7.2 — FIGMA.md as central governance document for CI, preflight, and AI coding agents*
 
 The value of this document is not primarily technical. It is organizational. When a new engineer joins the team and asks "what is this pipeline allowed to do?", the answer is in `FIGMA.md`. When an AI coding agent is given Figma access and needs to know whether it can infer semantic intent from an unnamed node, the answer is in `FIGMA.md`. When the team debates whether to allow direct commits to main for generated token files, the document is the artifact that makes the debate concrete — edit the document, review the edit, merge or reject it.

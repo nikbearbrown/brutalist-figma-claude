@@ -34,7 +34,7 @@ The token extractor — Style Dictionary, or an equivalent transformer — reads
 
 The platform formatter then converts that nested path into a platform-specific identifier. For CSS, the path becomes `--color-brand-primary`. For Swift, `colorBrandPrimary`. For Android XML, `color_brand_primary`. For JavaScript, `color.brand.primary`. The transformation rules are simple string operations: replace slashes with the platform's separator, apply the platform's case convention, prepend any required prefix.
 
-![The Figma variable name transformation chain: one name enters at Figma and exits as four platform identifiers — CSS, Swift, Android, and JS — through a deterministic pipeline](images/04-naming-as-an-api-contract-fig-01.png)
+![The Figma variable name transformation chain: one name enters at Figma and exits as four platform identifiers — CSS, Swift, Android, and JS — through a deterministic pipeline](../images/04-naming-as-an-api-contract-fig-01.png)
 *Figure 4.1 — Transformation chain: one name, four outputs*
 
 The point I want you to hold in mind is that this chain is deterministic. Given an input name, the output identifiers are fixed. The pipeline author controls the transformation rules. They do not control the input. A name like `Color 3` produces `--color-3` in CSS. A name like `Button / hover` — with spaces around the slash — may produce `--button---hover` or fail silently with an empty string, depending on how strictly the transformer handles whitespace. A name like `🎨 Brand Primary` causes most transformers to drop the non-ASCII character and produce something malformed.
@@ -74,7 +74,7 @@ The second tier is **semantic tokens**. These are decision tokens — aliases th
 
 The third tier is **component tokens**. These are component-scoped aliases into the semantic tier. `color/button/background/default` is a component token. Its value references `{color.brand.primary}`. Component tokens allow per-component customization without breaking the semantic layer. Small design systems often skip Tier 3; large systems with per-component theming requirements benefit from it.
 
-![Three-tier token hierarchy showing primitive tokens aliasing to semantic tokens aliasing to component tokens, with a cascade annotation showing how one primitive value change propagates to all consumers](images/04-naming-as-an-api-contract-fig-02.png)
+![Three-tier token hierarchy showing primitive tokens aliasing to semantic tokens aliasing to component tokens, with a cascade annotation showing how one primitive value change propagates to all consumers](../images/04-naming-as-an-api-contract-fig-02.png)
 *Figure 4.2 — Three-tier token hierarchy: primitive → semantic → component*
 
 The naming convention has to encode tier membership. The way it does this is through segment depth: three-segment names are semantic tokens, four-segment names are component tokens, two-segment names are primitives. The first segment — always — is the category: `color`, `spacing`, `typography`, `radius`, `shadow`, `motion`. The remaining segments specify subcategory and name.

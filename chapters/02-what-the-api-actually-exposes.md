@@ -83,7 +83,7 @@ Rate limits are the most common reason a working script stops working at scale.
 
 The documentation states that limits are applied per token, vary by endpoint, and vary by plan tier. [verify — all figures below against current docs before production use] A `429 Too Many Requests` response includes a `Retry-After` header indicating how many seconds to wait before retrying.
 
-![Flow diagram showing the figmaFetch() rate limit pattern: API request made, on 429 response read the Retry-After header, sleep for that duration, retry once, then either return JSON on success or surface the error to the operator if still rate-limited](images/02-what-the-api-actually-exposes-fig-01.png)
+![Flow diagram showing the figmaFetch() rate limit pattern: API request made, on 429 response read the Retry-After header, sleep for that duration, retry once, then either return JSON on success or surface the error to the operator if still rate-limited](../images/02-what-the-api-actually-exposes-fig-01.png)
 *Figure 2.1 — Rate limit response flow: read Retry-After, sleep, retry once, surface.*
 
 The plan-tier trap is the one that bites unexpectedly. On the Starter (free) tier, rate limits are significantly lower than on Professional or Enterprise. [verify — current Starter limits] A script that works cleanly against a small test file may hammer into rate limits against a large production file on a Starter plan. The correct handling pattern is not complex:
@@ -184,7 +184,7 @@ What the ping checks, in order:
 5. Rate limit headroom from the response headers of the file ping [verify — which headers Figma returns for rate limit state]
 6. Clear next-action output for every failure
 
-![Annotated terminal output from figma-ping.js showing PASS for environment, auth, and file access checks, WARN for the Variables API plan gate with a note directing to Tokens Studio, and an informational rate limit line — each row annotated with a callout label on the right](images/02-what-the-api-actually-exposes-fig-02.png)
+![Annotated terminal output from figma-ping.js showing PASS for environment, auth, and file access checks, WARN for the Variables API plan gate with a note directing to Tokens Studio, and an informational rate limit line — each row annotated with a callout label on the right](../images/02-what-the-api-actually-exposes-fig-02.png)
 *Figure 2.2 — figma-ping.js output for a healthy non-Enterprise session. Auth PASS, file PASS, variables WARN (expected).*
 
 ```javascript

@@ -14,7 +14,7 @@ A machine knows none of this. It needs the complete alias chain — not the reso
 
 `build-spec.mjs` emits a machine-readable component specification JSON that contains everything a code generator or AI coding agent needs, with nothing compressed out for the sake of human readability. The chapters that follow — MCP integration, CI orchestration — consume its output. A downstream CLI cannot make reliable decisions about what to generate unless the specification it reads is complete.
 
-![Side-by-side comparison table showing information present and absent in a human-readable component doc versus a machine-readable spec for the Button component. Fields absent in the human doc — token alias chain, node ID, layout constraints, spacing values, Code Connect import path — are annotated with the code generation failure mode each absence causes.](images/12-figma-as-a-machine-readable-specification-fig-01.png)
+![Side-by-side comparison table showing information present and absent in a human-readable component doc versus a machine-readable spec for the Button component. Fields absent in the human doc — token alias chain, node ID, layout constraints, spacing values, Code Connect import path — are annotated with the code generation failure mode each absence causes.](../images/12-figma-as-a-machine-readable-specification-fig-01.png)
 
 *Figure 12.1 — Human-readable doc versus machine-readable spec for the same component*
 
@@ -455,7 +455,7 @@ The third is Style Dictionary integration. Run Style Dictionary against a mainta
 
 The script degrades gracefully — it emits whatever alias information it can build and marks the rest `null`. A contract test should warn (not fail) when token aliases are absent, so the generator knows to fall back to resolved hex values rather than failing silently.
 
-![Three-column diagram showing paths to token alias resolution: the Enterprise path uses the Variables API directly and returns complete alias chains; the Tokens Studio path exports a tokens.json that build-spec.mjs merges at build time; the style-name convention path infers aliases from slash-path style names like "color/brand/primary" → "color.brand.primary". All three paths converge on the tokenAlias field in the component spec fill object, which is null when no path is available.](images/12-figma-as-a-machine-readable-specification-fig-02.png)
+![Three-column diagram showing paths to token alias resolution: the Enterprise path uses the Variables API directly and returns complete alias chains; the Tokens Studio path exports a tokens.json that build-spec.mjs merges at build time; the style-name convention path infers aliases from slash-path style names like "color/brand/primary" → "color.brand.primary". All three paths converge on the tokenAlias field in the component spec fill object, which is null when no path is available.](../images/12-figma-as-a-machine-readable-specification-fig-02.png)
 
 *Figure 12.2 — Three paths to token alias resolution*
 
@@ -565,7 +565,7 @@ The spec is also a fixture for regression testing. A code generator that has con
 
 For large design systems — 500 components or more — loading the entire `components.json` into an agent's context is impractical. The per-component files in `spec-output/components/` exist for this reason. An MCP workflow loads only the components relevant to the current generation task, treating the per-component spec as a targeted context window rather than a complete file read.
 
-![Infographic showing four output artifacts from build-spec.mjs flowing to downstream consumers: manifest.json (totalComponents, lastModified, hasVariableData) flows to CI decisions; components.json (all components, full spec, fills, layout, codeConnect) flows to code generator batch runs; components/*.json (one file per component) flows to MCP agent context loading via targeted loading; component-sets.json (variant dimensions and values) flows to TypeScript prop type generation and Code Connect prop mapping.](images/12-figma-as-a-machine-readable-specification-fig-03.png)
+![Infographic showing four output artifacts from build-spec.mjs flowing to downstream consumers: manifest.json (totalComponents, lastModified, hasVariableData) flows to CI decisions; components.json (all components, full spec, fills, layout, codeConnect) flows to code generator batch runs; components/*.json (one file per component) flows to MCP agent context loading via targeted loading; component-sets.json (variant dimensions and values) flows to TypeScript prop type generation and Code Connect prop mapping.](../images/12-figma-as-a-machine-readable-specification-fig-03.png)
 
 *Figure 12.3 — How build-spec.mjs output flows into downstream consumers*
 

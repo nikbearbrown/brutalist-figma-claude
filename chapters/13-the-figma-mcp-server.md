@@ -24,7 +24,7 @@ The correct mental model is this: MCP is a structured context layer, not a code 
 
 This second bound is the one most teams discover later than they should. A poorly structured Figma file — ambiguous names, empty description fields, no Code Connect mappings — produces poor MCP context. Poor context produces generic code. The work in Chapters 4 through 7 — naming discipline, audit, remediation, machine-readiness — is not preliminary to MCP. It is the precondition for MCP being useful at all.
 
-![MCP architecture: two parallel context delivery paths — live MCP server track on the left, CLI context package track on the right, both converging on the AI coding agent; the Figma design file feeds both tracks](images/13-the-figma-mcp-server-fig-01.png)
+![MCP architecture: two parallel context delivery paths — live MCP server track on the left, CLI context package track on the right, both converging on the AI coding agent; the Figma design file feeds both tracks](../images/13-the-figma-mcp-server-fig-01.png)
 *Figure 13.1 — MCP architecture: two context delivery paths*
 
 As of writing, the Figma MCP server surfaces design context from a selected frame or component — layout properties, style information, component metadata — to the coding agent. [verify — current as of writing] What it surfaces is constrained by what the file makes available. A component with no description, unnamed styles, and inconsistent slash naming produces minimal useful context regardless of server configuration.
@@ -251,7 +251,7 @@ Governance version: 1.2
 Review cycle: On every major design system release
 ```
 
-![Decision tree for an agent encountering a component without Code Connect: three branches — mapping present leads to generate; no mapping but clear description leads to escalate to human (shown in red); no mapping and empty description leads to refuse and explain](images/13-the-figma-mcp-server-fig-02.png)
+![Decision tree for an agent encountering a component without Code Connect: three branches — mapping present leads to generate; no mapping but clear description leads to escalate to human (shown in red); no mapping and empty description leads to refuse and explain](../images/13-the-figma-mcp-server-fig-02.png)
 *Figure 13.2 — Agent decision tree: component without Code Connect*
 
 Before each significant MCP working session, generate a preflight report that verifies the conditions declared in `FIGMA.md` are actually met:

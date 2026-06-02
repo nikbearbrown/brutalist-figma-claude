@@ -45,7 +45,7 @@ The Figma file is the source. The audit determines whether the file is structura
 
 The sequencing matters. A token extraction script run against an unaudited file inherits whatever structural problems the file has — naming violations become extraction failures become production bugs become "why doesn't the design system work." The audit comes first because everything downstream depends on what it finds.
 
-![Full extraction stack: Figma file at top flows through a blocking audit gate, then branches to five parallel extraction tools (tokens, assets, docs, brand, spec), converges at the GitHub Actions CI layer, opens a pull request, and ends at the human approval gate shown in red; each node annotated with its chapter number](images/14-putting-it-together-the-production-ready-design-system-fig-01.png)
+![Full extraction stack: Figma file at top flows through a blocking audit gate, then branches to five parallel extraction tools (tokens, assets, docs, brand, spec), converges at the GitHub Actions CI layer, opens a pull request, and ends at the human approval gate shown in red; each node annotated with its chapter number](../images/14-putting-it-together-the-production-ready-design-system-fig-01.png)
 *Figure 14.1 — Full extraction stack: from Figma file to human approval gate*
 
 ---

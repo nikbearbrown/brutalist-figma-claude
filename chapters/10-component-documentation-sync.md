@@ -272,7 +272,7 @@ The three JSON files are the integration point. How they connect depends on whic
 
 Storybook does not consume the Figma API directly. The connection works through Code Connect — a Figma feature [verify — current as of writing] that links a Figma component to its codebase implementation by embedding a code snippet in Figma's Dev Mode panel. When configured, a developer opening the Button component in Dev Mode sees the actual import statement and usage example alongside the design. Code Connect requires explicit configuration per component: installing the CLI (`npm install --save-dev @figma/code-connect`), creating a `.figma.connect.ts` file that maps the Figma node ID to the real component and its prop mappings, and running `figma connect publish` to push the mappings to Figma. It is not inferred automatically, and the missing-docs report should flag components without Code Connect links as documentation debt separate from missing descriptive text.
 
-![Code Connect data flow diagram: Figma component node maps to a Code Connect config file, which is pushed via figma connect publish to the Figma Dev Mode panel, where the developer sees the import statement and usage example. A dashed path shows sync-docs.mjs detecting absence of Code Connect.](images/10-component-documentation-sync-fig-01.png)
+![Code Connect data flow diagram: Figma component node maps to a Code Connect config file, which is pushed via figma connect publish to the Figma Dev Mode panel, where the developer sees the import statement and usage example. A dashed path shows sync-docs.mjs detecting absence of Code Connect.](../images/10-component-documentation-sync-fig-01.png)
 
 *Figure 10.1 — Code Connect data flow*
 
@@ -292,7 +292,7 @@ Variant property drift is the failure mode that the diff workflow is specificall
 
 The documentation platform de-sync is subtler: if description content has been edited directly in the documentation platform — descriptions written in Zeroheight's editor rather than in Figma — running a sync that overwrites platform content with Figma's description will destroy human-authored content. This is the canonical reason to decide ownership explicitly before automating: Figma owns the descriptions, or the platform does, and only one of those is acceptable for a given team. Mixed ownership is not a policy; it is deferred conflict.
 
-![Documentation ownership decision tree: two branches — descriptions authored in Figma flow to the platform via sync, overwriting platform content; descriptions authored in the platform produce reports only, with no writes back to Figma. Both branches converge on a conflict scenario when both sources have content.](images/10-component-documentation-sync-fig-02.png)
+![Documentation ownership decision tree: two branches — descriptions authored in Figma flow to the platform via sync, overwriting platform content; descriptions authored in the platform produce reports only, with no writes back to Figma. Both branches converge on a conflict scenario when both sources have content.](../images/10-component-documentation-sync-fig-02.png)
 
 *Figure 10.2 — Documentation ownership decision tree*
 

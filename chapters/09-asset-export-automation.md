@@ -12,7 +12,7 @@ This is not a story about SVG optimization. It is a story about what happens whe
 
 The pipeline in this chapter builds the thing that team did not have.
 
-![Split diagram contrasting informal asset management with divergent paths against pipeline-driven management with a manifest and deterministic paths](images/09-asset-export-automation-fig-01.png)
+![Split diagram contrasting informal asset management with divergent paths against pipeline-driven management with a manifest and deterministic paths](../images/09-asset-export-automation-fig-01.png)
 *Figure 9.1 — Informal vs. pipeline-driven asset management*
 
 ---
@@ -98,7 +98,7 @@ The node ID is the stable key. It survives renames. When a designer renames an i
 
 The decision of which nodes go in the manifest, in what format, to what path, is a design systems decision. It is not something the pipeline should infer from the file. The manifest is maintained by a human, or by the audit tooling from Chapter 5 in its manifest-generation mode. The export script reads and trusts it.
 
-![Diagram showing manifest node IDs linking from Figma frames through manifest entries to deterministic repository output paths](images/09-asset-export-automation-fig-02.png)
+![Diagram showing manifest node IDs linking from Figma frames through manifest entries to deterministic repository output paths](../images/09-asset-export-automation-fig-02.png)
 *Figure 9.2 — Asset manifest structure: node ID to repository path*
 
 ---
@@ -469,7 +469,7 @@ The `Check for changes` step prevents a PR from being opened when the export pro
 
 The `workflow_dispatch` trigger makes it possible to run the export manually without a library publish event — for initial setup, for recovering from manifest errors, and for dry-run validation before connecting the webhook.
 
-![CI workflow sequence from webhook trigger through preflight, export-assets.mjs, git diff, and conditional PR creation](images/09-asset-export-automation-fig-03.png)
+![CI workflow sequence from webhook trigger through preflight, export-assets.mjs, git diff, and conditional PR creation](../images/09-asset-export-automation-fig-03.png)
 *Figure 9.3 — CI workflow sequence for asset export*
 
 ---

@@ -30,7 +30,7 @@ Before writing any code, the architecture deserves examination, because token pi
 
 A reliable pipeline makes every stage explicit, testable, and independently verifiable. The failure on Monday morning was a Stage 2 problem that looked like a Stage 4 problem because no one had instrumented Stage 2 with a trigger.
 
-![Flow diagram of the five token pipeline stages with annotation marking the Declare-to-Extract gap as the Monday failure point](images/08-design-token-pipelines-fig-01.png)
+![Flow diagram of the five token pipeline stages with annotation marking the Declare-to-Extract gap as the Monday failure point](../images/08-design-token-pipelines-fig-01.png)
 *Figure 8.1 — Five-stage design token pipeline*
 
 ---
@@ -466,7 +466,7 @@ jobs:
           labels: design-tokens, automated
 ```
 
-![Sequence diagram from Figma library publish through webhook, GitHub Actions, extract, validate, transform, to PR creation with human review annotated](images/08-design-token-pipelines-fig-02.png)
+![Sequence diagram from Figma library publish through webhook, GitHub Actions, extract, validate, transform, to PR creation with human review annotated](../images/08-design-token-pipelines-fig-02.png)
 *Figure 8.2 — End-to-end trigger sequence: library publish to PR*
 
 The pull request is not optional. A pipeline that commits token changes directly to main without review has removed the only human checkpoint in the synchronization loop. The PR diff is the design-development conversation: the designer sees exactly which CSS variables changed, the developer confirms the values match what they saw in the file. On minor updates — a spacing value shifts from 8 to 10 — this review takes thirty seconds. On a large update that touches hundreds of tokens, or any update to color primitives that all semantic tokens reference, it should take longer and may require a visual regression test before merging.

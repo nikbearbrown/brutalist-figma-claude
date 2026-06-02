@@ -10,7 +10,7 @@ This is the gap between having access to data and understanding its shape. The A
 
 This chapter is the map.
 
-![Diagram showing the four top-level keys of the Figma file API response: document (node tree), components (flat ID-to-meta index), styles (color, text, and effect styles), and variables (Enterprise only, separate from the document tree), with an arrow showing how boundVariables in the document tree cross-reference the variables block](images/03-reading-a-figma-file-programmatically-fig-01.png)
+![Diagram showing the four top-level keys of the Figma file API response: document (node tree), components (flat ID-to-meta index), styles (color, text, and effect styles), and variables (Enterprise only, separate from the document tree), with an arrow showing how boundVariables in the document tree cross-reference the variables block](../images/03-reading-a-figma-file-programmatically-fig-01.png)
 *Figure 3.1 — Four top-level keys. Variables live outside the document tree.*
 
 ---
@@ -94,7 +94,7 @@ Variables live in collections. A collection has one or more modes — Light and 
 
 Aliases are where it gets interesting. A variable value that looks like `{ "type": "VARIABLE_ALIAS", "id": "VariableID:11:30" }` is a pointer to another variable. That target variable may itself be an alias. You follow the chain until you hit a terminal raw value. This indirection is intentional — it is how design systems implement semantic tokens that point at primitive tokens — and your extraction code needs to handle it explicitly or you will silently produce wrong output.
 
-![Diagram showing the alias chain from a COMPONENT node's boundVariables reference through semantic token "color/brand/primary" (VariableID:12:45), which has a VARIABLE_ALIAS value pointing to primitive "color/primitive/blue-500" (VariableID:11:30), which holds the terminal raw color value {r:0.082, g:0.337, b:0.855} equivalent to #1558D6](images/03-reading-a-figma-file-programmatically-fig-02.png)
+![Diagram showing the alias chain from a COMPONENT node's boundVariables reference through semantic token "color/brand/primary" (VariableID:12:45), which has a VARIABLE_ALIAS value pointing to primitive "color/primitive/blue-500" (VariableID:11:30), which holds the terminal raw color value {r:0.082, g:0.337, b:0.855} equivalent to #1558D6](../images/03-reading-a-figma-file-programmatically-fig-02.png)
 *Figure 3.2 — Alias chain: semantic → primitive → terminal value. Resolve per mode.*
 
 One more thing to know about variables before we move on: the `variables` field in the file response may not appear at all, or may appear empty, depending on your plan tier. [verify — current behavior by plan tier] This is not an error in your code. It is a gate Figma has placed between plan tiers and programmatic variable access. If your variable inventory comes back empty on a file where you know variables exist, check the plan before debugging the extraction logic.
@@ -503,7 +503,7 @@ function findHardcodedColors(document) {
 
 That second function is the embryo of the audit logic Chapter 5 formalizes. Understanding the traversal here — why it works, what it is actually checking — means you can write any variant you need.
 
-![Annotated tree diagram showing walk() visit order numbered 1 through 7: CANVAS at depth 0 (visit 1), FRAME at depth 1 (visit 2), COMPONENT_SET at depth 2 (visit 3), then Button/Default COMPONENT at depth 3 (visit 4) and its TEXT child at depth 4 (visit 5), then Button/Hover COMPONENT at depth 3 (visit 6) and its TEXT child at depth 4 (visit 7)](images/03-reading-a-figma-file-programmatically-fig-03.png)
+![Annotated tree diagram showing walk() visit order numbered 1 through 7: CANVAS at depth 0 (visit 1), FRAME at depth 1 (visit 2), COMPONENT_SET at depth 2 (visit 3), then Button/Default COMPONENT at depth 3 (visit 4) and its TEXT child at depth 4 (visit 5), then Button/Hover COMPONENT at depth 3 (visit 6) and its TEXT child at depth 4 (visit 7)](../images/03-reading-a-figma-file-programmatically-fig-03.png)
 *Figure 3.3 — walk() pre-order traversal: parent before children, siblings left to right.*
 
 ---
@@ -558,7 +558,7 @@ The general workflow: do a full fetch once, write the fixture, develop against t
 
 The discipline of producing these three files as a stable output shape, regardless of how the extraction logic evolves, is what allows downstream tools to depend on `figma-read.mjs` without coupling to its internals.
 
-![Flow diagram with figma-read.mjs as a central black node taking two inputs — Figma REST API (live fetch, red border) and local fixture (.figma-fixtures/*.json, dashed arrow) — and producing three outputs: component-inventory.json consumed by Chapter 5 audit, Chapter 10 docs sync, and Chapter 12 spec generation; variable-inventory.json consumed by Chapter 8 token extraction; and missing-descriptions.md for the design team](images/03-reading-a-figma-file-programmatically-fig-04.png)
+![Flow diagram with figma-read.mjs as a central black node taking two inputs — Figma REST API (live fetch, red border) and local fixture (.figma-fixtures/*.json, dashed arrow) — and producing three outputs: component-inventory.json consumed by Chapter 5 audit, Chapter 10 docs sync, and Chapter 12 spec generation; variable-inventory.json consumed by Chapter 8 token extraction; and missing-descriptions.md for the design team](../images/03-reading-a-figma-file-programmatically-fig-04.png)
 *Figure 3.4 — figma-read.mjs as the stable interface for downstream tools.*
 
 ---

@@ -4,110 +4,133 @@
 
 ---
 
-## The Failure
+Three days before release, someone ran a last-minute visual QA pass over the marketing file. They found it: dark-gray text on a medium-gray background. The designer had used the right-looking color but picked it from the color picker instead of the style library. The contrast ratio was 2.9:1 against white and 1.8:1 against the gray. Both fail WCAG AA. Normal text requires 4.5:1. Large text requires 3:1. This was neither.
 
-The release is in three days. Someone runs a last-minute visual QA pass over the marketing file. They find it: a dark-gray text on a medium-gray background. The designer used the right-looking color but picked it from the color picker instead of from the style library. The contrast ratio is 2.9:1 against a white background and 1.8:1 against the gray. Both fail WCAG AA. [WCAG 2.1 requires 4.5:1 for normal text, 3:1 for large text.] The component goes live anyway because the fix would delay the launch, and nobody is sure how many other instances of the problem exist in the file.
+The component went live anyway because fixing it would delay the launch — and because nobody was sure how many other instances of the problem existed in the file. Running a search felt like opening a door nobody wanted to open three days before ship.
 
-The answer — how many other instances exist — is exactly what `monitor-brand.mjs` answers. Run it before the release, not after. Better: run it on every commit, so the drift is caught when it is one object, not when it is eighty.
-
-Brand compliance failures come in clusters. They are not isolated mistakes. When one designer uses a hardcoded hex color instead of a style, it usually means the style library was not set up in a way that made using it easier than not using it. When one text layer uses 13px instead of 14px (the nearest type scale step), it usually means the type scale was not clearly communicated. Compliance failures are signals about system gaps, not just individual errors. A programmatic compliance report turns those signals into a data file a team can act on.
-
-This chapter builds `monitor-brand.mjs`: a CLI tool that walks the Figma file, checks every styleable object against declared brand rules, flags WCAG contrast failures, and writes a diffable compliance report. The same tool runs locally before a design review and in CI after a library publish, producing the same structured output both times. The diff between two runs is the compliance delta — the measure of whether the design is getting better or worse.
+The answer to how many other instances exist is exactly what `monitor-brand.mjs` produces. The question you should be asking is not "how do we fix this?" but "why did we not know sooner?" A compliance tool run the week before launch instead of the day before launch catches the problem when it is one object. Run on every library publish, it catches it when it is one object. Compliance failures come in clusters — when one designer reaches for the color picker instead of the style library, it usually means the style library was harder to use than the color picker. The programmatic report turns that signal into a data file the team can act on, rather than a feeling that something might be wrong somewhere.
 
 ---
 
-## What This Chapter Lets You Do
+## What the API Exposes and Why It Is Enough
 
-By the end of this chapter you can:
+Before building anything, it is worth understanding what the detection mechanism actually is — because it is simpler than it sounds.
 
-- Define brand compliance rules as a machine-readable configuration (approved colors, type scale, spacing grid)
-- Walk a Figma file's node tree and check every object against those rules
-- Detect WCAG contrast failures with correct AA and AAA thresholds for normal and large text
-- Write diffable compliance reports in JSON and Markdown that CI can compare across runs
-- Exit with a non-zero code when critical violations are present, blocking a PR merge or a documentation sync
-- Distinguish between errors (break the pipeline or fail WCAG), warnings (deviate from brand but do not fail accessibility), and informational findings (improvement opportunities)
+The Figma API distinguishes between two ways a fill can be applied to a node. [verify — current as of writing] A fill applied via a color style has a `styles.fill` property on the node, referencing the style's key. The raw color value is also present for rendering, but the style reference signals that the fill came from the library. A fill applied directly — from the color picker, from copy-paste, from an eyedropper — has no `styles.fill` property. Only the raw `fills` array with RGBA values.
 
----
+This is the detection mechanism for hardcoded fills: any node with a solid fill and no `styles.fill` is a candidate for a compliance violation. Whether it is actually a violation depends on whether the raw RGBA value matches an approved palette entry within a tolerance threshold.
 
-## Diagnosis: Brand Drift and Why It Is Invisible
+The same pattern applies to text. A text node styled via a text style has `styles.text` referencing the style key. A text node with inline typography has raw `style.fontSize`, `style.fontFamily`, and the rest — without a style reference, or with one that has been partially overridden.
 
-Brand compliance degrades gradually. In a well-maintained design system, designers use styles and variables for every color, type size, and spacing value. In practice, the style library is one click further than the color picker. One exception is made under deadline pressure. Then another. Then a third designer joins the team and learns by copying existing work. By the time the compliance problem is visible to the naked eye, it is embedded in hundreds of objects across dozens of frames.
+Spacing is different because Figma does not have spacing styles as first-class objects. Auto Layout frames expose their padding and gap values as raw numbers — `paddingTop`, `paddingBottom`, `paddingLeft`, `paddingRight`, `itemSpacing`. [verify — current as of writing] There is no reference to check. Spacing compliance is therefore purely rule-based: is this value a member of the declared spacing scale?
 
-The Figma file does not mark compliant and non-compliant objects differently. There is no red border around a hardcoded hex value. Every fill looks like every other fill in the canvas. The only way to detect compliance failures systematically is to read the raw API response, which distinguishes between a fill applied via a style reference and a fill applied as an inline property.
-
-The Figma API distinguishes these two cases in the node data [verify — current as of writing]:
-
-- A fill applied via a color style has a `styles.fill` property on the node, referencing the style's key. The actual color value is also present for rendering, but the style reference indicates that the fill was applied from the library.
-- A fill applied directly has no `styles.fill` property — only the raw `fills` array with RGBA values.
-
-This is the detection mechanism. Any node with a fill that does not reference a style is a candidate for a compliance violation. Your brand rules then determine whether the raw RGBA value matches an approved palette entry.
-
-The same pattern applies to text:
-
-- A text node styled via a text style has `styles.text` referencing the style key.
-- A text node with inline typography overrides has raw `style.fontSize`, `style.fontFamily`, and so on — without a style reference, or with a style reference but with overrides applied on top.
-
-For spacing and layout: Figma Auto Layout frames expose their `paddingTop`, `paddingBottom`, `paddingLeft`, `paddingRight`, `itemSpacing`, and `counterAxisSpacing` as raw numeric values [verify — current as of writing]. There is no spacing style reference — Figma does not have spacing styles as a first-class object in the same way as color or text styles. Spacing compliance is therefore rule-based: check whether each padding and gap value is a member of your declared spacing scale.
+These three detection mechanisms — style reference present or absent, approved color match within tolerance, value membership in a declared scale — are the entire foundation of `monitor-brand.mjs`. Everything else is walking the node tree and applying them.
 
 ---
 
-## Defining Brand Rules
+## Defining the Rules
 
-Before writing the walker, define the rules the walker checks against. The rules belong in a configuration file committed to your repository — not hardcoded in the script.
+The rules belong in a configuration file committed to the repository, not hardcoded in the script. The configuration is the contract between the design system and the compliance tool. When the design system adds a new approved color, the rules file is updated. When the spacing scale changes, the rules file changes. The compliance tool adapts automatically.
 
 ```json
-// brand-rules.json
-// [illustrative — populate with your actual design system values]
 {
   "approvedColors": [
-    { "name": "brand-primary", "hex": "#1A56DB", "rgba": [26, 86, 219, 1] },
+    { "name": "brand-primary",   "hex": "#1A56DB", "rgba": [26, 86, 219, 1] },
     { "name": "brand-secondary", "hex": "#6875F5", "rgba": [104, 117, 245, 1] },
-    { "name": "neutral-900", "hex": "#111928", "rgba": [17, 25, 40, 1] },
-    { "name": "neutral-700", "hex": "#374151", "rgba": [55, 65, 81, 1] },
-    { "name": "neutral-500", "hex": "#6B7280", "rgba": [107, 114, 128, 1] },
-    { "name": "neutral-100", "hex": "#F3F4F6", "rgba": [243, 244, 246, 1] },
-    { "name": "white", "hex": "#FFFFFF", "rgba": [255, 255, 255, 1] },
-    { "name": "error-500", "hex": "#F05252", "rgba": [240, 82, 82, 1] },
-    { "name": "success-500", "hex": "#0E9F6E", "rgba": [14, 159, 110, 1] }
+    { "name": "neutral-900",     "hex": "#111928", "rgba": [17, 25, 40, 1] },
+    { "name": "neutral-700",     "hex": "#374151", "rgba": [55, 65, 81, 1] },
+    { "name": "neutral-500",     "hex": "#6B7280", "rgba": [107, 114, 128, 1] },
+    { "name": "neutral-100",     "hex": "#F3F4F6", "rgba": [243, 244, 246, 1] },
+    { "name": "white",           "hex": "#FFFFFF", "rgba": [255, 255, 255, 1] },
+    { "name": "error-500",       "hex": "#F05252", "rgba": [240, 82, 82, 1] },
+    { "name": "success-500",     "hex": "#0E9F6E", "rgba": [14, 159, 110, 1] }
   ],
-  "approvedTypeSizes": [11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72],
-  "approvedFontWeights": [400, 500, 600, 700],
+  "approvedTypeSizes":    [11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72],
+  "approvedFontWeights":  [400, 500, 600, 700],
   "approvedFontFamilies": ["Inter", "Inter Variable"],
-  "spacingScale": [0, 2, 4, 6, 8, 10, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64, 80, 96],
+  "spacingScale":         [0, 2, 4, 6, 8, 10, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64, 80, 96],
   "minTouchTarget": 44,
   "colorTolerance": 2,
   "wcag": {
     "normalText": { "aa": 4.5, "aaa": 7.0 },
-    "largeText": { "aa": 3.0, "aaa": 4.5 },
-    "largeTextThresholdPt": 18,
+    "largeText":  { "aa": 3.0, "aaa": 4.5 },
+    "largeTextThresholdPt":     18,
     "boldLargeTextThresholdPt": 14
   }
 }
 ```
 
-Two notes on this configuration:
+Two decisions in this configuration deserve explanation.
 
-**Color tolerance**: Exact RGBA matching is too strict. Screen rendering, rounding, and opacity stacking mean that `rgba(26, 86, 219, 1)` and `rgba(27, 86, 219, 1)` are visually the same color but will not match exactly. The `colorTolerance` field allows a per-channel delta before flagging a mismatch.
+`colorTolerance` is set to 2 — a maximum per-channel delta of 2 out of 255. Exact RGBA matching is too strict. Screen rendering, rounding in the Figma color system, and opacity stacking mean that `rgba(26, 86, 219, 1)` and `rgba(27, 86, 219, 1)` are visually the same color but fail an exact match. A tolerance of 2 catches real palette deviations while avoiding false positives from floating-point rounding.
 
-**WCAG thresholds**: The WCAG 2.1 standard defines contrast ratios precisely. Normal text (below 18pt regular or 14pt bold) requires 4.5:1 for AA, 7:1 for AAA. Large text (18pt or larger regular, 14pt or larger bold) requires 3:1 for AA, 4.5:1 for AAA. These are stable standards — they do not change with the API. The contrast ratio calculation itself uses the relative luminance formula defined in WCAG 2.1, which takes sRGB values, applies a linearization step, and computes luminance as a weighted sum. [verify — the APCA algorithm proposed for WCAG 3 uses a different formula; this chapter uses WCAG 2.1 contrast ratios, which remain the current normative standard as of writing.]
+The WCAG thresholds are exact values from the WCAG 2.1 specification and are not configurable — they are not matters of team preference. [verify — WCAG 2.2 introduced no changes to contrast requirements; WCAG 3.0 proposes APCA, which remains a draft as of writing and is not normative for production compliance] What is configurable is whether a contrast failure is treated as an error or a warning by your CI gate. The recommendation: treat it as an error. A contrast failure is not a style preference. It affects users.
+
+<!-- → [TABLE: Brand rules configuration fields — columns: field, type, what it governs, when to update — rows for approvedColors, type scale, spacing scale, tolerance, WCAG thresholds] -->
 
 ---
 
-## Building `monitor-brand.mjs`
+## The Contrast Calculation
+
+The WCAG 2.1 contrast ratio formula is simple enough to implement correctly without reaching for a library. It is worth understanding the formula rather than treating it as a black box, because the formula determines which failures the tool catches and which it does not.
+
+Relative luminance is computed from sRGB values by first linearizing each channel — removing the gamma encoding that display hardware applies — and then weighting the three channels by their contribution to human brightness perception:
+
+```
+if channel ≤ 0.04045:  linear = channel / 12.92
+else:                   linear = ((channel + 0.055) / 1.055) ^ 2.4
+
+L = 0.2126 × linearR + 0.7152 × linearG + 0.0722 × linearB
+```
+
+The weights — 0.2126, 0.7152, 0.0722 — reflect that the human visual system is most sensitive to green, less to red, and least to blue. A pure green at full brightness appears brighter than a pure blue at full brightness. The luminance formula encodes that perceptual reality.
+
+The contrast ratio is then:
+
+```
+contrast = (L_lighter + 0.05) / (L_darker + 0.05)
+```
+
+The 0.05 addend prevents division by zero when both colors are pure black, and it slightly reduces the computed ratio for very dark color pairs — which matches perceptual reality for near-black combinations. The thresholds that apply to the ratio are: 4.5:1 for normal text (AA), 7:1 for normal text (AAA), 3:1 for large text (AA), 4.5:1 for large text (AAA). Large text is defined as 18pt or larger regular weight, or 14pt or larger bold.
+
+```javascript
+function srgbToLinear(c) {
+  const s = c / 255;
+  return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+}
+
+function relativeLuminance(r, g, b) {
+  return 0.2126 * srgbToLinear(r) + 0.7152 * srgbToLinear(g) + 0.0722 * srgbToLinear(b);
+}
+
+function contrastRatio(l1, l2) {
+  const lighter = Math.max(l1, l2);
+  const darker  = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+```
+
+The contrast check in `monitor-brand.mjs` propagates a `parentBg` color down the node tree, using the nearest solid fill ancestor as the background against which text nodes are checked. This is a necessary simplification. Real contrast checks account for opacity stacking, blending modes, layered fills, and image backgrounds. The tool as written will miss some failures — elements with partial opacity over complex backgrounds — and cannot check anything it cannot compute. Flag these limitations in the CI report: complex backgrounds require manual review.
+
+---
+
+## `monitor-brand.mjs`
 
 ```javascript
 // monitor-brand.mjs
-// [illustrative — adapt brand-rules.json to your design system]
+// Usage: node monitor-brand.mjs [--rules=brand-rules.json] [--out=dir] [--baseline=path]
+// Requires: FIGMA_TOKEN, FIGMA_FILE_KEY in environment
+// Illustrative — adapt brand-rules.json to your design system
 
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import 'dotenv/config';
 
-const TOKEN = process.env.FIGMA_TOKEN;
+const TOKEN    = process.env.FIGMA_TOKEN;
 const FILE_KEY = process.env.FIGMA_FILE_KEY;
 const RULES_PATH = process.argv.find(a => a.startsWith('--rules='))?.split('=')[1] || 'brand-rules.json';
-const OUT_DIR = process.argv.find(a => a.startsWith('--out='))?.split('=')[1] || 'brand-compliance-output';
-const BASELINE = process.argv.find(a => a.startsWith('--baseline='))?.split('=')[1] || null;
+const OUT_DIR    = process.argv.find(a => a.startsWith('--out='))?.split('=')[1]   || 'brand-compliance-output';
+const BASELINE   = process.argv.find(a => a.startsWith('--baseline='))?.split('=')[1] || null;
 
 if (!TOKEN || !FILE_KEY) {
   console.error('ERROR: FIGMA_TOKEN and FIGMA_FILE_KEY required.');
@@ -115,7 +138,7 @@ if (!TOKEN || !FILE_KEY) {
 }
 
 const rules = JSON.parse(readFileSync(RULES_PATH, 'utf8'));
-const BASE = 'https://api.figma.com/v1';
+const BASE  = 'https://api.figma.com/v1'; // [verify — current base URL]
 
 async function figmaGet(path) {
   const res = await fetch(`${BASE}${path}`, {
@@ -131,45 +154,30 @@ async function figmaGet(path) {
   return res.json();
 }
 
-// WCAG 2.1 relative luminance
 function srgbToLinear(c) {
   const s = c / 255;
   return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
 }
-
 function relativeLuminance(r, g, b) {
   return 0.2126 * srgbToLinear(r) + 0.7152 * srgbToLinear(g) + 0.0722 * srgbToLinear(b);
 }
-
 function contrastRatio(l1, l2) {
   const lighter = Math.max(l1, l2);
-  const darker = Math.min(l1, l2);
+  const darker  = Math.min(l1, l2);
   return (lighter + 0.05) / (darker + 0.05);
 }
-
 function colorDistance(a, b) {
-  return Math.max(
-    Math.abs(a[0] - b[0]),
-    Math.abs(a[1] - b[1]),
-    Math.abs(a[2] - b[2])
-  );
+  return Math.max(Math.abs(a[0]-b[0]), Math.abs(a[1]-b[1]), Math.abs(a[2]-b[2]));
 }
-
-function isApprovedColor(rgba, tolerance) {
-  const [r, g, b] = [
-    Math.round(rgba.r * 255),
-    Math.round(rgba.g * 255),
-    Math.round(rgba.b * 255)
-  ];
+function isApprovedColor(rgba) {
+  const [r, g, b] = [Math.round(rgba.r*255), Math.round(rgba.g*255), Math.round(rgba.b*255)];
   return rules.approvedColors.some(ac =>
-    colorDistance([r, g, b], [ac.rgba[0], ac.rgba[1], ac.rgba[2]]) <= tolerance
+    colorDistance([r,g,b], [ac.rgba[0], ac.rgba[1], ac.rgba[2]]) <= rules.colorTolerance
   );
 }
-
 function isOnSpacingScale(value) {
   return rules.spacingScale.includes(Math.round(value));
 }
-
 function isLargeText(fontSize, fontWeight) {
   return fontSize >= rules.wcag.largeTextThresholdPt ||
     (fontSize >= rules.wcag.boldLargeTextThresholdPt && fontWeight >= 700);
@@ -185,15 +193,15 @@ function addFinding(severity, page, nodeName, nodeId, category, issue, detail) {
 function checkNode(node, pageName, parentBg) {
   objectsChecked++;
   const nodeName = node.name || 'Unnamed';
-  const nodeId = node.id;
+  const nodeId   = node.id;
 
-  // Check fills
+  // Fills
   if (node.fills && Array.isArray(node.fills)) {
     for (const fill of node.fills) {
       if (fill.type !== 'SOLID' || fill.opacity === 0 || fill.visible === false) continue;
-      const hasStyleRef = node.styles && node.styles.fill;
+      const hasStyleRef = node.styles?.fill;
       if (!hasStyleRef) {
-        if (!isApprovedColor(fill.color, rules.colorTolerance)) {
+        if (!isApprovedColor(fill.color)) {
           addFinding('error', pageName, nodeName, nodeId, 'color',
             'hardcoded-unapproved-color',
             `Fill rgba(${Math.round(fill.color.r*255)},${Math.round(fill.color.g*255)},${Math.round(fill.color.b*255)}) not in approved palette and not applied via style`
@@ -201,46 +209,43 @@ function checkNode(node, pageName, parentBg) {
         } else {
           addFinding('warning', pageName, nodeName, nodeId, 'color',
             'hardcoded-approved-color',
-            `Fill is an approved color but not applied via a color style — replace with a style reference`
+            'Fill is an approved color but not applied via a color style — replace with a style reference'
           );
         }
       }
     }
   }
 
-  // Check strokes
+  // Strokes
   if (node.strokes && Array.isArray(node.strokes)) {
     for (const stroke of node.strokes) {
       if (stroke.type !== 'SOLID' || stroke.opacity === 0 || stroke.visible === false) continue;
-      const hasStyleRef = node.styles && node.styles.stroke;
-      if (!hasStyleRef && !isApprovedColor(stroke.color, rules.colorTolerance)) {
+      if (!node.styles?.stroke && !isApprovedColor(stroke.color)) {
         addFinding('warning', pageName, nodeName, nodeId, 'color',
           'hardcoded-stroke-color',
-          `Stroke color not in approved palette`
+          'Stroke color not in approved palette'
         );
       }
     }
   }
 
-  // Check typography
+  // Typography
   if (node.type === 'TEXT' && node.style) {
     const s = node.style;
-    const hasStyleRef = node.styles && node.styles.text;
+    const hasStyleRef = node.styles?.text;
 
     if (!rules.approvedTypeSizes.includes(s.fontSize)) {
       addFinding(hasStyleRef ? 'info' : 'warning', pageName, nodeName, nodeId, 'typography',
         'off-scale-font-size',
-        `Font size ${s.fontSize}px is not in the approved type scale [${rules.approvedTypeSizes.join(', ')}]`
+        `Font size ${s.fontSize}px is not in the approved type scale`
       );
     }
-
     if (s.fontFamily && !rules.approvedFontFamilies.includes(s.fontFamily)) {
       addFinding('error', pageName, nodeName, nodeId, 'typography',
         'unapproved-font-family',
         `Font family "${s.fontFamily}" not in approved list`
       );
     }
-
     if (s.fontWeight && !rules.approvedFontWeights.includes(s.fontWeight)) {
       addFinding('info', pageName, nodeName, nodeId, 'typography',
         'unapproved-font-weight',
@@ -248,21 +253,22 @@ function checkNode(node, pageName, parentBg) {
       );
     }
 
-    // Contrast check against parent background
-    if (parentBg && node.fills && node.fills.length > 0) {
+    // Contrast against parent background
+    if (parentBg && node.fills?.length > 0) {
       const textFill = node.fills.find(f => f.type === 'SOLID' && f.visible !== false);
       if (textFill) {
-        const textR = Math.round(textFill.color.r * 255);
-        const textG = Math.round(textFill.color.g * 255);
-        const textB = Math.round(textFill.color.b * 255);
-        const bgR = Math.round(parentBg.r * 255);
-        const bgG = Math.round(parentBg.g * 255);
-        const bgB = Math.round(parentBg.b * 255);
-
-        const textLum = relativeLuminance(textR, textG, textB);
-        const bgLum = relativeLuminance(bgR, bgG, bgB);
-        const ratio = contrastRatio(textLum, bgLum);
-        const large = isLargeText(s.fontSize, s.fontWeight || 400);
+        const textLum = relativeLuminance(
+          Math.round(textFill.color.r*255),
+          Math.round(textFill.color.g*255),
+          Math.round(textFill.color.b*255)
+        );
+        const bgLum = relativeLuminance(
+          Math.round(parentBg.r*255),
+          Math.round(parentBg.g*255),
+          Math.round(parentBg.b*255)
+        );
+        const ratio     = contrastRatio(textLum, bgLum);
+        const large     = isLargeText(s.fontSize, s.fontWeight || 400);
         const threshold = large ? rules.wcag.largeText.aa : rules.wcag.normalText.aa;
 
         if (ratio < threshold) {
@@ -275,101 +281,130 @@ function checkNode(node, pageName, parentBg) {
     }
   }
 
-  // Check spacing (Auto Layout frames)
-  if (node.layoutMode && (node.layoutMode === 'HORIZONTAL' || node.layoutMode === 'VERTICAL')) {
-    for (const prop of ['paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'itemSpacing']) {
+  // Spacing (Auto Layout frames)
+  if (node.layoutMode === 'HORIZONTAL' || node.layoutMode === 'VERTICAL') {
+    for (const prop of ['paddingTop','paddingBottom','paddingLeft','paddingRight','itemSpacing']) {
       const val = node[prop];
       if (val !== undefined && val !== 0 && !isOnSpacingScale(val)) {
         addFinding('warning', pageName, nodeName, nodeId, 'spacing',
           'off-scale-spacing',
-          `${prop}=${val} is not in the approved spacing scale [${rules.spacingScale.join(', ')}]`
+          `${prop}=${val} is not in the approved spacing scale`
         );
       }
     }
   }
 
-  // Check touch targets for interactive components (frames with component-like names)
+  // Touch targets
   if (node.type === 'COMPONENT' || node.type === 'COMPONENT_SET') {
     const w = node.absoluteBoundingBox?.width;
     const h = node.absoluteBoundingBox?.height;
     if (w && h && (w < rules.minTouchTarget || h < rules.minTouchTarget)) {
       addFinding('warning', pageName, nodeName, nodeId, 'accessibility',
         'small-touch-target',
-        `Component bounding box ${Math.round(w)}x${Math.round(h)}px may be below minimum touch target (${rules.minTouchTarget}px)`
+        `Bounding box ${Math.round(w)}×${Math.round(h)}px may be below minimum touch target (${rules.minTouchTarget}px)`
       );
     }
   }
 
-  // Recurse into children, passing background color if this node has a solid fill
+  // Recurse — pass nearest solid fill as background for children
   let nextBg = parentBg;
-  if (node.fills && node.fills.length > 0) {
-    const solidFill = node.fills.find(f => f.type === 'SOLID' && f.visible !== false && f.opacity !== 0);
-    if (solidFill) nextBg = solidFill.color;
+  if (node.fills?.length > 0) {
+    const solid = node.fills.find(f => f.type === 'SOLID' && f.visible !== false && f.opacity !== 0);
+    if (solid) nextBg = solid.color;
   }
+  if (node.children) {
+    for (const child of node.children) checkNode(child, pageName, nextBg);
+  }
+}
 
-  if (node.children && Array.isArray(node.children)) {
-    for (const child of node.children) {
-      checkNode(child, pageName, nextBg);
+function computeDiff(baseline, current) {
+  const key = f => `${f.nodeId}::${f.category}::${f.issue}`;
+  const baselineSet = new Set(baseline.findings.map(key));
+  const currentSet  = new Set(current.findings.map(key));
+  return {
+    baselineDate:        baseline.generatedAt,
+    currentDate:         current.generatedAt,
+    newFindings:         current.findings.filter(f => !baselineSet.has(key(f))).length,
+    resolvedFindings:    baseline.findings.filter(f => !currentSet.has(key(f))).length,
+    newFindingsList:     current.findings.filter(f => !baselineSet.has(key(f))),
+    resolvedFindingsList:baseline.findings.filter(f => !currentSet.has(key(f))),
+  };
+}
+
+function generateMarkdownReport(report) {
+  const lines = [
+    '# Brand Compliance Report',
+    `\nGenerated: ${report.generatedAt}`,
+    `\n## Summary\n`,
+    '| Metric | Value |', '|--------|-------|',
+    `| Objects checked | ${report.objectsChecked} |`,
+    `| Total findings | ${report.totalFindings} |`,
+    `| Errors | ${report.bySeverity.error} |`,
+    `| Warnings | ${report.bySeverity.warning} |`,
+    `| Info | ${report.bySeverity.info} |`,
+    `\n## By Category\n`,
+    ...Object.entries(report.byCategory).map(([cat, n]) => `- **${cat}**: ${n}`),
+  ];
+  const errors = report.findings.filter(f => f.severity === 'error');
+  if (errors.length > 0) {
+    lines.push(`\n## Errors (${errors.length})\n`);
+    for (const f of errors) {
+      lines.push(`### ${f.nodeName} — ${f.issue}`);
+      lines.push(`- **Page:** ${f.page}`);
+      lines.push(`- **Node ID:** \`${f.nodeId}\``);
+      lines.push(`- **Detail:** ${f.detail}\n`);
     }
   }
+  const warnings = report.findings.filter(f => f.severity === 'warning');
+  if (warnings.length > 0) {
+    lines.push(`\n## Warnings (${warnings.length})\n`);
+    for (const f of warnings) {
+      lines.push(`- **${f.nodeName}** [${f.page}] \`${f.nodeId}\`: ${f.detail}`);
+    }
+  }
+  return lines.join('\n');
 }
 
 async function main() {
   mkdirSync(OUT_DIR, { recursive: true });
 
   console.log('Fetching file...');
-  const fileData = await figmaGet(`/files/${FILE_KEY}`);
-  const pages = fileData.document?.children || [];
+  const fileData = await figmaGet(`/files/${FILE_KEY}`); // [verify — endpoint current]
+  const pages    = fileData.document?.children || [];
 
   for (const page of pages) {
     console.log(`  Checking page: ${page.name}`);
     if (page.children) {
-      for (const child of page.children) {
-        checkNode(child, page.name, null);
-      }
+      for (const child of page.children) checkNode(child, page.name, null);
     }
   }
 
-  // Summarize
-  const errors = findings.filter(f => f.severity === 'error');
+  const errors   = findings.filter(f => f.severity === 'error');
   const warnings = findings.filter(f => f.severity === 'warning');
-  const infos = findings.filter(f => f.severity === 'info');
-
-  const bySeverity = {
-    error: errors.length,
-    warning: warnings.length,
-    info: infos.length
-  };
+  const infos    = findings.filter(f => f.severity === 'info');
 
   const byCategory = {};
-  for (const f of findings) {
-    byCategory[f.category] = (byCategory[f.category] || 0) + 1;
-  }
+  for (const f of findings) byCategory[f.category] = (byCategory[f.category] || 0) + 1;
 
   const report = {
     generatedAt: new Date().toISOString(),
     fileKey: FILE_KEY,
     objectsChecked,
     totalFindings: findings.length,
-    bySeverity,
+    bySeverity: { error: errors.length, warning: warnings.length, info: infos.length },
     byCategory,
-    findings
+    findings,
   };
 
-  const reportPath = join(OUT_DIR, 'compliance-report.json');
-  writeFileSync(reportPath, JSON.stringify(report, null, 2));
+  writeFileSync(join(OUT_DIR, 'compliance-report.json'), JSON.stringify(report, null, 2));
+  writeFileSync(join(OUT_DIR, 'compliance-report.md'),   generateMarkdownReport(report));
 
-  const mdReport = generateMarkdownReport(report);
-  writeFileSync(join(OUT_DIR, 'compliance-report.md'), mdReport);
-
-  // Diff against baseline if provided
   if (BASELINE) {
     try {
       const baselineData = JSON.parse(readFileSync(BASELINE, 'utf8'));
       const diff = computeDiff(baselineData, report);
       writeFileSync(join(OUT_DIR, 'compliance-diff.json'), JSON.stringify(diff, null, 2));
-      writeFileSync(join(OUT_DIR, 'compliance-diff.md'), generateDiffMarkdown(diff));
-      console.log(`\nDiff vs baseline: ${diff.newFindings} new findings, ${diff.resolvedFindings} resolved.`);
+      console.log(`\nDiff vs baseline: ${diff.newFindings} new, ${diff.resolvedFindings} resolved.`);
     } catch (e) {
       console.warn(`Could not load baseline: ${e.message}`);
     }
@@ -385,133 +420,34 @@ async function main() {
   }
 }
 
-function computeDiff(baseline, current) {
-  const baselineSet = new Set(baseline.findings.map(f =>
-    `${f.nodeId}::${f.category}::${f.issue}`
-  ));
-  const currentSet = new Set(current.findings.map(f =>
-    `${f.nodeId}::${f.category}::${f.issue}`
-  ));
-
-  const newFindings = current.findings.filter(f =>
-    !baselineSet.has(`${f.nodeId}::${f.category}::${f.issue}`)
-  );
-  const resolvedFindings = baseline.findings.filter(f =>
-    !currentSet.has(`${f.nodeId}::${f.category}::${f.issue}`)
-  );
-
-  return {
-    baselineDate: baseline.generatedAt,
-    currentDate: current.generatedAt,
-    newFindings: newFindings.length,
-    resolvedFindings: resolvedFindings.length,
-    newFindingsList: newFindings,
-    resolvedFindingsList: resolvedFindings
-  };
-}
-
-function generateMarkdownReport(report) {
-  const lines = [];
-  lines.push('# Brand Compliance Report');
-  lines.push(`\nGenerated: ${report.generatedAt}`);
-  lines.push(`\n## Summary\n`);
-  lines.push(`| Metric | Value |`);
-  lines.push(`|--------|-------|`);
-  lines.push(`| Objects checked | ${report.objectsChecked} |`);
-  lines.push(`| Total findings | ${report.totalFindings} |`);
-  lines.push(`| Errors | ${report.bySeverity.error} |`);
-  lines.push(`| Warnings | ${report.bySeverity.warning} |`);
-  lines.push(`| Info | ${report.bySeverity.info} |`);
-
-  lines.push(`\n## By Category\n`);
-  for (const [cat, count] of Object.entries(report.byCategory)) {
-    lines.push(`- **${cat}**: ${count}`);
-  }
-
-  const errors = report.findings.filter(f => f.severity === 'error');
-  if (errors.length > 0) {
-    lines.push(`\n## Errors (${errors.length})\n`);
-    for (const f of errors) {
-      lines.push(`### ${f.nodeName} — ${f.issue}`);
-      lines.push(`- **Page:** ${f.page}`);
-      lines.push(`- **Node ID:** \`${f.nodeId}\``);
-      lines.push(`- **Detail:** ${f.detail}\n`);
-    }
-  }
-
-  const warnings = report.findings.filter(f => f.severity === 'warning');
-  if (warnings.length > 0) {
-    lines.push(`\n## Warnings (${warnings.length})\n`);
-    for (const f of warnings) {
-      lines.push(`- **${f.nodeName}** [${f.page}] \`${f.nodeId}\`: ${f.detail}`);
-    }
-  }
-
-  return lines.join('\n');
-}
-
-function generateDiffMarkdown(diff) {
-  const lines = [];
-  lines.push('# Compliance Diff Report');
-  lines.push(`\nBaseline: ${diff.baselineDate}`);
-  lines.push(`Current: ${diff.currentDate}`);
-  lines.push(`\n**${diff.newFindings} new findings | ${diff.resolvedFindings} resolved**`);
-
-  if (diff.newFindingsList.length > 0) {
-    lines.push(`\n## New Findings\n`);
-    for (const f of diff.newFindingsList) {
-      lines.push(`- [${f.severity.toUpperCase()}] **${f.nodeName}** — ${f.issue}: ${f.detail}`);
-    }
-  }
-  if (diff.resolvedFindingsList.length > 0) {
-    lines.push(`\n## Resolved\n`);
-    for (const f of diff.resolvedFindingsList) {
-      lines.push(`- **${f.nodeName}** — ${f.issue}`);
-    }
-  }
-
-  return lines.join('\n');
-}
-
 main().catch(err => {
   console.error('Fatal:', err.message);
   process.exit(1);
 });
 ```
 
-### Running It
+Running it:
 
 ```bash
-# First run — save as baseline
+# First run — establish baseline
 node monitor-brand.mjs --rules=brand-rules.json --out=compliance-run-1
 
-# Second run — compare against baseline
+# Subsequent runs — compare against baseline
 node monitor-brand.mjs --rules=brand-rules.json --out=compliance-run-2 \
   --baseline=compliance-run-1/compliance-report.json
 ```
 
-```json
-{
-  "scripts": {
-    "brand:check": "node monitor-brand.mjs --rules=brand-rules.json --out=compliance-output",
-    "brand:diff": "node monitor-brand.mjs --rules=brand-rules.json --out=compliance-output --baseline=compliance-baseline/compliance-report.json",
-    "brand:baseline": "node monitor-brand.mjs --rules=brand-rules.json --out=compliance-baseline"
-  }
-}
-```
-
 ---
 
-## The Diff is the Point
+## The Diff Is the Point
 
-A single compliance report is useful. A diff between two compliance reports — before and after a design sprint, before and after a library update, before and after a batch fix — is where the tool earns its keep in CI.
+A single compliance report shows the current state. A diff between two reports — before and after a design sprint, before and after a library update, before and after a batch fix — shows whether the file is getting better or worse. That directional signal is what makes the tool useful in CI rather than just useful on demand.
 
-The `computeDiff` function identifies findings by a composite key: `nodeId + category + issue`. A finding is "resolved" when that key disappears between runs. It is "new" when it appears without having been present before. This is a coarse definition — a node can be renamed or moved and the key changes — but it is stable enough for the purpose: showing whether the file is getting cleaner or dirtier.
+The `computeDiff` function identifies findings by a composite key: `nodeId + category + issue`. A finding is resolved when that key disappears between runs. It is new when the key appears without having been present before. This is coarse — a node that is renamed or moved changes its key — but it is stable enough for the purpose. The diff is a measure of progress, not a precise audit trail.
 
-In a GitHub Actions workflow, the compliance diff becomes the PR check:
+In a GitHub Actions workflow, the diff becomes the PR check:
 
 ```yaml
-# .github/workflows/brand-compliance.yml
 name: Brand Compliance Check
 on:
   pull_request:
@@ -527,124 +463,75 @@ jobs:
         with:
           node-version: '20'
       - run: npm ci
-      - name: Download baseline
-        run: |
-          # Restore compliance baseline from artifact storage or cache
-          # [configure per your CI setup]
       - name: Run compliance check
         env:
-          FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+          FIGMA_TOKEN:    ${{ secrets.FIGMA_TOKEN }}
           FIGMA_FILE_KEY: ${{ secrets.FIGMA_FILE_KEY }}
         run: npm run brand:diff
-      - name: Upload report
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: compliance-report
           path: compliance-output/
 ```
 
-The exit code from `monitor-brand.mjs` — zero on warning-only, non-zero on errors — drives the CI gate. Contrast failures are errors. Hardcoded unapproved colors are errors. Hardcoded approved colors (right color, wrong delivery) are warnings. Off-scale spacing is a warning. This severity mapping should match the team's actual risk model.
+<!-- → [FIGURE: CI gate diagram — compliance check exit code 0/1 decision point; annotations showing which finding categories produce each exit code; diff report attached to PR as artifact] -->
+
+The exit code drives the gate. Contrast failures and unapproved font families produce errors and fail the build. Hardcoded approved colors and off-scale spacing produce warnings and let the build pass while informing the designer. Off-scale font weights and marginal touch targets produce info items. This severity mapping should reflect the team's actual risk model — not the tool author's defaults.
 
 ---
 
-## WCAG Contrast: The Stakes Are Real
+## What the Tool Cannot Catch
 
-Contrast ratio checking gets its own section because the stakes are different from brand color compliance. A hardcoded hex color is a process violation. A failing contrast ratio is an accessibility failure that affects real users — users with low vision, users in bright outdoor environments, users on older displays.
+Understanding the tool's limits prevents false confidence.
 
-WCAG 2.1 defines contrast as the ratio of relative luminance values, adjusted by 0.05 to avoid division by zero:
+Background color propagation is approximate. The `parentBg` color passed down the tree is the nearest ancestor's solid fill. This misses semi-transparent fills, gradient fills, image fills, and layered opacity. Treat contrast findings as conservative: the tool catches obvious failures, not all failures. A dedicated accessibility audit tool that renders the file will catch more.
 
-```
-contrast = (L_lighter + 0.05) / (L_darker + 0.05)
-```
+The node tree walker depends on what the API returns. Very large files may not include all deeply nested nodes in the full file response. [verify — current as of writing] Confirm the tool is seeing the nodes you expect by checking a known-failing instance and verifying the finding appears.
 
-where `L` is relative luminance computed from sRGB values:
+Style references are not verified for correctness. The checker confirms that a fill was applied via a style (`styles.fill` is present), but it does not verify that the referenced style holds the right color. A designer can apply a style with a misleading name if the style library has naming problems. The audit from Chapter 5 should catch style library hygiene issues before the compliance check runs.
 
-```
-L = 0.2126 * linearR + 0.7152 * linearG + 0.0722 * linearB
-```
+The tool cannot read intent. WCAG 1.4.3 exempts purely decorative elements from contrast requirements. The API does not know which elements are decorative. All text nodes are checked. Human review is required to confirm which findings are actionable and which are correctly exempt.
 
-with each channel linearized from sRGB gamma:
+The approved color list must be maintained. Every new approved color requires updating `brand-rules.json`. If the list lags behind the design system, new approved colors generate false-positive warnings and engineers start ignoring the report. Assign ownership of the rules file to the design systems team and treat changes to it as requiring review.
 
-```
-if channel <= 0.04045: linear = channel / 12.92
-else:                  linear = ((channel + 0.055) / 1.055) ^ 2.4
-```
-
-The thresholds are:
-- Normal text (below 18pt regular or 14pt bold): 4.5:1 (AA), 7:1 (AAA)
-- Large text (18pt or larger regular, 14pt bold or bolder): 3:1 (AA), 4.5:1 (AAA)
-- Non-text UI components (icons, borders, interactive states): 3:1 (AA)
-
-[verify — WCAG 2.2 introduced no changes to contrast requirements; WCAG 3.0 proposes APCA, which remains a draft as of writing and is not normative for production compliance]
-
-The checker in `monitor-brand.mjs` propagates a `parentBg` color down the node tree, using the nearest solid fill ancestor as the background against which text nodes are checked. This is a simplification: real contrast checks account for opacity stacking, blending modes, and layered fills. The checker as written will miss some failures (elements with partial opacity over complex backgrounds) and will not flag failures it cannot compute (gradient backgrounds, image backgrounds). Flag these limitations in the CI report with a note that complex backgrounds require manual review.
-
-The non-text 3:1 threshold for UI components requires knowing which components are interactive. The script approximates this by checking components against a minimum touch target size. This is not the same as WCAG 1.4.11 (Non-text Contrast), which requires that the visual indicator of an interactive component has 3:1 contrast against adjacent colors. Correctly checking 1.4.11 requires knowing which borders, outlines, and state indicators belong to interactive elements — information that requires design intent beyond what the API exposes. Mark these checks as requiring human review.
+<!-- → [TABLE: Tool limitations — columns: what it cannot catch, why, what to do instead — rows: opacity/gradient backgrounds, decorative elements, intent vs. naming accidents, deeply nested nodes, style naming errors] -->
 
 ---
 
-## Failure Modes of the Monitor
+## The Lint Report
 
-**The node tree walker is depth-limited.** The full file fetch returns the complete document tree for files under the API's node limit, but very large files may not include all deeply nested nodes [verify — current as of writing]. If the file has deeply nested component instances, the checker may miss fills inside instances. Test by checking a known-failing instance and confirming the finding appears.
+Long before design files existed in a form that programs could read, code compliance was monitored by linters — static analysis tools that walked source code and reported deviations from a defined style or correctness standard.
 
-**Background color propagation is approximate.** The `parentBg` passed down the tree is the nearest ancestor's solid fill. This misses: semi-transparent fills, gradient fills, image fills, and mixed opacity. Treat contrast findings as conservative — they catch the obvious failures but are not a replacement for a dedicated accessibility audit tool that renders the file.
+The canonical early linter was `lint`, written by Stephen Johnson at Bell Labs in 1978 for C code. Its job was to detect constructs that, while syntactically valid, were likely mistakes: unused variables, type mismatches, pointer errors. It did not fix anything. It reported. The human decided what to do with the report.
 
-**The approved color list must be maintained.** Every time the design system adds a new approved color, `brand-rules.json` must be updated. If the list lags behind the design system, approved new colors will generate false-positive warnings. Assign ownership of the rules file to the design systems team and treat updates to it as requiring review.
+The pattern — walk a formal artifact, check against declared rules, emit a structured report — is the pattern `monitor-brand.mjs` implements for Figma files. The inputs are different (a JSON node tree instead of C source), the rules are different (brand guidelines instead of type safety), but the mechanism is identical.
 
-**Style references are not verified.** The checker confirms that a fill is applied via a style reference (`styles.fill` is present), but it does not verify that the referenced style is the correct one. A designer can apply a style with the wrong color name if the style library has duplicates. The missing-description report from Chapter 10 and the audit from Chapter 5 should catch style library hygiene problems before the compliance check runs.
+The critical insight from the lint tradition is that a linter's value is proportional to the actionability of its output. A linter that produces five hundred undifferentiated warnings trains engineers to ignore it. ESLint succeeded in part because it distinguished fixable from non-fixable violations and let teams configure severity to match their actual risk model. `monitor-brand.mjs` is built on the same principle: errors block, warnings inform, info items educate. The severity mapping belongs to the team. The tool provides the detection mechanism; the team decides what to do with the signal.
 
-**The contrast checker cannot read intent.** The API does not know whether a decorative element is purely decorative (exempt from contrast requirements under WCAG 1.4.3) or whether it conveys information. All text nodes are checked. All falls through to the human reviewer to confirm which findings require remediation and which are correctly decorative.
-
-**CI false positives erode trust.** If the compliance check flags warnings so aggressively that engineers begin ignoring it, the check has failed its purpose. Calibrate the warning threshold to your team's actual process. A design system in an early cleanup phase should treat off-scale spacing as info, not warning, and fix the compliance baseline after each sprint rather than requiring perfection before any commit.
+The design compliance space is in the early phase of this evolution — the phase where teams are still deciding which violations are worth failing CI over. The answer for most teams: start with contrast failures and unapproved font families (genuine correctness failures that affect users or indicate the style library is not being used), and treat everything else as configurable until there is evidence of what actually matters.
 
 ---
 
-## Decision Rules
+## What Comes Next
 
-**Run `monitor-brand.mjs` before**: every library publish, every major release, any design review where brand fidelity is at stake.
-
-**Run it in CI**: on a schedule (weekly is a reasonable minimum) and on pull requests that modify Figma-sourced assets or design tokens.
-
-**Make CI fail on**: contrast failures, unapproved font families, and hardcoded colors that are not in the approved palette. These are either accessibility failures or violations that indicate the style library is not being used.
-
-**Make CI warn on**: hardcoded approved colors (right color, wrong delivery mechanism), off-scale spacing, and off-scale font sizes. These are process violations worth fixing but do not break accessibility.
-
-**Make CI info on**: thin or unusual font weights, touch target sizes that are marginal, and spacing values near but not on the scale. These are improvement opportunities.
-
-**Save a compliance baseline** after each major cleanup sprint. The diff from that baseline is the measure of progress and regression.
-
-**Do not automate fixes**: the compliance report identifies violations; it does not fix them. Fixing requires a human in Figma, or a Plugin API script reviewed by the design team before running. The compliance report is input to that process, not the process itself.
-
-**Treat contrast findings as genuine errors**: they affect users. A contrast failure is not a style preference. It is a usability and legal accessibility risk. Give contrast findings the same weight as a broken component in code.
+Chapter 12 handles the consumer that is not a human at all — structuring the Figma file's data as a machine-readable specification that a CLI or code generator can build from. The compliance report is input to that process: a file with known-passing compliance is a file the code generator can trust.
 
 ---
 
-## Try This
+## LLM Exercises
 
-1. Run `monitor-brand.mjs` against your most active Figma file. Save the output as your baseline. Count the errors. Count the warnings. This is your compliance starting point.
+**Exercise 1 — Generate and examine**
 
-2. Pick one page with the highest error count. Fix the errors in Figma — swap hardcoded fills for style references, adjust failing contrast pairs. Re-run the check. Compare the diff.
+Paste the `contrastRatio` and `relativeLuminance` functions into a conversation with an LLM. Ask it to trace through the calculation for two specific colors — say, `#111928` (neutral-900) text on `#FFFFFF` white background — step by step. Then ask it to compute the ratio for the failure case in the opening scenario: `#374151` (neutral-700) on `#6B7280` (neutral-500). Verify the computed ratio against the 4.5:1 AA threshold for normal text. Does it fail? By how much?
 
-3. Add the tool to a GitHub Action that runs on a schedule. Configure it to post the diff as a comment on the weekly "design system health" issue or Slack thread.
+**Exercise 2 — Apply to known context**
 
-4. Take the contrast check and test it against a component you know has passed a manual accessibility review. Confirm the tool agrees. Then test it against a component you know is decorative. Note the false positive — this is where the human review step matters.
+Describe your team's design system to an LLM: which colors are in your approved palette, what your type scale is, whether you use Auto Layout consistently. Ask it to predict which compliance category — color, typography, spacing, or accessibility — is most likely to produce the most findings on first run, and why. Run the tool. Compare the prediction to the actual output.
 
-5. Update `brand-rules.json` to add one new approved color from a recent design decision. Confirm that the warning disappears for that color. This tests that the rules file is the single source of truth.
+**Exercise 3 — Stress-test a specific claim**
 
----
+The chapter argues that contrast failures should always be errors that fail CI, never warnings. Ask an LLM to argue the opposing position: that contrast failures should be warnings during an active remediation sprint, to avoid blocking work while the team fixes existing issues. Evaluate the argument. Under what conditions is the warning-only approach defensible? Under what conditions does it risk leaving accessibility failures in production indefinitely?
 
-## AI Wayback Machine — The Lint Report
+**Exercise 4 — Draft or audit a professional deliverable**
 
-Long before design files existed in a form that programs could read, code compliance was monitored by **linters**: static analysis tools that walked source code and reported deviations from a defined style or correctness standard.
-
-The canonical early linter was `lint`, written by Stephen Johnson at Bell Labs in 1978 for C code. Its job was to detect constructs that, while syntactically valid, were likely to be mistakes: unused variables, type mismatches, pointer errors. It did not fix anything. It reported. The human decided what to do with the report.
-
-The pattern — a tool that walks a formal artifact, checks against declared rules, and emits a structured report — is the pattern this chapter implements for Figma files. The inputs are different (a JSON node tree instead of C source), the rules are different (brand guidelines instead of type safety), but the mechanism is the same: define the rule, walk the artifact, report the deviation.
-
-The critical insight from the lint tradition, which applies equally to design compliance monitoring, is that the value of a linter is proportional to the actionability of its output. A linter that produces five hundred warnings with no severity ranking trains engineers to ignore it. ESLint, the dominant JavaScript linter of the 2010s-2020s, succeeded in part because it distinguished fixable from non-fixable violations and allowed teams to configure rule severity to match their actual risk model. `monitor-brand.mjs` is built on the same principle: errors block, warnings inform, info items educate. The severity mapping belongs to the team, not the tool author.
-
-The design compliance space is still in the early phase of this evolution — the phase where teams are still deciding which violations are worth failing CI over. The constraint chapter answers this for Figma: start with contrast failures and unapproved font families (genuine correctness failures), and treat everything else as configurable.
-
----
-
-*Next chapter: when the consumer is not a human at all — structuring the Figma file's data as a machine-readable specification that a CLI or code generator can build from.*
+You have just run the compliance tool for the first time and found 43 errors: 12 contrast failures and 31 hardcoded unapproved colors. Write a one-page summary for the design director that covers: what the numbers mean, which findings require immediate action before the next release, and what the remediation plan looks like over the next two sprints. Ask an LLM to draft this document. Then audit the draft: does it accurately convey the severity difference between contrast failures (accessibility risk) and hardcoded colors (process violation)? Does it give the director enough information to prioritize the work?

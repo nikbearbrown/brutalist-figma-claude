@@ -4,51 +4,27 @@
 
 ---
 
-## What This Chapter Lets You Do
+Here is a failure that happened, in one form or another, on almost every design team that works at scale. A designer runs a WCAG contrast audit and discovers that the primary button blue — `#1A73E8` — fails against white backgrounds at the body text size. The fix is straightforward: darken the blue slightly to `#1558D6`. The designer opens Figma, selects the primitive color variable, changes the value, and watches every component that references that variable update in real time. Primary buttons, link text, focus rings — all correct. The design review passes. The tokens JSON file in the design system repository is updated and merged. Everything looks right.
 
-After this chapter you can explain, precisely and without hand-waving, why the synchronization problem exists and why it cannot be solved by better communication, more careful exports, or a design system Confluence page. You will have the vocabulary for the rest of the book — source of truth, snapshot, drift, extraction layer — and a clear-eyed decision rule for when manual handoff is actually fine and when it will eventually hurt you.
+Three weeks later, a visual QA pass before a product launch catches it. The iOS app is still `#1A73E8`. The Android app has `#1558D6`. The web app has `#1558D6` in most places but the old value in the marketing components, which pull from a different token file that nobody updated.
 
-No code in this chapter. No API calls. This chapter is the diagnosis.
+Three environments. Three weeks of silent divergence. A developer fixing it at 9 PM the night before the launch.
 
----
+The postmortem question was: "Why didn't anyone catch this?" The honest answer is that nobody had a reason to look. The Figma file was correct. The implicit assumption was that a correct Figma file produces correct production code — that the two are linked somehow, that a change in one propagates to the other. That assumption was wrong. And it was wrong in a way that is structural, not accidental. Not a communication failure. Not a process failure. Structural.
 
-## The Failure
-
-The timeline looked like this:
-
-- **Week 1.** The design team decides to shift the primary brand color from `#1A73E8` to `#1558D6` — a subtle but deliberate darkening, driven by a WCAG contrast audit on the product's blue buttons against white backgrounds.
-- **Week 2.** The designer updates every relevant style in the Figma file. Primary button, link text, focus rings, all updated. The file looks correct. The design review passes. The tokens JSON file in the design system repository is updated and merged.
-- **Week 5.** A visual QA pass before a product launch catches it: the primary button in the iOS app is still `#1A73E8`. The Android app has `#1558D6`. The web app has `#1558D6` in most places but `#1A73E8` in the marketing components, which pull from a different token file that was not updated.
-
-Three environments, three weeks of divergence, a launch risk that a developer has to fix at 9 PM the night before shipping.
-
-Postmortem question: "Why didn't anyone catch this?" The honest answer is that nobody had a reason to look. The Figma file was correct. The assumption was that correct Figma equals correct production. That assumption was wrong, and it was wrong in a way that is structural — not accidental, not a process failure, not a communication gap. Structural.
-
-This chapter explains the structure.
+Understanding the structure is what this chapter is for.
 
 ---
 
-## Diagnosis: The Synchronization Problem
+## What the File Actually Is
 
-### One source of truth, two diverging copies
+Before you can reason about why Figma and production diverge, you need a working model of what Figma actually stores. Most people think of a Figma file as a picture — a sophisticated picture with metadata attached, but fundamentally a visual document. This model is wrong, and the wrongness matters.
 
-"Figma is the source of truth" is a reasonable policy. The problem is what happens next.
+A Figma file is a document graph. It is a tree of nodes, each with a type, a set of typed properties, and references either to child nodes or to shared resources — style definitions, variable collections, component definitions. The canvas you see when you open Figma is a rendering of that graph. Figma's rendering engine traverses the node tree, resolves the references, and produces pixels on screen. But the pixels are not the data. The graph is the data.
 
-When a designer makes a change in Figma, nothing in production changes automatically. Someone has to move the decision across: export a token file, update a CSS variable, copy a value from Dev Mode. That crossing is manual. And every manual crossing has the same property: it is a one-time operation.
+<!-- → [FIGURE: Diagram showing Figma's document graph structure — nodes, references, variable bindings — contrasted with the rendered canvas view. Caption: The file is a graph; the canvas is a rendering of the graph.] -->
 
-The first crossing produces a copy. The copy is accurate at the moment of copying. Then both the original and the copy continue to exist, independently, and the original continues to change. The copy does not change with it unless someone crosses again.
-
-This is the synchronization problem. It is not a communication problem — the designer and developer may be talking constantly. It is a structural problem: two things that are supposed to represent the same decision have become different things, and the system has no mechanism to detect or correct the divergence.
-
-Design systems at the scale of two people can survive this with discipline. At the scale of ten people, three platforms, and a Figma file with 400 components, discipline is not a solution. The file is lying to you because you believe it represents production, but it only represents what production used to be.
-
-### What the Figma file actually is
-
-Before you can extract anything from Figma reliably, you need a working model of what Figma actually stores.
-
-A Figma file is not a picture. It is not a PDF with metadata. It is a **document graph**: a tree of nodes, each with a type, a set of properties, and references to other nodes or to shared resources (styles, variables, component definitions).
-
-When you look at a Figma frame on screen, you are seeing a rendering of that graph. The rendering looks like a design. The underlying data looks like this (abbreviated):
+Here is a simplified fragment of what a primary button component looks like in that graph:
 
 ```json
 {
@@ -70,155 +46,126 @@ When you look at a Figma frame on screen, you are seeing a rendering of that gra
 }
 ```
 
-The rendering engine on Figma's servers takes this graph and produces what you see on screen. But the data that matters for an automated pipeline is the graph itself — specifically, the structured properties: what variable is bound to what node, what the variable's value is in each mode, what the component's name is, what its description says.
+Notice what is happening in the `fills` field. There is a raw color value — the RGB triple — but there is also a `boundVariables` entry pointing to a variable by ID. That variable, `VariableID:12:45`, is defined elsewhere in the file. It has a name, a collection it belongs to, and a value for each mode in that collection. The rendered button uses the resolved value: whatever `VariableID:12:45` currently equals in the active mode.
 
-That graph is what the REST API exposes. The API is not an export tool. It is a query interface against the document graph. The distinction is important: exports produce snapshots, queries produce live reads.
+When you change a variable's value in Figma, you are modifying a node in this graph. Figma re-renders every component that has a `boundVariables` reference pointing at that variable ID. On screen, everything updates instantly. Visually, it looks like the change propagated everywhere.
 
-### Why manual export is a one-time operation
-
-When a designer right-clicks a component and exports it as SVG, they produce a file that represents the component at that moment. If the component changes, the exported file does not change. There is no link between them. The export is severed from its source the moment it lands on disk.
-
-The same is true for:
-
-- Copying a hex value from Dev Mode and pasting it into a CSS file
-- Downloading a token JSON from Tokens Studio and committing it manually
-- Copying styles from Figma Inspect into a Storybook story
-- Screenshotting a component and attaching it to a Jira ticket
-
-All of these produce snapshots. Snapshots drift.
-
-The only way to prevent drift is to eliminate the manual crossing. That means the pipeline reads directly from the graph, transforms what it reads, and writes to production — automatically, repeatably, on a trigger. The pipeline does not produce snapshots. It produces synchronized copies, and it can re-synchronize on demand.
+It did not propagate anywhere outside Figma.
 
 ---
 
-## The Three Failure Modes
+## The Structure of the Problem
 
-Manual handoff fails in three distinguishable ways. The book will address tools for all three, but naming them now is useful because they have different symptoms and different urgencies.
+Here is the core of it, stated as plainly as I can manage.
 
-### Failure Mode 1 — Silent drift
+When you change a variable in Figma, you change a value in Figma's servers — in the document graph that Figma stores and renders. Production is a different system. It does not read from Figma's servers. It reads from a codebase: a collection of CSS files, Swift constants, Kotlin resource files, JavaScript modules, whatever the platform requires. Those files contain values that were correct at the moment a human copied them from Figma. Since that moment, the Figma file has continued to change. The files have not.
 
-This is the color-change story. Production and Figma diverge without anyone noticing. The divergence is usually small at first — a shade off, a spacing value that rounds differently on different platforms — but it compounds. After six months of active design iteration, production may have dozens of values that no longer match the design.
+The technical name for this situation is a **snapshot**. Every time a designer exports a token file, copies a hex value from Dev Mode, downloads an SVG, or even screenshots a component and attaches it to a Jira ticket, they are producing a snapshot: a copy of the current state, severed from its source at the moment of creation. The copy is accurate when made. The source continues to change. The copy does not.
 
-Silent drift is dangerous because it is invisible. The design looks right in Figma. Production looks approximately right in the browser. No test fails. The divergence only becomes visible at a design review, a brand audit, or an accessibility check.
+<!-- → [FIGURE: Timeline diagram showing Figma state diverging from production state after a manual export event. Caption: Every manual crossing produces a snapshot. Snapshots drift.] -->
 
-The diagnostic question for silent drift: when was the last time you compared your production token values against your Figma file programmatically? If the answer is "never" or "we look at them manually in design reviews," you have silent drift. The only question is how much.
+This is not a communication problem. Two people talking constantly about a design change does not prevent divergence — it just means both people know the intention. The implementation still has to cross from Figma to production through a manual step, and that step is, by definition, a one-time operation. It does not repeat when the design changes again next week.
 
-### Failure Mode 2 — Version chaos
+This is also not a tooling problem, at least not in the way people usually mean it. The era before the Figma API was the era of inspect tools: Zeplin, InVision Inspect, Figma's own Inspect panel. Inspect tools made the snapshot legible. A developer could click on a component and read its exact font size, color, and padding without guessing from a screenshot. This was a genuine improvement. But it was an improvement to the experience of reading from a snapshot. It did not change the fundamental structure: the snapshot existed as of the last export, and it was not updated when the design changed.
 
-The `tokens_final_v3_really_final.json` situation.
-
-This failure is most visible in the file structure: token files with version suffixes, multiple "source of truth" Figma files (the library file, the draft file, the "real one"), duplicate component definitions across projects, and exported assets in three slightly different directories.
-
-Version chaos is a naming and governance failure, but its root cause is the same: the manual crossing. Every manual export invites human variation. One designer exports to `tokens/`, another exports to `design-tokens/`, and both are technically "the current token file." Nobody knows which one the iOS build is reading.
-
-### Failure Mode 3 — Broken trust
-
-The quietest failure. Engineers stop checking the Figma file because experience has taught them that it does not match production. Designers stop specifying precisely because engineers are going to "just figure it out" anyway. The design system degrades into a mood board — a reference, not a contract.
-
-Broken trust is hard to diagnose from the artifacts because it is a behavioral failure. The symptoms are: developers making visual decisions unilaterally ("it looks about right"), designers specifying things they assume won't be built ("it won't match anyway"), and a codebase that uses hardcoded values rather than tokens because "the tokens keep changing."
-
-Broken trust is the terminal failure mode. It means the synchronization problem has been running long enough to produce cultural damage. The fix is technical — build the pipeline — but rebuilding the trust that the pipeline will be maintained requires demonstrated reliability over time.
+What Zeplin gave teams was a more comfortable way to ignore the synchronization problem. The solution was always going to require eliminating the manual step, not improving it.
 
 ---
 
-## The Pipeline Is the Only Solution
+## Three Ways the System Breaks
 
-This is the thesis of the book stated plainly: if the Figma file is genuinely the source of truth, the only sustainable connection between it and production is an automated pipeline that reads, transforms, and distributes without a human in the loop.
+The synchronization problem fails in three recognizable patterns. They have different symptoms and different urgencies, but the same root cause.
 
-"Pipeline" here means a sequence of automated steps with a defined input (the Figma file key), a defined set of outputs (token JSON, exported assets, component documentation, machine-readable specs), and a defined trigger (a Figma library publish event, a CI run, a scheduled cron).
+**Silent drift** is the failure from the opening story. Production and Figma diverge without anyone noticing. The divergence is usually small at first — a shade off, a spacing value that rounds to the nearest pixel differently on different platforms — but it compounds. After six months of active design iteration, production may have dozens of values that no longer match the design. No test fails. The design looks right in Figma. Production looks approximately right in the browser. The divergence surfaces at a brand audit, an accessibility compliance check, or an embarrassing visual comparison in a client meeting.
 
-The human's role in a well-designed pipeline is not the crossing. It is the governance: deciding what the pipeline is authorized to read, what it is authorized to write, what changes require human review before they reach production. The crossing is automatic. The judgment about what crosses is still human.
+The diagnostic question for silent drift is simple: when was the last time your team compared production token values against the Figma file programmatically — not by eye, programmatically? If the answer is never, you have silent drift. The only open question is how much.
 
-This book is about building that extraction layer. Everything that follows — the API surfaces, the file structure requirements, the token pipelines, the asset automation, the MCP integration — is infrastructure for that automated crossing.
+<!-- → [TABLE: Comparison of silent drift symptoms vs. visible synchronization failures — columns: symptom, detectability, typical discovery trigger, urgency] -->
 
----
+**Version chaos** is the `tokens_final_v3_really_final.json` situation. This failure is visible in the file structure: token files with version suffixes, multiple "source of truth" Figma files, duplicate component definitions across projects, exported assets in three slightly different directories. One designer exports to `tokens/`; another exports to `design-tokens/`; a third commits to `src/styles/tokens/`. Nobody knows which one the iOS build is reading. The Figma file is correct. Production has four different versions of correct, applied inconsistently across platforms.
 
-## Worked Example: The `tokens_final_v3_really_final.json` Workflow
+Version chaos is a naming and governance failure on the surface, but its root is the same: the manual crossing invites human variation. Each export is an independent act with no enforced destination, no enforced filename, no enforced validation. Every crossing adds entropy.
 
-Let's make the failure concrete. This is a real pattern, reconstructed from common team practice.
+**Broken trust** is the quietest failure, and the most expensive to repair. Engineers stop checking the Figma file because experience has taught them it does not match production. Designers stop specifying precisely because engineers are going to "just figure it out" anyway. The design system degrades into a mood board — a reference, a vibe, not a contract. The symptoms are developers hardcoding values because "the tokens keep changing," and designers specifying components they privately expect will not be built accurately.
 
-**Before (the manual workflow):**
-
-1. Designer updates color variables in Figma.
-2. Designer or design system engineer opens the Tokens Studio plugin, exports the current token set to a JSON file.
-3. The file is named based on the exporter's judgment: `tokens.json`, `design-tokens.json`, `tokens-v3.json`, `tokens_final.json`, `tokens_final_v2.json`.
-4. The file is either emailed/Slacked to the engineering team, dropped in a shared folder, or committed to the repository by whoever has access.
-5. Engineers update their build config to point at the new file.
-6. Some environments are updated; others are not.
-7. Three months later, there are four token files in the repository, each partially different, each referenced by a different platform build.
-
-The Figma file is correct. Production has four different versions of "correct."
-
-**After (the pipeline workflow):**
-
-1. Designer publishes the variable library in Figma. This triggers a webhook event [verify — current as of writing].
-2. The webhook triggers a CI job that runs `extract-tokens.mjs` (covered in Chapter 8) with the canonical `FIGMA_FILE_KEY` from the environment.
-3. The script calls the Figma Variables API [verify — Enterprise plan required], fetches the current variable state, transforms it to DTCG-compatible JSON, and writes `tokens/tokens.json` to a deterministic path.
-4. A validation step runs `validate-tokens.mjs`, which checks for broken aliases and malformed values. If validation fails, the job fails and no PR is opened.
-5. If validation passes, the job opens a pull request with the diff. Engineers see exactly what changed — which token values, which modes, which collections.
-6. The PR is merged. Every platform build that reads from `tokens/tokens.json` picks up the change on next build.
-
-One source of truth. One token file. One crossing, automated.
-
-The before/after is not primarily a tooling change. It is a governance change: the decision about what is authoritative and who is allowed to produce it. The tooling makes that governance enforceable rather than aspirational.
+Broken trust is terminal. It means the synchronization problem has been running long enough to produce cultural damage. The fix is technical — build the pipeline — but rebuilding the trust requires demonstrated reliability over time, not just a fixed process.
 
 ---
 
-## Decision Rules: When Manual Export Is Acceptable
+## What Needs to Happen Instead
 
-The pipeline is not always necessary. Manual export is a reasonable choice when:
+The diagnosis leads directly to the prescription. If the Figma file is genuinely the source of truth — if that phrase is to mean something beyond a hopeful policy statement — then the only sustainable connection between it and production is an automated pipeline that reads, transforms, and distributes without a human in the loop.
 
-- **The team is small (two to four people) and co-located.** Communication overhead is low enough that synchronization failures are caught quickly.
-- **There is one platform and one codebase.** The token file goes to one place. There is no divergence problem because there is no divergence opportunity.
-- **The design system is stable and infrequently changed.** If the token set changes twice a year, the manual crossing happens twice a year and the risk is low.
-- **There is no production automation that reads Figma data.** If no build tool, CI step, or code generator is reading from Figma, there is nothing for drift to break.
+Not a better naming convention. Not a more careful export checklist. Not a Confluence page documenting the correct procedure. An automated pipeline.
 
-Manual export is not acceptable when:
+What I mean by pipeline is a sequence of automated steps with a defined input, a defined set of outputs, and a defined trigger. The input is a Figma file key and credentials. The outputs are platform-ready artifacts: token JSON files, exported SVG assets, component documentation, machine-readable specs. The trigger is an event — a Figma library publish, a CI run, a scheduled job. The pipeline runs, reads the current graph state from the Figma API, transforms it, validates it, and writes to production. No human performs the crossing.
 
-- **Multiple platforms or codebases need to stay synchronized.** Each manual crossing is an opportunity for divergence.
-- **The design system changes frequently.** Frequent changes mean frequent crossings, and frequent crossings mean frequent opportunities for error.
-- **A build tool, code generator, or AI agent reads Figma data.** These consumers need reliable, versioned, validated inputs. Manual exports do not provide them.
-- **Brand compliance or accessibility is a contractual requirement.** "We meant to update it" is not a defense.
-- **The team has experienced broken trust.** If engineers and designers have already stopped trusting each other's artifacts, manual handoff will not repair that trust. A demonstrated automated pipeline will.
+<!-- → [FIGURE: Pipeline architecture diagram — trigger → API read → transform → validate → PR/deploy. Caption: The automated crossing eliminates the snapshot. The current graph state is always readable.] -->
 
-Use this as a decision checklist. If any of the "not acceptable" conditions are true, the manual workflow will eventually hurt you. The question is only when.
+The human's role in this system is governance, not crossing. A designer decides what is authoritative. An engineer decides what the pipeline is allowed to read and write, what changes require human review before reaching production, what the validation rules are. The judgment is human. The mechanical act of moving a value from Figma to a token file is not.
+
+This is the difference between the Zeplin Era and the extraction layer. Zeplin gave you better access to the last known state. The extraction layer eliminates the last-known-state problem by making the current state queryable at any time. The API doesn't give you a better snapshot. It gives you the source, re-readable on demand.
 
 ---
 
-## Try This
+## When Manual Export Is Actually Fine
 
-**Exercise 1: Map your current crossings.**
+I want to be honest about the cases where the pipeline is not worth building, because overselling it does nobody any good.
 
-Draw (on paper or in a doc) the path from a Figma design decision — a token value, a component name, an asset — to its production equivalent. For each step in the path, mark it: automated (no human required) or manual (a human performs this step).
+Manual export is a reasonable choice when the team is small enough — two to four people — that communication overhead is low and synchronization failures surface quickly. It is reasonable when there is one platform and one codebase, because there is no divergence opportunity: one manual crossing, one destination, one file to check. It is reasonable when the design system is stable and changes infrequently — twice a year, say — because the risk window is short and the crossing cost is low. And it is reasonable when nothing in the production build actually reads from Figma; if no build tool, code generator, or automated agent is consuming Figma data, there is nothing for drift to break.
 
-Count the manual steps. Each manual step is a potential drift point. Note which crossings have no audit trail — no Git history, no Slack message, no ticket — and are therefore invisible if they fail.
+<!-- → [TABLE: Decision matrix — when manual export is acceptable vs. when it will eventually hurt you. Rows: team size, platform count, change frequency, downstream automation, compliance requirements] -->
 
-**Exercise 2: Find the oldest snapshot.**
+Manual export is not acceptable when multiple platforms need to stay synchronized. Each crossing is an independent act; platforms diverge by default. It is not acceptable when the design system changes frequently, because frequent crossings mean frequent opportunities for error. It is not acceptable when a build tool, code generator, or AI agent is reading Figma data — these consumers need reliable, validated, versioned inputs, which snapshots cannot provide. And it is not acceptable when brand compliance or accessibility is a contractual requirement, because "we meant to update it" is not an audit defense.
 
-Open your production codebase and find the oldest committed design artifact: a token file, an SVG icon, a color palette in a constants file. Check the Git history to find when it was last modified. Now open the corresponding item in your Figma file.
-
-Are they the same? If not, when did they diverge? Could you tell? This is a quick proxy for how much silent drift your system has accumulated.
+The practical version of this decision: if any of the "not acceptable" conditions are true for your team, the manual workflow will eventually produce a failure. The only question is when, and whether you find out before or after it matters.
 
 ---
 
-## The AI Wayback Machine: The Zeplin Era
+## The Concrete Before and After
 
-Before the Figma API existed in useful form, the dominant handoff model was "inspect tools": Zeplin, InVision Inspect, Figma's own Inspect panel. The design was exported to a web interface where developers could click on elements and copy property values: hex codes, font sizes, spacing numbers.
+Let me make the pipeline concrete so the abstraction has somewhere to land.
 
-The inspect-tool model made the snapshot legible. Developers no longer had to guess values from screenshots. But the tool did not solve the synchronization problem — it made it more comfortable to ignore. Developers now had a clean interface for reading from the snapshot. The snapshot still did not update when the design changed.
+**Before**, in the manual workflow: a designer updates color variables in Figma. The designer or a design system engineer opens a plugin — Tokens Studio, say — exports the current token set to a JSON file, names it based on judgment (`tokens.json`, `design-tokens-v3.json`, `tokens_final_actually.json`), and either Slacks it to the engineering team or commits it manually if they have repository access. Engineers update their build configuration to point at the new file. Some environments are updated; others are not. Three months later there are four token files in the repository, each slightly different, each referenced by a different platform build, and nobody can say with confidence which one is correct.
 
-This is the Zeplin Era pattern: better access to the last known state. The extraction layer is different: it eliminates the last-known-state problem by making the current state always accessible through a queryable interface. The API doesn't give you a better snapshot. It gives you the source, which you can re-read any time.
+**After**, in the pipeline workflow: the designer publishes the variable library in Figma. A webhook fires, triggering a CI job. The job calls the Figma Variables API with the canonical file key, reads the current variable state, transforms it to DTCG-compatible JSON, and writes `tokens/tokens.json` to a deterministic path. A validation step checks for broken aliases and malformed values; if validation fails, the job fails and no pull request is opened. If validation passes, the job opens a pull request with the exact diff: which token values changed, which modes, which collections. Engineers review the diff. The PR is merged. Every platform build that reads `tokens/tokens.json` picks up the change on next build.
 
-The historical lesson is that tooling that makes manual handoff more comfortable tends to defer, not solve, the synchronization problem. The solution was always going to require eliminating the manual step, not improving it.
+One source of truth. One token file. One crossing, automated. The diff is visible and reviewable. The history is in Git. The validation is enforced. The filename is not a function of whoever happened to run the export last Tuesday.
+
+<!-- → [TABLE: Side-by-side comparison of manual export workflow vs. pipeline workflow — rows: who performs the crossing, output filename, validation, audit trail, drift risk, platform consistency] -->
+
+The before-and-after is not primarily a tooling change. It is a governance change: the decision about what is authoritative and who is allowed to produce it. The tooling makes that governance enforceable rather than aspirational. That is the whole point.
+
+---
+
+## What I Don't Fully Understand
+
+There is a thing about this problem I have not fully resolved, and I want to be honest about it.
+
+The pipeline eliminates the manual crossing, but it does not eliminate human judgment about what gets crossed. Someone has to decide that a variable name change is intentional, not a typo. Someone has to notice when a semantic token is accidentally mapped to a primitive value. Someone has to review the PR diff and understand whether a two-value change in the `--color-primary` token is the expected result of a deliberate brand decision or a mistake in the transform script.
+
+The pipeline makes that review possible — the diff is right there in the PR, reviewable by anyone with repository access. But it does not make that review easy for non-engineers. A designer who needs to verify that the pipeline correctly captured their Figma change has to either trust the automated validation or learn to read a JSON diff in a pull request. Neither option is fully satisfying.
+
+The tools are getting better. Figma's own Variables API is relatively new; the workflows for connecting it to design review rather than just engineering review are still being worked out. This book covers the extraction layer as it exists today, which is primarily an engineering tool. The design-legible version of that pipeline — one where a designer can verify correctness in a Figma-native interface rather than a GitHub PR — is a thing I expect to exist in a few years and that I cannot fully describe yet.
 
 ---
 
 ## What Comes Next
 
-Chapter 2 explains what the Figma API actually exposes — because before you build the pipeline, you need to understand what the query interface can and cannot return. The node graph you will read from, the rate limits you will hit, the plan gates you may run into, and the first real CLI artifact: `figma-ping.js`, which verifies your session is healthy before you write a single line of extraction code.
+Chapter 2 explains what the Figma API actually exposes. The node graph you will read from, the rate limits you will hit, the plan gates that control which endpoints are available to which subscription tiers, and the first real code artifact: `figma-ping.js`, a small script that verifies your credentials and session are healthy before you write a single line of extraction logic.
 
-The failure is diagnosed. The prescription is the extraction layer. Let's build it.
+The failure is diagnosed. The structure is clear. The prescription is an extraction layer. Let's build it.
 
 ---
 
-*Tags: synchronization, handoff, drift, extraction-layer, design-systems*
+**LLM Exercises**
+
+*Use these with Claude or any capable language model to deepen your understanding of the concepts in this chapter.*
+
+**1. Generate and examine.** Ask the model to describe the synchronization problem in a domain you know well — not design systems, but something from your own work or field. Ask it to identify where "snapshots" exist in that domain and what the equivalent of "drift" looks like. Compare its answer to the structure described in this chapter.
+
+**2. Apply to known context.** Describe a specific handoff workflow from a project you have worked on — the actual steps, the actual tools, the actual people involved. Ask the model to map each step to one of the three failure modes (silent drift, version chaos, broken trust) and explain its reasoning. Push back if its categorization seems wrong.
+
+**3. Stress-test a specific claim.** This chapter argues that the manual crossing is structural, not a communication or process failure, and therefore cannot be fixed by better communication or more careful process. Present this argument to the model and ask it to steelman the opposing view: that disciplined process and strong communication can, in practice, prevent synchronization failures at scale. Evaluate how convincing you find the counterargument.
+
+**4. Draft or audit a professional deliverable.** Write a one-paragraph summary of the synchronization problem as you would explain it to a non-technical stakeholder — a product manager, a VP, a client — who is asking why the team needs time to build pipeline infrastructure. Then ask the model to critique your explanation for clarity, accuracy, and whether it makes the business case effectively.
